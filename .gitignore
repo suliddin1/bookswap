@@ -1,0 +1,11 @@
+.next
+node_modules
+.env*.local
+playwright-report
+test-results
+.playwright
+coverage
+.npm-cache
+.DS_Store
+
+.vercel
