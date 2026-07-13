@@ -12,6 +12,8 @@ BookSwap is a premium, mobile-friendly marketplace for pre-loved books and textb
 - Protected profiles and personal listings
 - Buyer/seller chat with protected room membership and Realtime updates
 - Admin-only listing moderation, user banning, and report counts
+- Seller-controlled sold/relist lifecycle, buyer reviews, listing reports, and notifications
+- Privacy requests for access, correction, export, deletion, objection, and moderation appeal
 - Installable PWA manifest, theme colors, and app icon placeholders
 
 There is intentionally no payment or Stripe integration in this version.
@@ -48,6 +50,8 @@ Never expose `SUPABASE_SERVICE_ROLE_KEY` or other secret keys to client componen
 
 The migrations create profiles, listings, favorites, rooms, messages, reviews, notifications, reports, RLS policies, search indexes, Realtime publications, and the `listing-images` bucket.
 
+The latest hardening migration also applies least-privilege column grants, hides private contact and role fields, blocks suspended accounts in RLS and API checks, validates chat participants, and creates the privacy-request workflow. Apply every migration in filename order to a new Supabase project.
+
 Make an admin through the Supabase SQL editor:
 
 ```sql
@@ -62,3 +66,16 @@ npm test
 npm run build
 npm run test:e2e
 ```
+
+## Security model
+
+- Public seller identity is limited to name, city, account creation date, and ID. Email, phone, ban state, and admin state are private.
+- Authenticated API calls are revalidated with Supabase Auth and the current database ban/admin state.
+- The browser never chooses a chat seller; the API derives the seller from the listing.
+- Service-role credentials are server-only and must never use a `NEXT_PUBLIC_` prefix.
+- Uploaded images are limited by count, size, MIME type, file signature, random filename, and authenticated owner folder.
+- User-generated email content is HTML-escaped.
+- Marketplace mutations use strict Zod schemas and baseline request throttling. Production should add a distributed rate-limit store before a large public launch.
+- The database remains the final authorization layer through RLS and column-level privileges.
+
+See [docs/security-model.md](docs/security-model.md), [docs/market-research.md](docs/market-research.md), and [docs/launch-checklist.md](docs/launch-checklist.md).

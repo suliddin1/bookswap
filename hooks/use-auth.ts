@@ -18,7 +18,9 @@ export function useAuth() {
       setUser(data.user);
       setLoading(false);
     });
-    const { data } = supabase.auth.onAuthStateChange((_, session) => setUser(session?.user ?? null));
+    const { data } = supabase.auth.onAuthStateChange((_, session) =>
+      setUser(session?.user ?? null),
+    );
     return () => data.subscription.unsubscribe();
   }, []);
 

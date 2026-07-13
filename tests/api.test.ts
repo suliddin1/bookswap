@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { listingInput, messageInput, reviewInput } from "../lib/api";
+import {
+  favoriteInput,
+  listingInput,
+  listingUpdateInput,
+  privacyRequestInput,
+  profileInput,
+  reportInput,
+  reviewInput,
+  roomInput,
+  messageInput,
+} from "../lib/api";
+import { assertOwnedListingImages, escapeHtml } from "../lib/security";
 
 describe("marketplace input validation", () => {
   it("accepts a complete listing", () => {
@@ -11,15 +22,79 @@ describe("marketplace input validation", () => {
       category: "Fiction",
       city: "Baku",
       condition: "Very good",
+      images: ["https://project.supabase.co/storage/v1/object/public/listing-images/user-1/cover.jpg"],
     });
-    expect(listing.images).toEqual([]);
+    expect(listing.images).toHaveLength(1);
   });
 
   it("limits chat message length", () => {
-    expect(() => messageInput.parse({ roomId: "room-1", text: "x".repeat(2001) })).toThrow();
+    expect(() =>
+      messageInput.parse({ roomId: "room-1", text: "x".repeat(2001) }),
+    ).toThrow();
   });
 
   it("only accepts five-star review scale", () => {
-    expect(() => reviewInput.parse({ listingId: "one", rating: 6, comment: "Nice book" })).toThrow();
+    expect(() =>
+      reviewInput.parse({ listingId: "one", rating: 6, comment: "Nice book" }),
+    ).toThrow();
+  });
+
+  it("requires UUID identifiers for protected resources", () => {
+    expect(() => favoriteInput.parse({ listingId: "not-an-id" })).toThrow();
+    expect(() => roomInput.parse({ listingId: "not-an-id" })).toThrow();
+  });
+
+  it("only lets sellers choose supported public statuses", () => {
+    expect(listingUpdateInput.parse({ status: "sold" }).status).toBe("sold");
+    expect(() => listingUpdateInput.parse({ status: "locked" })).toThrow();
+  });
+
+  it("validates report and privacy request detail lengths", () => {
+    expect(() =>
+      reportInput.parse({
+        listingId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        reason: "short",
+      }),
+    ).toThrow();
+    expect(() =>
+      privacyRequestInput.parse({ type: "deletion", details: "short" }),
+    ).toThrow();
+  });
+
+  it("rejects role fields in profile updates", () => {
+    expect(() =>
+      profileInput.parse({ name: "Reader", city: "Baku", is_admin: true }),
+    ).toThrow();
+  });
+
+  it("escapes user content before email rendering", () => {
+    expect(escapeHtml('<img src=x onerror="alert(1)">')).toBe(
+      "&lt;img src=x onerror=&quot;alert(1)&quot;&gt;",
+    );
+  });
+
+  it("only accepts listing images from the owner's storage folder", () => {
+    const previous = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co";
+    expect(() =>
+      assertOwnedListingImages(
+        [
+          "https://project.supabase.co/storage/v1/object/public/listing-images/user-1/cover.jpg",
+        ],
+        "user-1",
+      ),
+    ).not.toThrow();
+    expect(() =>
+      assertOwnedListingImages(["https://tracker.example/cover.jpg"], "user-1"),
+    ).toThrow();
+    expect(() =>
+      assertOwnedListingImages(
+        [
+          "https://project.supabase.co/storage/v1/object/public/listing-images/user-2/cover.jpg",
+        ],
+        "user-1",
+      ),
+    ).toThrow();
+    process.env.NEXT_PUBLIC_SUPABASE_URL = previous;
   });
 });

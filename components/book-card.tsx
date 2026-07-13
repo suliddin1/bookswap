@@ -8,7 +8,13 @@ import { BookCover } from "@/components/book-cover";
 import { Listing } from "@/lib/types";
 import { authFetch } from "@/lib/client-api";
 
-export function BookCard({ listing, saved = false }: { listing: Listing; saved?: boolean }) {
+export function BookCard({
+  listing,
+  saved = false,
+}: {
+  listing: Listing;
+  saved?: boolean;
+}) {
   const [isSaved, setIsSaved] = useState(saved);
 
   async function toggleFavorite(event: React.MouseEvent) {
@@ -28,7 +34,11 @@ export function BookCard({ listing, saved = false }: { listing: Listing; saved?:
   }
 
   return (
-    <motion.article className="book-card market-book-card group" whileHover={{ y: -5 }} transition={{ duration: 0.25 }}>
+    <motion.article
+      className="book-card market-book-card group"
+      whileHover={{ y: -5 }}
+      transition={{ duration: 0.25 }}
+    >
       <Link href={`/listings/${listing.id}`} className="relative block">
         <BookCover listing={listing} />
         <button
@@ -43,17 +53,25 @@ export function BookCard({ listing, saved = false }: { listing: Listing; saved?:
             Sold
           </span>
         )}
-        <span className="bookmark-badge absolute -left-2 top-4 z-10 !min-h-[29px] !px-3 !pb-1">{listing.condition}</span>
+        <span className="bookmark-badge absolute -left-2 top-4 z-10 !min-h-[29px] !px-3 !pb-1">
+          {listing.condition}
+        </span>
       </Link>
       <div className="pt-5">
         <div className="mb-1 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <Link href={`/listings/${listing.id}`}>
-              <h3 className="truncate text-sm font-extrabold tracking-tight">{listing.title}</h3>
+              <h3 className="truncate text-sm font-extrabold tracking-tight">
+                {listing.title}
+              </h3>
             </Link>
-            <p className="mt-1 truncate text-xs text-gray-500">{listing.author}</p>
+            <p className="mt-1 truncate text-xs text-gray-500">
+              {listing.author}
+            </p>
           </div>
-          <strong className="display text-xl text-orange">₼{listing.price}</strong>
+          <strong className="display text-xl text-orange">
+            ₼{listing.price}
+          </strong>
         </div>
         <div className="mt-4 flex items-center justify-between border-t border-[#ece9e2] pt-3 text-[10px] font-bold text-gray-500">
           <span className="flex items-center gap-1">

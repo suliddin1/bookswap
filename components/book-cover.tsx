@@ -19,7 +19,11 @@ export function BookCover({
     >
       {listing.images?.[0] ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={listing.images[0]} alt={`${listing.title} cover`} className="absolute inset-0 h-full w-full object-cover" />
+        <img
+          src={listing.images[0]}
+          alt={`${listing.title} cover`}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
       ) : (
         <>
           <span className="book-cover-title">{listing.title}</span>

@@ -12,8 +12,19 @@ export function useChat(roomId: string) {
     if (!supabase) return;
     const channel = supabase
       .channel(`room:${roomId}`)
-      .on("broadcast", { event: "message" }, ({ payload }) => setMessages((current) => [...current, payload]))
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `room_id=eq.${roomId}` }, ({ new: message }) => setMessages((current) => [...current, message]))
+      .on("broadcast", { event: "message" }, ({ payload }) =>
+        setMessages((current) => [...current, payload]),
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `room_id=eq.${roomId}`,
+        },
+        ({ new: message }) => setMessages((current) => [...current, message]),
+      )
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);

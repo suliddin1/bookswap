@@ -30,7 +30,11 @@ body {
   font-family: var(--font-manrope), Arial, sans-serif;
   background-image:
     url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E"),
-    radial-gradient(circle at 50% -20%, rgba(184, 137, 40, 0.09), transparent 36%);
+    radial-gradient(
+      circle at 50% -20%,
+      rgba(184, 137, 40, 0.09),
+      transparent 36%
+    );
 }
 
 a {
@@ -123,7 +127,12 @@ textarea:focus-visible {
   position: absolute;
   inset: 0;
   content: "";
-  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.35) 48%, transparent 66%);
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.35) 48%,
+    transparent 66%
+  );
   transform: translateX(-130%);
   transition: transform 600ms ease;
 }
@@ -140,8 +149,8 @@ textarea:focus-visible {
 
 .btn-secondary {
   color: var(--ink);
-  background: rgba(255,255,255,.45);
-  border-color: #cdbfA7;
+  background: rgba(255, 255, 255, 0.45);
+  border-color: #cdbfa7;
 }
 
 .btn-dark {
@@ -202,7 +211,11 @@ textarea:focus-visible {
   inset: 0 auto 0 9px;
   width: 1px;
   content: "";
-  background: linear-gradient(90deg, rgba(0,0,0,.22), rgba(255,255,255,.12));
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.22),
+    rgba(255, 255, 255, 0.12)
+  );
 }
 
 .book-cover::after {
@@ -305,16 +318,20 @@ textarea:focus-visible {
   clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%);
   font-size: 9px;
   font-weight: 800;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .catalog-drawer {
   border: 1px solid #cdbd9e;
   background:
-    repeating-linear-gradient(0deg, rgba(95, 70, 39, .035) 0 1px, transparent 1px 29px),
-    rgba(255, 251, 242, .78);
-  box-shadow: 5px 7px 0 rgba(71, 49, 26, .08);
+    repeating-linear-gradient(
+      0deg,
+      rgba(95, 70, 39, 0.035) 0 1px,
+      transparent 1px 29px
+    ),
+    rgba(255, 251, 242, 0.78);
+  box-shadow: 5px 7px 0 rgba(71, 49, 26, 0.08);
 }
 
 .spine-stack {
@@ -334,17 +351,24 @@ textarea:focus-visible {
   color: #ead5a2;
   background: var(--spine-color);
   border-radius: 3px 5px 2px 2px;
-  box-shadow: inset -4px 0 rgba(0,0,0,.12), 3px 2px 5px rgba(0,0,0,.15);
+  box-shadow:
+    inset -4px 0 rgba(0, 0, 0, 0.12),
+    3px 2px 5px rgba(0, 0, 0, 0.15);
   writing-mode: vertical-rl;
   font-family: var(--font-fraunces), Georgia, serif;
   font-size: 10px;
-  letter-spacing: .04em;
+  letter-spacing: 0.04em;
 }
 
 .desk-surface {
   background:
-    linear-gradient(90deg, rgba(255,255,255,.025), transparent 40%),
-    repeating-linear-gradient(90deg, #352317 0 2px, #3c291b 2px 80px, #342216 81px 83px);
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025), transparent 40%),
+    repeating-linear-gradient(
+      90deg,
+      #352317 0 2px,
+      #3c291b 2px 80px,
+      #342216 81px 83px
+    );
 }
 
 .pill {
@@ -377,7 +401,11 @@ textarea:focus-visible {
 .dark-library {
   color: #f7f0e3;
   background:
-    radial-gradient(circle at 72% 40%, rgba(184,137,40,.18), transparent 30%),
+    radial-gradient(
+      circle at 72% 40%,
+      rgba(184, 137, 40, 0.18),
+      transparent 30%
+    ),
     linear-gradient(135deg, #171713, #2b2117);
   border: 1px solid rgba(213, 177, 99, 0.26);
 }
@@ -396,7 +424,7 @@ textarea:focus-visible {
   text-align: center;
   border: 1px dashed #cdbfa7;
   border-radius: 16px;
-  background: rgba(255,253,248,.45);
+  background: rgba(255, 253, 248, 0.45);
   animation: breathe 3s ease-in-out infinite;
 }
 
@@ -420,15 +448,19 @@ textarea:focus-visible {
 }
 
 @keyframes breathe {
-  50% { border-color: #aa8641; }
+  50% {
+    border-color: #aa8641;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     scroll-behavior: auto !important;
-    animation-duration: .01ms !important;
+    animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

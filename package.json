@@ -2,11 +2,19 @@
   "name": "bookswap",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9 <25"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.17"
+    }
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --ext .js,.ts,.tsx --max-warnings=0",
     "test": "vitest run tests/api.test.ts --root .",
     "test:e2e": "node scripts/run-e2e.mjs",
     "format": "prettier --write ."

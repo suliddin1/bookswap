@@ -8,7 +8,14 @@ const covers = [
 ] as const;
 
 export function normalizeListing(row: Record<string, any>): Listing {
-  const palette = covers[Math.abs(String(row.id).split("").reduce((sum, char) => sum + char.charCodeAt(0), 0)) % covers.length];
+  const palette =
+    covers[
+      Math.abs(
+        String(row.id)
+          .split("")
+          .reduce((sum, char) => sum + char.charCodeAt(0), 0),
+      ) % covers.length
+    ];
   const seller = row.seller ?? {};
   const name = seller.name ?? "BookSwap reader";
   return {
@@ -30,11 +37,20 @@ export function normalizeListing(row: Record<string, any>): Listing {
     seller: {
       id: seller.id ?? row.seller_id ?? "",
       name,
-      initials: name.split(" ").map((part: string) => part[0]).join("").slice(0, 2).toUpperCase(),
+      initials: name
+        .split(" ")
+        .map((part: string) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase(),
       city: seller.city ?? row.city,
     },
     createdAt: row.created_at,
-    posted: row.created_at ? new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(row.created_at)) : undefined,
+    posted: row.created_at
+      ? new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(
+          new Date(row.created_at),
+        )
+      : undefined,
     saves: row.favorites?.[0]?.count ?? 0,
   };
 }
