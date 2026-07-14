@@ -82,6 +82,8 @@ The acceptance matrix is the definition of done. Project state records facts, is
 
 ## ADR-014 — Resolve public profile grants without widening private data
 
-Status: Proposed, P0.
+Status: Accepted.
 
-Current column-level public grants protect email, phone, banned, and is_admin, but the catalog's PostgREST embedded users relation requires table SELECT and returns permission denied. The fix must preserve private columns. Candidate designs include a deliberately public profile table/view with safe grants and RLS or an RPC/query shape that never requires broad users SELECT. Do not grant all users columns to anon as a shortcut.
+Keep `public.users` column grants limited to `id`, `name`, `city`, and `created_at`; never grant broad table reads to `anon` or `authenticated`. Policies that need ban state call the stable, strict, security-definer `private.user_is_active(uuid)` predicate. The `private` schema is not exposed through the Data API, the function has an empty search path, and execute is restricted to `anon` and `authenticated`. Public catalog/detail queries may therefore retain atomic PostgREST embeds that explicitly name only the four safe profile fields. Direct Data API tests must continue to prove safe reads succeed, private fields and `*` fail, and banned sellers/listings are absent.
+
+Chat-room seller ownership is independently enforced with qualified RLS and a composite `(listing_id, seller_id) -> listings(id, seller_id)` foreign key so privileged writes cannot create a mismatched room.

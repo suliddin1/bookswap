@@ -4,6 +4,47 @@ Evidence date: 2026-07-14 (Asia/Baku). Repository: D:\Codex Projects\2HandedBook
 
 No production database, deployment, remote branch, or protected secondary checkout was touched. Public development configuration was supplied only to validation processes; no credential was written to tracked files. Transient server logs and Playwright output are under ignored test-results.
 
+## P0 public catalog and chat authorization — current evidence
+
+Applied additive development migrations:
+
+1. `fix_chat_room_seller_authorization`
+2. `add_chat_room_listing_seller_index`
+
+The first adds the non-exposed `private.user_is_active(uuid)` predicate, rewrites policies that previously tried to read protected `users.banned`, qualifies chat-room ownership columns, and replaces the single-column room/listing foreign key with `(listing_id, seller_id) -> listings(id, seller_id)`. The second adds the advisor-requested covering index. Generated TypeScript confirms the composite relationship.
+
+Current validation:
+
+| Command / probe | Result |
+| --- | --- |
+| `npm run lint` | Pass, exit 0, no warnings. |
+| `npx tsc --noEmit` | Pass, exit 0, no diagnostics. |
+| `npm test -- --run` | Pass: 1 file, 9/9 tests. |
+| `npm run build` | Pass: Next.js 15.5.19, 37 generated routes. |
+| `npm run test:e2e` | Pass: Chromium 4/4. |
+| Direct safe profile read | 200; only id/name/city/created_at. |
+| Direct profile email and `*` reads | 401 with PostgreSQL 42501. |
+| Safe listing/seller embed | 200; seller keys are exactly city/created_at/id/name. |
+| Attempted private RPC through Data API | 404/PGRST202. |
+| Banned-seller probe | Profile rows 0 and public listing rows 0; ban reset afterward. |
+
+Direct authenticated role-level chat probes used three temporary users and one active listing. The valid buyer/listing-owner pair inserted successfully. Wrong seller, spoofed buyer ID, self-room, inactive listing, banned buyer, banned seller, missing listing, anonymous insert, and third-party room read all failed. The actual buyer could read its room. A privileged mismatched insert failed the composite foreign key with 23503. Catalog inspection then confirmed zero mismatched rooms, zero compiled tautologies, one composite chat/listing relationship, and the covering index.
+
+Function catalog evidence: `private.user_is_active` is SECURITY DEFINER, stable, strict, configured with `search_path=""`, and executable only by postgres/anon/authenticated. All nine public tables retain RLS. Security advisor reports one external warning: leaked-password protection is disabled; official Supabase documentation states it is available on Pro and above, so the free development project was not upgraded. Performance advisor has only expected new-project unused-index informational notices; the missing foreign-key index warning is resolved.
+
+Production browser evidence with Agent Browser:
+
+| Viewport | Catalog/detail | Seller fixture | Horizontal overflow | Console/page errors |
+| --- | --- | --- | --- | --- |
+| 1440x900 | 200 | Rendered | None (scroll width 1440) | None |
+| 1024x768 | 200 | Rendered | None (scroll width 1024) | None |
+| 390x844 | 200 | Rendered | None (scroll width 390) | None |
+| 360x800 | 200 | Rendered | None (scroll width 360) | None |
+
+The detail API returned 200 and rendered the safe seller name/city at 390x844. Accessibility-tree inspection also found empty accessible names on the catalog search, location, and condition controls; this remains P1-011. A `next dev` run records a React Refresh `unsafe-eval` CSP violation, but a fresh production browser session has zero errors; this remains in P2-005 rather than weakening the production CSP.
+
+Cleanup: all three temporary Auth users were deleted. Cascades were verified: temporary Auth users 0, public profiles 0, listings 0, and chat rooms 0.
+
 ## Static and automated baseline
 
 | Command | Result | Exact summary |
@@ -24,7 +65,9 @@ Production build route evidence:
 - Favorites: 208 kB.
 - Build success does not override runtime API failures below.
 
-## Four-viewport browser inspection
+## Historical pre-fix four-viewport browser inspection (superseded)
+
+This section preserves the preparation baseline that motivated P0-001. It is superseded by the current evidence above.
 
 The production server was started with the new development project's public URL/publishable key in process environment. At each viewport the script loaded home and catalog to network idle, checked document text/navigation/overflow, captured console/request/HTTP failures, and called /api/listings directly.
 
@@ -55,12 +98,14 @@ Applied migrations in repository order:
 2. marketplace_upgrade
 3. production_hardening
 4. security_marketplace_hardening
+5. fix_chat_room_seller_authorization
+6. add_chat_room_listing_seller_index
 
 Catalog verification:
 
 - 9 public tables, all RLS enabled: users, listings, chat_rooms, messages, reviews, notifications, favorites, reports, privacy_requests.
-- 36 public constraints: 10 checks, 15 foreign keys, 2 explicit unique constraints, plus primary keys/remaining constraints.
-- 28 public indexes including full-text/trigram/filter/listing cursor support, relationship indexes, uniqueness, and open-case partial indexes.
+- 37 public constraints, including the composite chat-room listing/seller foreign key and referenced unique key.
+- 30 public indexes including full-text/trigram/filter/listing cursor support, relationship indexes, uniqueness, open-case partial indexes, and the composite chat ownership index.
 - Policy counts: users 2; listings 4; chat_rooms 2; messages 2; reviews 2; notifications 2; favorites 3; reports 2; privacy_requests 2; storage.objects 2.
 - Grants verified: anon cannot select users.email or users.is_admin; authenticated can update users.phone but not users.email; anon cannot select chat_rooms; authenticated can update notifications.read but not notifications.payload.
 - Storage bucket listing-images is public for reads, limited to 5,242,880 bytes, and limited to image/jpeg, image/png, image/webp. Insert/delete policies require the authenticated user ID as the first object path segment.
@@ -68,7 +113,7 @@ Catalog verification:
 - on_auth_user_created fires after Auth inserts and calls handle_new_user.
 - handle_new_user is SECURITY DEFINER, has empty search_path, and execute ACL only for postgres/service_role.
 - TypeScript generation succeeded and contains the same 9 tables and 2 enums as the repository's hand-shaped lib/database.types.ts. The generated file was not written over application code during preparation.
-- Supabase security advisor: zero findings.
+- Supabase security advisor: one external leaked-password protection warning, a Pro-and-above feature on the current free development plan.
 - Performance advisor: informational unused-index notices only, expected for a zero-row new project; re-evaluate with representative traffic.
 
 Functional Auth profile evidence:
@@ -80,7 +125,7 @@ Functional Auth profile evidence:
 
 No audit test data remains.
 
-## Verified backend defects
+## Historical backend defects resolved by this slice
 
 ### Chat-room seller authorization
 
@@ -88,16 +133,16 @@ Catalog inspection of the deployed policy returned:
 
     listing.seller_id = listing.seller_id
 
-The migration source intended listing.seller_id = seller_id, but SQL name resolution binds the unqualified inner reference to the listing relation. This is a tautology and fails CHAT-01/DB-01.
+The migration source intended listing.seller_id = seller_id, but SQL name resolution bound the unqualified inner reference to the listing relation. The new qualified policy plus composite foreign key resolves this defect; the compiled tautology count is now zero.
 
 ### Public profile/API compatibility
 
-Safe column grants exist, but the PostgREST embedded relation used by app/api/listings/route.ts requires table-level access and returns 42501. The schema is present; application compatibility fails at the real API boundary.
+Safe column grants existed, but the listing RLS policy itself tried to read protected `users.banned`, causing PostgREST 42501. Moving that predicate behind the private security-definer function restores the existing explicit safe-column embed without widening grants. Current catalog/detail reads return 200.
 
 ## Coverage limits
 
 - No service-role/secret key for the new development project is available through the connected tooling or local environment, so protected Next.js route flows were not exercised live.
 - Existing E2E tests are signed-out smoke tests and do not cover buyer/seller/admin isolation, RLS adversarial cases, uploads, message membership, unread state, or moderation.
-- No representative listing dataset was seeded; search relevance, pagination, query plans, and realistic performance remain unverified.
+- Only a minimal temporary authorization listing was seeded and removed; search relevance, pagination, query plans, and realistic performance remain unverified.
 - Accessibility evidence is foundation/source inspection plus responsive checks, not a complete WCAG audit.
 - Deployment, production secrets/domain, monitoring, backups, rollback, and legal operator configuration remain unverified.

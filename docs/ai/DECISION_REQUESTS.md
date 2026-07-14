@@ -60,6 +60,14 @@ Status: Required only if analytics are desired.
 
 Choose whether to collect product analytics, lawful basis/consent model, permitted events, retention, IP/device handling, and provider. Default without a decision: no non-essential tracking.
 
+## DR-010 — Leaked-password protection and Auth plan
+
+Status: Required before production launch if password authentication remains enabled.
+
+The Supabase security advisor reports leaked-password protection disabled. Current official documentation says this control is available on Pro and above, while bookswap-development was explicitly authorized only at zero cost.
+
+Decision/action required: authorize a production plan that includes leaked-password protection, or approve a documented passwordless/compensating-control strategy during the production Auth design. Goal mode must not upgrade a plan or incur cost autonomously.
+
 ## Resolved during preparation
 
 - A separate development Supabase project was allowed only with authenticated access and no paid commitment. The authorized organization was on the free plan, the reported cost was zero monthly, and bookswap-development was created in eu-central-1.

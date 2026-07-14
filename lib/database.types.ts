@@ -127,10 +127,10 @@ export type Database = {
         [
           {
             foreignKeyName: "chat_rooms_listing_id_fkey";
-            columns: ["listing_id"];
+            columns: ["listing_id", "seller_id"];
             isOneToOne: false;
             referencedRelation: "listings";
-            referencedColumns: ["id"];
+            referencedColumns: ["id", "seller_id"];
           },
           {
             foreignKeyName: "chat_rooms_buyer_id_fkey";

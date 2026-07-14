@@ -23,8 +23,10 @@ export async function GET(
         "*, seller:users!listings_seller_id_fkey(id,name,city,created_at), reviews(*, author:users!reviews_author_id_fkey(id,name,city,created_at))",
       )
       .eq("id", id)
-      .single();
-    if (error) return apiError(error, 404);
+      .maybeSingle();
+    if (error) throw error;
+    if (!data)
+      throw new ApiError("Listing not found", 404, "LISTING_NOT_FOUND");
     return Response.json({
       data: { ...normalizeListing(data), reviews: data.reviews ?? [] },
     });

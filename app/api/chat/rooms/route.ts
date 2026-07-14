@@ -35,10 +35,18 @@ export async function POST(request: Request) {
     const user = await requireUser(request);
     const { data: listing, error: listingError } = await supabase
       .from("listings")
-      .select("id,seller_id,status")
+      .select(
+        "id,seller_id,status,seller:users!listings_seller_id_fkey(banned)",
+      )
       .eq("id", input.listingId)
-      .single();
-    if (listingError || !listing || listing.status !== "active")
+      .maybeSingle();
+    if (listingError) throw listingError;
+    if (
+      !listing ||
+      listing.status !== "active" ||
+      !listing.seller ||
+      listing.seller.banned
+    )
       throw new ApiError(
         "This listing is not available",
         404,
@@ -63,6 +71,6 @@ export async function POST(request: Request) {
     if (error) throw error;
     return Response.json({ data }, { status: 201 });
   } catch (error) {
-    return apiError(error);
+    return apiError(error, 500);
   }
 }
