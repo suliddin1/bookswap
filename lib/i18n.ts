@@ -352,6 +352,119 @@ export const AZ_COPY = {
     completeTitle: "Parol yeniləndi.",
     openDashboard: "Kabineti aç",
   },
+  profile: {
+    metadataTitle: "Oxucu kabineti",
+    metadataDescription:
+      "BookSwap elanlarını, seçilmiş kitablarını və profil məlumatlarını idarə et.",
+    authTitle: "Kabinetə baxmaq üçün daxil ol.",
+    authBody:
+      "Elanlarını, seçilmiş kitablarını və söhbətlərini hesabına daxil olduqdan sonra idarə edə bilərsən.",
+    signIn: "Daxil ol",
+    unavailableTitle: "Kabineti yükləmək mümkün olmadı.",
+    unavailableBody: "Bir az sonra yenidən cəhd et.",
+    signInAgain: "Yenidən daxil ol",
+    loading: "Kabinet yüklənir",
+    reader: "Oxucu",
+    badge: "Oxucu kabineti",
+    welcome: (name: string) => `Xoş gəldin, ${name}.`,
+    createListing: "Elan yarat",
+    locationNotSet: "Məkan göstərilməyib",
+    navigationLabel: "Kabinet bölmələri",
+    tabs: {
+      listings: "Elanlarım",
+      messages: "Mesajlar",
+      favorites: "Seçilmişlər",
+      requests: "Alış-satış",
+      profile: "Profil",
+    },
+    activeListings: "Aktiv elanlar",
+    soldBooks: "Satılmış kitablar",
+    savedBooks: "Seçilmiş kitablarım",
+    totalListings: "Bütün elanlarım",
+    listingsTitle: "Elanlarım",
+    edit: "Redaktə et",
+    publish: "Yayımla",
+    relist: "Yenidən yayımla",
+    markSold: "Satılıb işarələ",
+    locked: "Elan kilidlənib",
+    deleteListing: "Elanı sil",
+    deleteConfirm: "Bu elanı həmişəlik silmək istəyirsən?",
+    deleteFailed: "Elanı silmək mümkün olmadı.",
+    deleteComplete: "Elan silindi.",
+    deleteCleanupPending:
+      "Elan silindi. Şəkillər təhlükəsiz təmizləmə növbəsindədir.",
+    statusFailed: "Elanın vəziyyətini dəyişmək mümkün olmadı.",
+    statusUpdated: "Elanın vəziyyəti yeniləndi.",
+    emptyListingsTitle: "Hələ elan yoxdur.",
+    emptyListingsBody:
+      "Oxuyub bitirdiyin kitabı elan et və onu növbəti oxucuya çatdır.",
+    listBook: "Kitab elan et",
+    messagesTitle: "Mesajlar",
+    messagesEmptyTitle: "Söhbətlərini davam etdir.",
+    messagesEmptyBody: "Alıcı və satıcılarla yazışmaq üçün mesaj qutusunu aç.",
+    openMessages: "Mesajları aç",
+    favoritesTitle: "Seçilmişlər",
+    savedCount: (count: number) => `${count} seçilmiş kitab.`,
+    favoritesBody: "Yadda saxladığın kitab elanları bir yerdə görünür.",
+    openFavorites: "Seçilmişləri aç",
+    requestsTitle: "Alış-satış söhbətləri",
+    requestsEmptyTitle: "Aktiv sorğuların mesajlarda görünür.",
+    requestsEmptyBody:
+      "Razılaşma detallarını mesajlarda müzakirə et, tamamlandıqdan sonra elanı satılıb işarələ.",
+    profileTitle: "Profil",
+    name: "Ad",
+    city: "Şəhər / rayon",
+    phone: "Telefon (məxfi saxlanılır)",
+    privacyHelp:
+      "E-poçt ünvanın və telefon nömrən ictimai satıcı profilində göstərilmir. Əlaqə məlumatlarını yalnız özünü rahat hiss etdikdə paylaş.",
+    saveProfile: "Profili yadda saxla",
+    savingProfile: "Yadda saxlanılır...",
+    profileSaved: "Profil yadda saxlanıldı.",
+    profileSaveFailed: "Profili yadda saxlamaq mümkün olmadı.",
+  },
+  privacyRequests: {
+    authTitle: "Məxfilik sorğusu üçün daxil ol.",
+    authBody:
+      "Şəxsi məlumat sorğularını təhlükəsiz göndərmək və izləmək üçün hesabına daxil ol.",
+    signIn: "Daxil ol",
+    loading: "Sorğular yüklənir...",
+    type: "Sorğunun növü",
+    details: "Ətraflı məlumat",
+    detailsHelp: "Sorğunu ən azı 10, ən çoxu 2000 simvolla izah et.",
+    detailsPlaceholder:
+      "Nəyi nəzərdən keçirməyimizi və ya təqdim etməyimizi istədiyini izah et.",
+    sending: "Göndərilir...",
+    submit: "Təhlükəsiz sorğu göndər",
+    submitted: "Sorğun qeydə alındı.",
+    failed: "Sorğunu göndərmək mümkün olmadı.",
+    loadFailed: "Əvvəlki sorğuları yükləmək mümkün olmadı.",
+    recent: "Son sorğuların",
+    empty: "Hələ məxfilik sorğusu göndərməmisən.",
+  },
+  userRights: {
+    metadataTitle: "İstifadəçi hüquqları",
+    metadataDescription:
+      "BookSwap hesabın və şəxsi məlumatlarınla bağlı seçimlərini öyrən.",
+    eyebrow: "Hesab və məlumatlar",
+    title: "Məlumatın, seçimin.",
+    intro:
+      "BookSwap-da hesabın və şəxsi məlumatların üzərində nəzarət imkanların.",
+    rightsTitle: "Mövcud hüquqlar",
+    rights: [
+      "Haqqında saxlanılan məlumatın surətini istəmək.",
+      "Yanlış və ya natamam məlumatı düzəltmək.",
+      "Daşına bilən məlumat çıxarışı istəmək.",
+      "Müəyyən məlumat emalına etiraz etmək.",
+      "Hesab və məlumatların silinməsini istəmək.",
+      "Moderasiya və hesab məhdudiyyəti barədə izah və yenidən baxış istəmək.",
+    ],
+    requestTitle: "Sorğu göndər",
+    requestBody:
+      "Hesabına daxil olduqdan sonra aşağıdakı formadan istifadə et. Təhlükəsizlik üçün əlavə şəxsiyyət təsdiqi tələb oluna bilər. Qanuni öhdəliklər və saxtakarlığın qarşısının alınması üçün lazım olan məlumat dərhal silinməyə bilər.",
+    controlsTitle: "Gündəlik nəzarət",
+    controlsBody:
+      "Ad, şəhər və məxfi telefon nömrəsini Kabinet → Profil bölməsində dəyişə bilərsən. Elanları redaktə edə, silə, satılıb işarələyə və seçilmişləri istənilən vaxt dəyişə bilərsən.",
+  },
 } as const;
 
 const categoryLabels: Record<string, string> = {
@@ -398,6 +511,22 @@ const listingStatusLabels: Record<string, string> = {
   locked: "Kilidlənib",
 };
 
+const privacyRequestTypeLabels: Record<string, string> = {
+  access: "Məlumatlarıma çıxış",
+  correction: "Məlumatlarımın düzəldilməsi",
+  export: "Məlumatlarımın ixracı",
+  deletion: "Hesabımın və məlumatlarımın silinməsi",
+  objection: "Məlumat emalına etiraz",
+  appeal: "Moderasiya qərarına etiraz",
+};
+
+const privacyRequestStatusLabels: Record<string, string> = {
+  open: "Açıqdır",
+  in_progress: "İcradadır",
+  completed: "Tamamlanıb",
+  rejected: "Rədd edilib",
+};
+
 const apiErrorLabels: Record<string, string> = {
   AUTH_REQUIRED: "Davam etmək üçün daxil ol.",
   INVALID_SESSION: "Sessiyanın müddəti bitib. Yenidən daxil ol.",
@@ -405,6 +534,9 @@ const apiErrorLabels: Record<string, string> = {
   ACCOUNT_SUSPENDED: "Hesabın dayandırılıb.",
   RATE_LIMITED: "Həddən çox sorğu göndərildi. Bir az sonra yenidən cəhd et.",
   VALIDATION_ERROR: "Daxil etdiyin məlumatları yoxla.",
+  BAD_REQUEST: "Sorğunu yoxla və yenidən cəhd et.",
+  INTERNAL_ERROR:
+    "Əməliyyatı tamamlamaq mümkün olmadı. Bir az sonra yenidən cəhd et.",
   LISTING_NOT_FOUND: AZ_COPY.listingDetail.unavailableBody,
   LISTING_UNAVAILABLE: AZ_COPY.listingDetail.unavailableBody,
   OWN_LISTING: "Öz elanını şikayət edə bilməzsən.",
@@ -521,6 +653,14 @@ export function formatCity(value: string) {
 
 export function formatListingStatus(value: string) {
   return listingStatusLabels[value] ?? value;
+}
+
+export function formatPrivacyRequestType(value: string) {
+  return privacyRequestTypeLabels[value] ?? value;
+}
+
+export function formatPrivacyRequestStatus(value: string) {
+  return privacyRequestStatusLabels[value] ?? value;
 }
 
 export function formatReviewSummary(rating: number, reviewCount: number) {

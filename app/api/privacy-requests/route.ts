@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     if (error) throw error;
     return Response.json({ data: data ?? [] });
   } catch (error) {
-    return apiError(error, 401);
+    return apiError(error, 500);
   }
 }
 
@@ -33,6 +33,6 @@ export async function POST(request: Request) {
     if (error) throw error;
     return Response.json({ data }, { status: 201 });
   } catch (error) {
-    return apiError(error, 400);
+    return apiError(error, 500);
   }
 }

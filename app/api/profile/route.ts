@@ -7,12 +7,12 @@ export async function GET(request: Request) {
   try {
     const user = await requireUser(request);
     const supabase = requireSupabaseAdmin();
-    const [
-      { data: profile, error },
-      { data: listings },
-      { count: favoriteCount },
-    ] = await Promise.all([
-      supabase.from("users").select("*").eq("id", user.id).single(),
+    const [profileResult, listingsResult, favoritesResult] = await Promise.all([
+      supabase
+        .from("users")
+        .select("name,phone,city")
+        .eq("id", user.id)
+        .single(),
       supabase
         .from("listings")
         .select(
@@ -25,16 +25,18 @@ export async function GET(request: Request) {
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id),
     ]);
-    if (error) throw error;
+    if (profileResult.error) throw profileResult.error;
+    if (listingsResult.error) throw listingsResult.error;
+    if (favoritesResult.error) throw favoritesResult.error;
     return Response.json({
       data: {
-        profile,
-        listings: (listings ?? []).map(normalizeListing),
-        favoriteCount: favoriteCount ?? 0,
+        profile: profileResult.data,
+        listings: (listingsResult.data ?? []).map(normalizeListing),
+        favoriteCount: favoritesResult.count ?? 0,
       },
     });
   } catch (error) {
-    return apiError(error, 401);
+    return apiError(error, 500);
   }
 }
 
@@ -51,11 +53,11 @@ export async function PATCH(request: Request) {
         city: input.city,
       })
       .eq("id", user.id)
-      .select()
+      .select("name,phone,city")
       .single();
     if (error) throw error;
     return Response.json({ data });
   } catch (error) {
-    return apiError(error, 401);
+    return apiError(error, 500);
   }
 }

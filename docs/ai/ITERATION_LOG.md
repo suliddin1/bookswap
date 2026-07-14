@@ -1,5 +1,23 @@
 # Iteration log
 
+## 2026-07-14 - P1 Azerbaijani profile and privacy-request journeys
+
+Goal / acceptance IDs: P1-010; L10N-01, PROF-01, LIST-01, FAV-01, REP-01, SEO-01, RESP-01, A11Y-01, BROW-01, TEST-01.
+
+Ownership: root exclusively owns the Azerbaijani contract additions, profile and user-rights metadata, profile dashboard and privacy-request components, user profile/privacy response shaping and safe client error handling, focused tests, browser evidence, and affected durable documentation for this slice. No other agent is editing these files.
+
+Starting state: clean branch `autonomous/bookswap-product` at `e08f91a`. Listing authoring and authentication are localized, but the private dashboard still exposes English tabs, statistics, listing actions, profile fields, unsafe raw route errors, a broad own-profile response, and silent partial-query failures. The privacy form exposes English request/status values, hides initial-load failure, lacks busy/error semantics and dates, and the public user-rights route has English metadata plus mixed terminology.
+
+Planned contract: centralize profile/privacy copy and request/status labels; preserve privacy request and listing wire values; return only dashboard-required profile fields and fail the profile aggregate when any constituent query fails; map machine errors to safe Azerbaijani fallbacks; localize metadata, private robots, counts, listing actions, confirmation, profile help, request history, dates, loading/empty/error states, and accessible tab/current/busy semantics; prove signed-out and representative authenticated UI at four viewports without claiming blocked protected mutations.
+
+Implemented: extended the typed Azerbaijani contract through the profile dashboard, profile editor, listing-state actions, privacy-request form/history, and user-rights route. Stable listing/privacy wire values remain unchanged while labels, money, dates, statuses, locations, validation, alerts, help, loading/error/empty states, and metadata are localized. The profile API returns only `name`, `phone`, and `city`, fails the aggregate if any constituent query fails, and both profile/privacy routes preserve recognized API errors while returning a safe 500 response for unexpected faults. Signed-out profile/privacy views no longer start protected requests. Tabs, navigation, current/pressed states, busy/status feedback, field hints, and affected touch targets have explicit semantics.
+
+Adversarial review: representative authenticated UI used a real development Auth session but browser-only profile/privacy GET responses because the unavailable service secret still blocks truthful protected Next-route execution. No profile, listing, or privacy mutation was submitted. A fresh real token caused direct unread/notification requests to report PostgREST `PGRST303` (`JWT issued at future`); database and local UTC clocks matched when checked, so no persistent clock skew was demonstrated. The final UI-only matrix stubbed those unrelated counters and does not count as backend evidence. This anomaly remains with authenticated browser coverage instead of triggering another repair cycle.
+
+Validation: lint and strict TypeScript pass; 31/31 unit tests pass; the 37-route production build passes; 8/8 Playwright tests pass. Profile and user-rights views passed at 1440x900, 1024x768, 390x844, and 360x800 with `lang=az`, one `h1`, exact viewport width, localized labels/dates/statuses, private profile robots, and no stale owned English or mojibake. Every profile tab was exercised. A final clean representative UI matrix had no unexpected console/page/request or HTTP error after the unrelated counters were stubbed; protected route mutations remain unverified.
+
+Cleanup and stop point: the temporary Auth user, identity, sessions, refresh tokens, public profile, listings, and privacy requests were removed; a final development query returned zero for every checked table. The temporary server is stopped, port 3000 is free, and browser screenshots/logs are removed. This coherent checkpoint remains deliberately uncommitted because the user stopped the loop before another iteration.
+
 ## 2026-07-14 - P1 Azerbaijani listing authoring and authentication
 
 Goal / acceptance IDs: P1-010; L10N-01, AUTH-01, AUTH-02, LIST-01, IMG-02, MOD-01, SEO-01, RESP-01, A11Y-01, BROW-01, TEST-01.

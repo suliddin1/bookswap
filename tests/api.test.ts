@@ -49,6 +49,8 @@ import {
   formatCondition,
   formatLoadedBooks,
   formatListingStatus,
+  formatPrivacyRequestStatus,
+  formatPrivacyRequestType,
   formatReviewSummary,
   formatStars,
   localizeApiError,
@@ -82,6 +84,9 @@ describe("marketplace input validation", () => {
     expect(formatCondition("Very good")).toBe("Çox yaxşı");
     expect(formatCity("Nakhchivan")).toBe("Naxçıvan");
     expect(formatListingStatus("sold")).toBe("Satılıb");
+    expect(formatPrivacyRequestType("deletion")).toContain("silinməsi");
+    expect(formatPrivacyRequestStatus("in_progress")).toBe("İcradadır");
+    expect(formatPrivacyRequestType("custom")).toBe("custom");
     expect(formatReviewSummary(4.5, 2)).toBe("2 rəyə əsasən 4,5");
     expect(formatLoadedBooks(7)).toBe("7 kitab yüklənib");
     expect(formatStars(5)).toBe("5 ulduz");
@@ -124,6 +129,12 @@ describe("marketplace input validation", () => {
       "../components/edit-listing-form.tsx",
       "../components/auth-panel.tsx",
       "../components/reset-password-panel.tsx",
+      "../app/profile/page.tsx",
+      "../app/user-rights/page.tsx",
+      "../components/profile-dashboard.tsx",
+      "../components/privacy-request-form.tsx",
+      "../app/api/profile/route.ts",
+      "../app/api/privacy-requests/route.ts",
       "../lib/client-listing-images.ts",
       "../lib/client-api.ts",
     ]
@@ -162,9 +173,52 @@ describe("marketplace input validation", () => {
       "Choose a new password",
       "Authentication failed",
       "Supabase is not configured",
+      "Seller dashboard",
+      "Welcome back",
+      "My Listings",
+      "Saved by readers",
+      "Listing views",
+      "Delete this listing permanently",
+      "Request type",
+      "Access my data",
+      "Submit secure request",
+      "Your recent requests",
+      "User Rights",
+      "Account & data",
+      "Dashboard → Profile",
+      "Profile saved",
     ]) {
       expect(sources).not.toContain(oldCopy);
     }
+  });
+
+  it("keeps profile and privacy aggregates narrow and fail-closed", () => {
+    const profileRoute = readFileSync(
+      new URL("../app/api/profile/route.ts", import.meta.url),
+      "utf8",
+    );
+    const privacyRoute = readFileSync(
+      new URL("../app/api/privacy-requests/route.ts", import.meta.url),
+      "utf8",
+    );
+
+    expect(profileRoute.match(/\.select\("name,phone,city"\)/g)).toHaveLength(
+      2,
+    );
+    expect(profileRoute).toContain(
+      "if (listingsResult.error) throw listingsResult.error",
+    );
+    expect(profileRoute).toContain(
+      "if (favoritesResult.error) throw favoritesResult.error",
+    );
+    expect(profileRoute.match(/apiError\(error, 500\)/g)).toHaveLength(2);
+    expect(privacyRoute.match(/apiError\(error, 500\)/g)).toHaveLength(2);
+    expect(
+      privacyRequestInput.parse({
+        type: "appeal",
+        details: "Qərarın yenidən nəzərdən keçirilməsini xahiş edirəm.",
+      }).type,
+    ).toBe("appeal");
   });
 
   it("accepts a complete listing", () => {

@@ -1,45 +1,33 @@
+import type { Metadata } from "next";
 import { InfoPage, InfoSection } from "@/components/info-page";
 import { PrivacyRequestForm } from "@/components/privacy-request-form";
+import { AZ_COPY } from "@/lib/i18n";
 
-export const metadata = {
-  title: "User Rights",
-  description: "Control your BookSwap account and personal data.",
+export const metadata: Metadata = {
+  title: AZ_COPY.userRights.metadataTitle,
+  description: AZ_COPY.userRights.metadataDescription,
 };
 
 export default function UserRightsPage() {
   return (
     <InfoPage
-      eyebrow="Account & data"
-      title="Sizin məlumatınız, sizin seçiminiz."
-      intro="BookSwap-da hesab və fərdi məlumatlarınız üzərində nəzarət imkanları."
+      eyebrow={AZ_COPY.userRights.eyebrow}
+      title={AZ_COPY.userRights.title}
+      intro={AZ_COPY.userRights.intro}
     >
-      <InfoSection title="Mövcud hüquqlar">
+      <InfoSection title={AZ_COPY.userRights.rightsTitle}>
         <ul className="list-disc space-y-2 pl-5">
-          <li>Haqqınızda saxlanan məlumatın surətini istəmək.</li>
-          <li>Yanlış və ya natamam məlumatı düzəltmək.</li>
-          <li>Daşına bilən məlumat çıxarışı istəmək.</li>
-          <li>Müəyyən emala etiraz etmək.</li>
-          <li>Hesab və məlumatların silinməsini istəmək.</li>
-          <li>
-            Moderasiya və hesab məhdudiyyəti barədə izah və yenidən baxış
-            istəmək.
-          </li>
+          {AZ_COPY.userRights.rights.map((right) => (
+            <li key={right}>{right}</li>
+          ))}
         </ul>
       </InfoSection>
-      <InfoSection title="Sorğu göndərin">
-        <p>
-          Hesabınıza daxil olduqdan sonra aşağıdakı formanı istifadə edin.
-          Təhlükəsizlik üçün əlavə şəxsiyyət təsdiqi tələb oluna bilər. Hüquqi
-          və fraud-prevention öhdəliyi olan məlumat dərhal silinməyə bilər.
-        </p>
+      <InfoSection title={AZ_COPY.userRights.requestTitle}>
+        <p>{AZ_COPY.userRights.requestBody}</p>
         <PrivacyRequestForm />
       </InfoSection>
-      <InfoSection title="Gündəlik nəzarət">
-        <p>
-          Ad, şəhər və private telefon nömrəsini Dashboard → Profile bölməsində
-          dəyişə bilərsiniz. Elanları redaktə edə, silə, satılmış kimi işarələyə
-          və favoritləri istənilən vaxt dəyişə bilərsiniz.
-        </p>
+      <InfoSection title={AZ_COPY.userRights.controlsTitle}>
+        <p>{AZ_COPY.userRights.controlsBody}</p>
       </InfoSection>
     </InfoPage>
   );

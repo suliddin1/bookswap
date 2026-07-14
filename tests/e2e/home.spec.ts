@@ -45,13 +45,43 @@ test("safety and user rights guidance is publicly reachable", async ({
   await expect(
     page.getByRole("heading", { name: /Təhlükəsiz al, təhlükəsiz sat/i }),
   ).toBeVisible();
+  const privacyRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/api/privacy-requests"))
+      privacyRequests.push(request.url());
+  });
   await page.goto("/user-rights");
   await expect(
-    page.getByRole("heading", { name: /Sizin məlumatınız/i }),
+    page.getByRole("heading", { name: /Məlumatın, seçimin/i }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: /Submit secure request/i }),
+    page.getByRole("heading", { name: /Məxfilik sorğusu üçün daxil ol/i }),
   ).toBeVisible();
+  await expect(page).toHaveTitle(/İstifadəçi hüquqları/i);
+  await expect(
+    page.getByRole("link", { name: "Daxil ol", exact: true }).last(),
+  ).toBeVisible();
+  expect(privacyRequests).toHaveLength(0);
+});
+
+test("profile exposes a localized private sign-in state", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const profileRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/api/profile"))
+      profileRequests.push(request.url());
+  });
+  await page.goto("/profile");
+  await expect(page.locator("h1")).toHaveText("Kabinetə baxmaq üçün daxil ol.");
+  await expect(page).toHaveTitle(/Oxucu kabineti/i);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    /noindex/i,
+  );
+  await expect(
+    page.getByRole("link", { name: "Daxil ol", exact: true }).last(),
+  ).toBeVisible();
+  expect(profileRequests).toHaveLength(0);
 });
 
 test("favorites exposes a localized private sign-in state", async ({
