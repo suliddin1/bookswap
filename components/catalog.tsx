@@ -7,15 +7,23 @@ import { BookSkeleton } from "@/components/book-skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { useListings } from "@/hooks/use-listings";
 import {
+  AZ_COPY,
+  formatAzn,
+  formatCategory,
+  formatCity,
+  formatCondition,
+} from "@/lib/i18n";
+import {
   AZERBAIJAN_CITIES,
   BOOK_CATEGORIES,
   BOOK_CONDITIONS,
 } from "@/lib/marketplace";
 
-const categories = ["All books", ...BOOK_CATEGORIES];
+const ALL_BOOKS_VALUE = "All books";
+const categories = [ALL_BOOKS_VALUE, ...BOOK_CATEGORIES];
 
 export function Catalog({
-  initialCategory = "All books",
+  initialCategory = ALL_BOOKS_VALUE,
   initialQuery = "",
   initialCity = "",
   initialCondition = "",
@@ -38,7 +46,7 @@ export function Catalog({
   const deferredQuery = useDeferredValue(query);
   const { data, loading, loadingMore, error, hasMore, loadMore } = useListings({
     query: deferredQuery,
-    category: category === "All books" ? "" : category,
+    category: category === ALL_BOOKS_VALUE ? "" : category,
     city,
     condition,
     maxPrice,
@@ -48,7 +56,7 @@ export function Catalog({
   useEffect(() => {
     const params = new URLSearchParams();
     if (query) params.set("query", query);
-    if (category !== "All books") params.set("category", category);
+    if (category !== ALL_BOOKS_VALUE) params.set("category", category);
     if (city) params.set("city", city);
     if (condition) params.set("condition", condition);
     if (maxPrice !== 200) params.set("maxPrice", String(maxPrice));
@@ -64,28 +72,28 @@ export function Catalog({
     <div className="container-shell py-10 md:py-14">
       <div className="flex flex-col justify-between gap-6 border-b-2 border-[#5b3c25] pb-7 md:flex-row md:items-end">
         <div>
-          <span className="bookmark-badge">Library catalog</span>
+          <span className="bookmark-badge">{AZ_COPY.catalog.badge}</span>
           <h1 className="display mt-5 text-5xl font-semibold md:text-7xl">
-            Books for sale.
+            {AZ_COPY.catalog.title}
           </h1>
         </div>
         <p className="max-w-sm text-xs leading-7 text-gray-500">
-          Every result is a real copy listed by a reader. Search the catalog,
-          then message the seller directly.
+          {AZ_COPY.catalog.intro}
         </p>
       </div>
 
       <section className="catalog-drawer mt-7 rounded-sm p-4 md:p-5">
         <div className="mb-4 flex items-center justify-between border-b border-[#cfbea0] pb-3">
           <span className="flex items-center gap-2 text-[9px] font-extrabold uppercase tracking-[.16em]">
-            <BookOpen size={13} className="text-orange" /> Catalog search card
+            <BookOpen size={13} className="text-orange" />{" "}
+            {AZ_COPY.catalog.searchCard}
           </span>
           <span className="text-[9px] text-gray-400">
-            BookSwap / Available copies
+            {AZ_COPY.catalog.availableCopies}
           </span>
         </div>
         <div className="grid gap-4 md:grid-cols-[1.4fr_.7fr_.7fr_.6fr]">
-          <CatalogField label="Title / author / ISBN">
+          <CatalogField label={AZ_COPY.catalog.titleAuthorIsbn}>
             <label className="relative block">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-orange"
@@ -93,8 +101,8 @@ export function Catalog({
               />
               <input
                 className="input !min-h-[42px] !pl-9"
-                placeholder="Search catalog..."
-                aria-label="Search by title, author, or ISBN"
+                placeholder={AZ_COPY.catalog.searchPlaceholder}
+                aria-label={AZ_COPY.catalog.searchLabel}
                 maxLength={200}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -103,42 +111,42 @@ export function Catalog({
                 <button
                   onClick={() => setQuery("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
-                  aria-label="Clear catalog search"
+                  aria-label={AZ_COPY.catalog.clearSearch}
                 >
                   <X size={13} />
                 </button>
               )}
             </label>
           </CatalogField>
-          <CatalogField label="Location">
+          <CatalogField label={AZ_COPY.catalog.location}>
             <Select
-              label="Filter by location"
+              label={AZ_COPY.catalog.locationFilter}
               value={city}
               onChange={setCity}
               options={[
-                ["", "Anywhere"],
+                ["", AZ_COPY.catalog.anywhere],
                 ...AZERBAIJAN_CITIES.map(
-                  (item) => [item, item] as [string, string],
+                  (item) => [item, formatCity(item)] as [string, string],
                 ),
               ]}
               icon={MapPin}
             />
           </CatalogField>
-          <CatalogField label="Condition">
+          <CatalogField label={AZ_COPY.catalog.condition}>
             <Select
-              label="Filter by condition"
+              label={AZ_COPY.catalog.conditionFilter}
               value={condition}
               onChange={setCondition}
               options={[
-                ["", "Any condition"],
+                ["", AZ_COPY.catalog.anyCondition],
                 ...BOOK_CONDITIONS.map(
-                  (item) => [item, item] as [string, string],
+                  (item) => [item, formatCondition(item)] as [string, string],
                 ),
               ]}
               icon={Tag}
             />
           </CatalogField>
-          <CatalogField label="Maximum price">
+          <CatalogField label={AZ_COPY.catalog.maximumPrice}>
             <div className="pt-1">
               <input
                 className="w-full accent-orange"
@@ -147,11 +155,11 @@ export function Catalog({
                 max="200"
                 step="1"
                 value={maxPrice}
-                aria-label="Maximum price in AZN"
+                aria-label={AZ_COPY.catalog.maximumPriceLabel}
                 onChange={(event) => setMaxPrice(Number(event.target.value))}
               />
               <span className="mt-1 block text-center text-[9px] font-bold">
-                Up to ₼{maxPrice}
+                {formatAzn(maxPrice)}-dək
               </span>
             </div>
           </CatalogField>
@@ -161,7 +169,7 @@ export function Catalog({
       <div className="mt-9 grid gap-8 lg:grid-cols-[180px_1fr]">
         <aside>
           <p className="border-b-2 border-[#5b3c25] pb-3 text-[9px] font-extrabold uppercase tracking-[.16em]">
-            Subject index
+            {AZ_COPY.catalog.subjectIndex}
           </p>
           <div className="mt-2 divide-y divide-[#d5c5a8] border-b border-[#d5c5a8]">
             {categories.map((item, index) => (
@@ -171,7 +179,11 @@ export function Catalog({
                 aria-pressed={category === item}
                 className={`flex w-full items-center justify-between py-3 text-left text-[10px] font-bold transition ${category === item ? "text-orange" : "text-gray-600 hover:pl-1 hover:text-ink"}`}
               >
-                <span>{item}</span>
+                <span>
+                  {item === ALL_BOOKS_VALUE
+                    ? AZ_COPY.catalog.allBooks
+                    : formatCategory(item)}
+                </span>
                 <span className="display text-sm text-[#b8a482]">
                   {String(index + 1).padStart(2, "0")}
                 </span>
@@ -179,10 +191,9 @@ export function Catalog({
             ))}
           </div>
           <div className="mt-7 border-l-2 border-orange pl-4">
-            <b className="display text-xl">Reader listed.</b>
+            <b className="display text-xl">{AZ_COPY.catalog.readerListed}</b>
             <p className="mt-2 text-[9px] leading-5 text-gray-500">
-              Prices, condition, and pickup details come directly from the
-              seller.
+              {AZ_COPY.catalog.readerListedBody}
             </p>
           </div>
         </aside>
@@ -190,18 +201,20 @@ export function Catalog({
         <section>
           <div className="mb-6 flex items-center justify-between border-b border-[#cdbd9e] pb-3">
             <p className="text-[9px] font-bold uppercase tracking-[.14em]">
-              {data.length} loaded catalog entries
+              {data.length} kataloq nəticəsi yüklənib
             </p>
             <label className="relative">
-              <span className="sr-only">Sort listings</span>
+              <span className="sr-only">{AZ_COPY.catalog.sortLabel}</span>
               <select
                 value={sort}
                 onChange={(event) => setSort(event.target.value)}
                 className="appearance-none bg-transparent pr-5 text-[9px] font-bold uppercase tracking-[.1em]"
               >
-                <option value="newest">Newest listed</option>
-                <option value="price-low">Lowest price</option>
-                <option value="price-high">Highest price</option>
+                <option value="newest">{AZ_COPY.catalog.newest}</option>
+                <option value="price-low">{AZ_COPY.catalog.lowestPrice}</option>
+                <option value="price-high">
+                  {AZ_COPY.catalog.highestPrice}
+                </option>
               </select>
               <ChevronDown
                 size={12}
@@ -229,7 +242,9 @@ export function Catalog({
                     onClick={loadMore}
                     disabled={loadingMore}
                   >
-                    {loadingMore ? "Loading more..." : "Load more books"}
+                    {loadingMore
+                      ? AZ_COPY.catalog.loadingMore
+                      : AZ_COPY.catalog.loadMore}
                   </button>
                 </div>
               )}
@@ -238,18 +253,19 @@ export function Catalog({
                   role="alert"
                   className="mt-5 text-center text-xs text-red-700"
                 >
-                  {error}
+                  {AZ_COPY.global.loadMoreUnavailable}
                 </p>
               )}
             </>
           ) : (
             <EmptyState
-              title="No matching catalog entries."
+              title={AZ_COPY.catalog.emptyTitle}
               body={
-                error ||
-                "Try a broader search or list the book readers are missing."
+                error
+                  ? AZ_COPY.global.listingsUnavailable
+                  : AZ_COPY.catalog.emptyBody
               }
-              action="Sell a book"
+              action={AZ_COPY.catalog.sellBook}
               href="/listings/new"
             />
           )}

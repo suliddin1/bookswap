@@ -38,6 +38,17 @@ import {
   planListingUpdateModeration,
 } from "../lib/moderation";
 import { throwAdminActionError } from "../lib/admin-actions";
+import {
+  APP_LOCALE,
+  AZ_COPY,
+  DOCUMENT_LANGUAGE,
+  formatAzn,
+  formatAzDate,
+  formatCategory,
+  formatCity,
+  formatCondition,
+  formatListingStatus,
+} from "../lib/i18n";
 
 const originalOpenAIKey = process.env.OPENAI_API_KEY;
 
@@ -48,6 +59,49 @@ afterEach(() => {
 });
 
 describe("marketplace input validation", () => {
+  it("uses one Azerbaijani locale contract for public marketplace labels", () => {
+    expect(DOCUMENT_LANGUAGE).toBe("az");
+    expect(APP_LOCALE).toBe("az-AZ");
+    expect(AZ_COPY.metadata.title).toContain("ikinci həyat");
+    expect(formatAzn(12)).toBe("12\u00a0₼");
+    expect(formatAzDate("2026-07-14T00:00:00.000Z")).toBe("14 iyl 2026");
+    expect(formatCategory("Fiction")).toBe("Bədii ədəbiyyat");
+    expect(formatCondition("Very good")).toBe("Çox yaxşı");
+    expect(formatCity("Nakhchivan")).toBe("Naxçıvan");
+    expect(formatListingStatus("sold")).toBe("Satılıb");
+    expect(formatCategory("User supplied value")).toBe("User supplied value");
+  });
+
+  it("keeps the localized public discovery boundary free of its old English copy", () => {
+    const sources = [
+      "../app/layout.tsx",
+      "../app/manifest.ts",
+      "../app/loading.tsx",
+      "../app/error.tsx",
+      "../app/not-found.tsx",
+      "../app/page.tsx",
+      "../components/site-header.tsx",
+      "../components/site-footer.tsx",
+      "../components/catalog.tsx",
+      "../components/book-card.tsx",
+    ]
+      .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
+      .join("\n");
+
+    for (const oldCopy of [
+      "Give yours a second life",
+      "Finding the right shelf",
+      "Something went wrong",
+      "That page left the shelf",
+      "Books for sale",
+      "Catalog search card",
+      "Save listing",
+      "Browse available books",
+    ]) {
+      expect(sources).not.toContain(oldCopy);
+    }
+  });
+
   it("accepts a complete listing", () => {
     const listing = listingInput.parse({
       title: "A good book",

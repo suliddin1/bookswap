@@ -17,6 +17,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useChatUnread } from "@/hooks/use-chat-unread";
 import { useNotifications } from "@/hooks/use-notifications";
+import { AZ_COPY } from "@/lib/i18n";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
@@ -47,20 +48,20 @@ export function SiteHeader() {
 
         <nav className="hide-mobile flex items-center gap-5 text-[10px] font-extrabold uppercase tracking-[.09em]">
           <Link href="/" className="transition hover:text-orange">
-            Home
+            {AZ_COPY.navigation.home}
           </Link>
           <Link href="/listings" className="transition hover:text-orange">
-            Browse
+            {AZ_COPY.navigation.browse}
           </Link>
           <Link href="/listings/new" className="transition hover:text-orange">
-            Sell
+            {AZ_COPY.navigation.sell}
           </Link>
           <Link
             href="/messages"
-            aria-label={`${unreadChats} unread messages`}
+            aria-label={`${unreadChats} oxunmamış mesaj`}
             className="flex items-center gap-1.5 transition hover:text-orange"
           >
-            Messages
+            {AZ_COPY.navigation.messages}
             {unreadChats > 0 && (
               <span className="grid h-5 min-w-5 place-items-center rounded-full bg-orange px-1 text-[8px] text-white">
                 {unreadChats > 9 ? "9+" : unreadChats}
@@ -68,17 +69,17 @@ export function SiteHeader() {
             )}
           </Link>
           <Link href="/favorites" className="transition hover:text-orange">
-            Favorites
+            {AZ_COPY.navigation.favorites}
           </Link>
           <Link href="/profile" className="transition hover:text-orange">
-            Dashboard
+            {AZ_COPY.navigation.dashboard}
           </Link>
         </nav>
 
         <div className="hide-mobile flex items-center gap-2">
           <Link
             href="/listings"
-            aria-label="Search"
+            aria-label={AZ_COPY.navigation.search}
             className="grid h-10 w-10 place-items-center rounded-full transition hover:bg-white"
           >
             <Search size={17} />
@@ -87,7 +88,7 @@ export function SiteHeader() {
             <>
               <Link
                 href="/notifications"
-                aria-label={`${unread} unread notifications`}
+                aria-label={`${unread} oxunmamış bildiriş`}
                 className="relative grid h-10 w-10 place-items-center rounded-full hover:bg-white"
               >
                 <Bell size={15} />
@@ -105,7 +106,7 @@ export function SiteHeader() {
               </Link>
               <button
                 onClick={signOut}
-                aria-label="Sign out"
+                aria-label={AZ_COPY.navigation.signOut}
                 className="grid h-10 w-10 place-items-center rounded-full hover:bg-white"
               >
                 <LogOut size={15} />
@@ -116,7 +117,7 @@ export function SiteHeader() {
               href="/login"
               className="btn-secondary ml-2 !min-h-[42px] !px-4"
             >
-              Sign in
+              {AZ_COPY.navigation.signIn}
             </Link>
           )}
         </div>
@@ -124,40 +125,49 @@ export function SiteHeader() {
         <button
           className="grid h-10 w-10 place-items-center rounded-full md:hidden"
           onClick={() => setOpen(!open)}
-          aria-label="Menu"
+          aria-label={AZ_COPY.navigation.menu}
+          aria-expanded={open}
+          aria-controls="mobile-navigation"
         >
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
       {open && (
-        <div className="border-t border-[#e8e5df] bg-paper px-5 py-5 md:hidden">
+        <div
+          id="mobile-navigation"
+          className="border-t border-[#e8e5df] bg-paper px-5 py-5 md:hidden"
+        >
           <nav className="flex flex-col gap-4 text-sm font-extrabold">
             <Link href="/" onClick={() => setOpen(false)}>
-              Home
+              {AZ_COPY.navigation.home}
             </Link>
             <Link href="/listings" onClick={() => setOpen(false)}>
-              Browse
+              {AZ_COPY.navigation.browse}
             </Link>
             <Link href="/listings/new" onClick={() => setOpen(false)}>
-              Sell
+              {AZ_COPY.navigation.sell}
             </Link>
             <Link href="/messages" onClick={() => setOpen(false)}>
-              <MessageCircle className="inline" size={14} /> Messages
+              <MessageCircle className="inline" size={14} />{" "}
+              {AZ_COPY.navigation.messages}
               {unreadChats ? ` (${unreadChats})` : ""}
             </Link>
             <Link href="/favorites" onClick={() => setOpen(false)}>
-              <Heart className="inline" size={14} /> Favorites
+              <Heart className="inline" size={14} />{" "}
+              {AZ_COPY.navigation.favorites}
             </Link>
             <Link href="/notifications" onClick={() => setOpen(false)}>
-              <Bell className="inline" size={14} /> Notifications
+              <Bell className="inline" size={14} />{" "}
+              {AZ_COPY.navigation.notifications}
               {unread ? ` (${unread})` : ""}
             </Link>
             <Link href="/profile" onClick={() => setOpen(false)}>
-              <LayoutDashboard className="inline" size={14} /> Dashboard
+              <LayoutDashboard className="inline" size={14} />{" "}
+              {AZ_COPY.navigation.dashboard}
             </Link>
             {!user && (
               <Link href="/login" onClick={() => setOpen(false)}>
-                Sign in
+                {AZ_COPY.navigation.signIn}
               </Link>
             )}
             <Link
@@ -165,7 +175,7 @@ export function SiteHeader() {
               className="btn-primary mt-2"
               onClick={() => setOpen(false)}
             >
-              <Plus size={14} /> Sell a book
+              <Plus size={14} /> {AZ_COPY.navigation.sellBook}
             </Link>
           </nav>
         </div>

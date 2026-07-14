@@ -1,4 +1,5 @@
-import { Listing } from "@/lib/types";
+import { AZ_COPY } from "@/lib/i18n";
+import type { Listing } from "@/lib/types";
 
 export function BookCover({
   listing,
@@ -21,7 +22,7 @@ export function BookCover({
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={listing.images[0]}
-          alt={`${listing.title} cover`}
+          alt={`${listing.title} ${AZ_COPY.listingCard.cover}`}
           className="absolute inset-0 h-full w-full object-cover"
         />
       ) : (

@@ -16,13 +16,14 @@ import { BookSkeleton } from "@/components/book-skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { MotionReveal } from "@/components/motion-reveal";
 import { useListings } from "@/hooks/use-listings";
+import { AZ_COPY, formatCategory } from "@/lib/i18n";
 import type { Listing } from "@/lib/types";
 
 const displayBooks: Listing[] = [
   {
     id: "visual-1",
-    title: "Collected Essays",
-    author: "The Reading Club",
+    title: "Seçilmiş esselər",
+    author: "Oxu klubu",
     description: "",
     price: 0,
     category: "Essays",
@@ -35,8 +36,8 @@ const displayBooks: Listing[] = [
   },
   {
     id: "visual-2",
-    title: "A History of Ideas",
-    author: "Private Library",
+    title: "Fikirlər tarixi",
+    author: "Şəxsi kitabxana",
     description: "",
     price: 0,
     category: "History",
@@ -49,8 +50,8 @@ const displayBooks: Listing[] = [
   },
   {
     id: "visual-3",
-    title: "Modern Literature",
-    author: "BookSwap Edition",
+    title: "Müasir ədəbiyyat",
+    author: "BookSwap nəşri",
     description: "",
     price: 0,
     category: "Fiction",
@@ -63,8 +64,8 @@ const displayBooks: Listing[] = [
   },
   {
     id: "visual-4",
-    title: "Exam Notes",
-    author: "Student Archive",
+    title: "İmtahan qeydləri",
+    author: "Tələbə arxivi",
     description: "",
     price: 0,
     category: "Notes",
@@ -77,8 +78,8 @@ const displayBooks: Listing[] = [
   },
   {
     id: "visual-5",
-    title: "Rare Poems",
-    author: "Old Town Books",
+    title: "Nadir şeirlər",
+    author: "İçərişəhər kitabları",
     description: "",
     price: 0,
     category: "Rare Finds",
@@ -109,15 +110,14 @@ export default function HomePage() {
       <section className="relative overflow-hidden border-b border-[#cdbd9e] pt-14 md:pt-20">
         <div className="container-shell relative z-10 text-center">
           <MotionReveal>
-            <span className="bookmark-badge">BookSwap marketplace</span>
+            <span className="bookmark-badge">{AZ_COPY.home.badge}</span>
             <h1 className="display mx-auto mt-7 max-w-5xl text-[56px] font-semibold leading-[.94] md:text-[92px]">
-              Find your next book.
+              {AZ_COPY.home.heroLead}
               <br />
-              <span className="text-orange">Give yours a second life.</span>
+              <span className="text-orange">{AZ_COPY.home.heroAccent}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-[#6c6253]">
-              A reader-to-reader marketplace for textbooks, novels, study notes,
-              and hard-to-find editions.
+              {AZ_COPY.home.intro}
             </p>
           </MotionReveal>
 
@@ -134,22 +134,23 @@ export default function HomePage() {
                 <input
                   name="query"
                   className="input !min-h-[58px] !border-0 !bg-transparent !pl-14 !text-sm !shadow-none"
-                  placeholder="Search by title, author, subject, or ISBN"
-                  aria-label="Search books"
+                  placeholder={AZ_COPY.home.searchPlaceholder}
+                  aria-label={AZ_COPY.home.searchLabel}
                 />
               </label>
               <button className="btn-primary !min-h-[58px] !px-8">
-                Search books <ArrowRight size={15} />
+                {AZ_COPY.home.searchAction} <ArrowRight size={15} />
               </button>
             </form>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
-              {quickCategories.map(([label, Icon]) => (
+              {quickCategories.map(([category, Icon]) => (
                 <Link
-                  key={label}
-                  href={`/listings?category=${encodeURIComponent(label)}`}
+                  key={category}
+                  href={`/listings?category=${encodeURIComponent(category)}`}
                   className="flex items-center gap-2 rounded-full border border-[#cdbd9e] bg-[#fffaf0]/65 px-4 py-2 text-[10px] font-bold transition hover:-translate-y-0.5 hover:border-orange"
                 >
-                  <Icon size={13} className="text-orange" /> {label}
+                  <Icon size={13} className="text-orange" />{" "}
+                  {formatCategory(category)}
                 </Link>
               ))}
             </div>
@@ -175,8 +176,8 @@ export default function HomePage() {
       <section className="py-20">
         <div className="container-shell">
           <MarketplaceHeading
-            label="Featured shelf"
-            title="Books readers are noticing."
+            label={AZ_COPY.home.featuredLabel}
+            title={AZ_COPY.home.featuredTitle}
             link="/listings"
           />
           {loading ? (
@@ -190,9 +191,13 @@ export default function HomePage() {
           ) : (
             <div className="mt-10">
               <EmptyState
-                title="The featured shelf is waiting."
-                body={error || "List a book and help start the marketplace."}
-                action="Sell a book"
+                title={AZ_COPY.home.featuredEmptyTitle}
+                body={
+                  error
+                    ? AZ_COPY.global.listingsUnavailable
+                    : AZ_COPY.home.featuredEmptyBody
+                }
+                action={AZ_COPY.catalog.sellBook}
                 href="/listings/new"
               />
             </div>
@@ -204,21 +209,20 @@ export default function HomePage() {
         <div className="container-shell">
           <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
-              <span className="eyebrow">Browse the book fair</span>
+              <span className="eyebrow">{AZ_COPY.home.browseLabel}</span>
               <h2 className="display mt-3 text-4xl font-semibold md:text-5xl">
-                Start with a shelf.
+                {AZ_COPY.home.browseTitle}
               </h2>
             </div>
             <p className="max-w-sm text-[11px] leading-6 text-gray-500">
-              From course essentials to editions that rarely stay listed for
-              long.
+              {AZ_COPY.home.browseBody}
             </p>
           </div>
           <div className="mt-9 grid grid-cols-2 gap-3 md:grid-cols-5">
-            {quickCategories.map(([label, Icon], index) => (
+            {quickCategories.map(([category, Icon], index) => (
               <Link
-                key={label}
-                href={`/listings?category=${encodeURIComponent(label)}`}
+                key={category}
+                href={`/listings?category=${encodeURIComponent(category)}`}
                 className="catalog-drawer group relative min-h-[150px] overflow-hidden rounded-sm p-5 transition hover:-translate-y-1"
               >
                 <span className="display absolute right-3 top-3 text-4xl text-[#d8c6a5]">
@@ -226,10 +230,10 @@ export default function HomePage() {
                 </span>
                 <Icon size={19} className="text-orange" />
                 <h3 className="display mt-12 text-2xl font-semibold">
-                  {label}
+                  {formatCategory(category)}
                 </h3>
                 <span className="mt-2 flex items-center gap-1 text-[9px] font-bold text-gray-500">
-                  Open shelf <ArrowRight size={11} />
+                  {AZ_COPY.home.openShelf} <ArrowRight size={11} />
                 </span>
               </Link>
             ))}
@@ -240,8 +244,8 @@ export default function HomePage() {
       <section className="py-20">
         <div className="container-shell">
           <MarketplaceHeading
-            label="Just listed"
-            title="Fresh arrivals from nearby readers."
+            label={AZ_COPY.home.recentLabel}
+            title={AZ_COPY.home.recentTitle}
             link="/listings"
           />
           {loading ? (
@@ -283,18 +287,17 @@ export default function HomePage() {
             </div>
           </div>
           <div className="relative max-w-xl">
-            <span className="bookmark-badge">Your shelf can earn</span>
+            <span className="bookmark-badge">{AZ_COPY.home.sellerBadge}</span>
             <h2 className="display mt-5 text-5xl font-semibold leading-none">
-              Finished reading?
+              {AZ_COPY.home.sellerTitleLead}
               <br />
-              Pass it forward.
+              {AZ_COPY.home.sellerTitleAccent}
             </h2>
             <p className="mt-5 text-xs leading-7 text-[#d7c5aa]">
-              Photograph the real copy, set a fair price, and meet its next
-              reader.
+              {AZ_COPY.home.sellerBody}
             </p>
             <Link href="/listings/new" className="btn-primary mt-7">
-              Sell your book <ArrowRight size={15} />
+              {AZ_COPY.home.sellBook} <ArrowRight size={15} />
             </Link>
           </div>
         </div>
@@ -324,7 +327,7 @@ function MarketplaceHeading({
         href={link}
         className="hide-mobile flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.12em] text-orange"
       >
-        View all <ArrowRight size={13} />
+        {AZ_COPY.home.viewAll} <ArrowRight size={13} />
       </Link>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { AZ_COPY } from "@/lib/i18n";
 
 export default function GlobalError({
   error,
@@ -15,16 +16,15 @@ export default function GlobalError({
   return (
     <div className="container-shell grid min-h-[600px] place-items-center py-16">
       <div className="card max-w-lg p-9 text-center">
-        <span className="bookmark-badge">Something went wrong</span>
+        <span className="bookmark-badge">{AZ_COPY.global.errorBadge}</span>
         <h1 className="display mt-5 text-4xl font-semibold">
-          This shelf could not load.
+          {AZ_COPY.global.errorTitle}
         </h1>
         <p className="mt-3 text-xs leading-6 text-gray-500">
-          Try again. If the problem continues, no account action or payment has
-          been taken by BookSwap.
+          {AZ_COPY.global.errorBody}
         </p>
         <button onClick={reset} className="btn-primary mt-6">
-          Try again
+          {AZ_COPY.global.retry}
         </button>
       </div>
     </div>

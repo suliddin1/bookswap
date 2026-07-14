@@ -3,20 +3,26 @@ import { Fraunces, Manrope } from "next/font/google";
 import "@/app/globals.css";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { AZ_COPY, DOCUMENT_LANGUAGE } from "@/lib/i18n";
 
-const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces" });
+const manrope = Manrope({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-manrope",
+});
+const fraunces = Fraunces({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-fraunces",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   ),
   title: {
-    default: "BookSwap | Give books a second life",
+    default: AZ_COPY.metadata.title,
     template: "%s | BookSwap",
   },
-  description:
-    "A private-library marketplace for pre-loved books, textbooks, and reader-to-reader exchange.",
+  description: AZ_COPY.metadata.description,
   applicationName: "BookSwap",
   appleWebApp: {
     capable: true,
@@ -26,14 +32,15 @@ export const metadata: Metadata = {
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
   openGraph: {
     type: "website",
+    locale: "az_AZ",
     siteName: "BookSwap",
-    title: "BookSwap | Give books a second life",
-    description: "Buy and sell pre-loved books directly with nearby readers.",
+    title: AZ_COPY.metadata.title,
+    description: AZ_COPY.metadata.openGraphDescription,
   },
   twitter: {
     card: "summary",
     title: "BookSwap",
-    description: "A reader-to-reader marketplace for pre-loved books.",
+    description: AZ_COPY.metadata.socialDescription,
   },
 };
 
@@ -43,7 +50,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={DOCUMENT_LANGUAGE} dir="ltr" suppressHydrationWarning>
       <body className={`${manrope.variable} ${fraunces.variable}`}>
         <SiteHeader />
         <main>{children}</main>

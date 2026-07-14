@@ -4,6 +4,16 @@ Evidence date: 2026-07-14 (Asia/Baku). Repository: D:\Codex Projects\2HandedBook
 
 No production database, deployment, remote branch, or protected secondary checkout was touched. Public development configuration was supplied only to validation processes; no credential was written to tracked files. Transient server logs and Playwright output are under ignored test-results.
 
+## P1 Azerbaijani public discovery foundation - current evidence
+
+The root product now declares `lang=az`, `dir=ltr`, Azerbaijani base/social metadata, `az_AZ` Open Graph locale, Azerbaijani web-manifest language/copy, and Latin Extended Fraunces/Manrope subsets. One typed `lib/i18n.ts` contract owns the current copy plus category/condition/city/status labels and az-AZ number/date formatting. English database/API/query values remain stable: the browser displays `Bədii ədəbiyyat` while its link and selected catalog state preserve `category=Fiction`. Unknown and user-entered content passes through. `LOCALIZATION_INVENTORY.md` accounts for every remaining page/component/API/email/database-notification/legal surface and keeps missing legal operator/contact facts explicitly blocked. A root canonical was deliberately not added because Next metadata inheritance could incorrectly canonicalize every child route to `/`; per-route canonical URLs remain explicit SEO work.
+
+Header/footer/global loading/error/not-found states, the full signed-out home page, catalog filters/sort/pagination/empty/error states, cards, covers, accessible names, locations, conditions, categories, status, and money are Azerbaijani. API failures on this public journey surface localized safe errors rather than server prose. Unit/source checks verify `az`/`az-AZ`, representative labels, date output, exact non-breaking-space `₼` format, unknown-value pass-through, and removal of the replaced English copy. Playwright verifies document language/title, raw query preservation, localized navigation/headings, deterministic manat output, mobile menu, public safety/right routes, and security headers.
+
+The first production browser matrix found a real React hydration 418: Node formatted `Intl` currency style as `200 ₼` while Chromium formatted it as `200 AZN`, changing catalog text after hydration. The formatter now localizes the number only and appends an explicit non-breaking-space manat symbol. The entire matrix was rebuilt and repeated in isolated route contexts. At 1440x900, 1024x768, 390x844, and 360x800, home and `listings?category=Fiction` show correct language/title/description, loaded fonts, localized selected values, `200 ₼-dək`, zero horizontal overflow, no mojibake/old owned-surface copy/overlay/hydration/page/console/HTTP 4xx/5xx, and clean visual hierarchy. Mobile navigation expands with Azerbaijani names and no overflow; scrolling the decorative shelf reveals five covers with three in-viewport. A cancelled duplicate `/_rsc` link prefetch has no failed response or console effect and direct catalog contexts are clean. A transient first-run development-host DNS failure did not recur on the isolated repeat. No mocks or database fixtures were used.
+
+Current gate: lint pass; TypeScript pass; Vitest 30/30; Next.js production build 37 routes; Playwright 4/4. Build size remains 214 kB first-load JS for home/catalog, consistent with the prior 208-217 kB range. The production server/browser were closed and all screenshots/logs removed. L10N-01 and SEO-01 remain Partial because listing, account, chat, notification, admin, route-specific metadata, email, API, and reviewed legal coverage are still pending.
+
 ## P0 protected listing publication boundary - current evidence
 
 The final P1-009 state-machine review found a stop-ship bypass in the existing listing edit route: PATCHing only `{status:"active"}` on a draft or sold listing created no moderation checks, so a seller could republish an administrator-rejected draft even while the required provider was unavailable. Authenticated also retained direct Data API INSERT/UPDATE/DELETE grants on `public.listings`, allowing clients to skip the protected server route entirely.
@@ -24,18 +34,18 @@ Every administrator route requires a trimmed 10-1000 character reason and delega
 
 Live rollback-only development evidence used temporary administrator, seller, reporter, listing, report, access-request, and appeal fixtures:
 
-| Probe | Result |
-| --- | --- |
-| User actions | Ban and unban produced `user.banned` and `user.unbanned`. |
-| Listing actions | Reject and approve produced two audit rows and exactly two atomic SYSTEM notifications. |
-| Report action | Open to resolved produced `report.resolved`. |
-| Privacy actions | Open to in-progress to completed produced both audited transitions. |
-| Appeal action | Open to rejected produced `appeal.rejected`, not a generic privacy action. |
-| History shape | Exactly eight rows, correct actor snapshot, valid reasons, before/after state, target, action, and timestamp; privacy details were absent. |
-| Forced audit failure | An injected audit check failure returned 23514 and rolled back the preceding ban completely. |
-| Invalid cases | Self-ban, administrator target, missing target, short reason, banned actor, repeated report resolution, and reopening a final privacy request all failed without side effects. |
-| Direct access | Anon/authenticated SELECT, service INSERT/UPDATE/DELETE, and authenticated RPC execution were denied; service SELECT succeeded. |
-| Tamper | Owner UPDATE and DELETE each raised SQLSTATE 55000; neither persisted. |
+| Probe                | Result                                                                                                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| User actions         | Ban and unban produced `user.banned` and `user.unbanned`.                                                                                                                      |
+| Listing actions      | Reject and approve produced two audit rows and exactly two atomic SYSTEM notifications.                                                                                        |
+| Report action        | Open to resolved produced `report.resolved`.                                                                                                                                   |
+| Privacy actions      | Open to in-progress to completed produced both audited transitions.                                                                                                            |
+| Appeal action        | Open to rejected produced `appeal.rejected`, not a generic privacy action.                                                                                                     |
+| History shape        | Exactly eight rows, correct actor snapshot, valid reasons, before/after state, target, action, and timestamp; privacy details were absent.                                     |
+| Forced audit failure | An injected audit check failure returned 23514 and rolled back the preceding ban completely.                                                                                   |
+| Invalid cases        | Self-ban, administrator target, missing target, short reason, banned actor, repeated report resolution, and reopening a final privacy request all failed without side effects. |
+| Direct access        | Anon/authenticated SELECT, service INSERT/UPDATE/DELETE, and authenticated RPC execution were denied; service SELECT succeeded.                                                |
+| Tamper               | Owner UPDATE and DELETE each raised SQLSTATE 55000; neither persisted.                                                                                                         |
 
 Catalog verification shows the four RPCs are security-definer with empty search paths and execute ACLs limited to postgres/service_role; private helpers and the mutation-rejection trigger are postgres-only. Generated types contain the audit table and all four RPC signatures. A final query confirms zero rows/objects across Auth, all fixture-bearing public tables, the audit/moderation/cleanup ledgers, and Storage.
 
@@ -61,19 +71,19 @@ Room creation initializes buyer/seller count zero. Message insert atomically val
 
 Live RLS/Realtime/reconnect evidence used three temporary confirmed users, one listing, and one room:
 
-| Probe | Result |
-| --- | --- |
-| Initial participant state | Buyer and seller each see one own row/count 0; third sees 0 rows. |
-| Direct authenticated read-state update | Denied even for owner; mutation is server-managed. |
-| Three buyer messages | Seller count 3, buyer count 0, exactly three unique linked notifications. |
-| Read-state Realtime | Seller receives `[3]`; buyer and third receive no seller update. |
-| Third/spoofed send | RLS denied; no message/count/notification side effect. |
-| Privileged nonmember send | Trigger rejects 23514, proving service writes cannot bypass membership. |
-| Seller acknowledgement | Count 0, read marker present, all three room notifications read. |
-| Seller reconnect/reply | Persisted 0/all-read; reply makes buyer count 1 and one linked notification. |
-| Notification ownership | Seller cross-mark affects 0 rows; buyer self-mark affects 1. |
-| Cross-device read event | Seller receives notification `read=true` and count `0`; third receives neither. |
-| Exact room-list relation query | One room/own read row; buyer/seller keys exactly city/created_at/id/name; listing embed succeeds. |
+| Probe                                  | Result                                                                                            |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Initial participant state              | Buyer and seller each see one own row/count 0; third sees 0 rows.                                 |
+| Direct authenticated read-state update | Denied even for owner; mutation is server-managed.                                                |
+| Three buyer messages                   | Seller count 3, buyer count 0, exactly three unique linked notifications.                         |
+| Read-state Realtime                    | Seller receives `[3]`; buyer and third receive no seller update.                                  |
+| Third/spoofed send                     | RLS denied; no message/count/notification side effect.                                            |
+| Privileged nonmember send              | Trigger rejects 23514, proving service writes cannot bypass membership.                           |
+| Seller acknowledgement                 | Count 0, read marker present, all three room notifications read.                                  |
+| Seller reconnect/reply                 | Persisted 0/all-read; reply makes buyer count 1 and one linked notification.                      |
+| Notification ownership                 | Seller cross-mark affects 0 rows; buyer self-mark affects 1.                                      |
+| Cross-device read event                | Seller receives notification `read=true` and count `0`; third receives neither.                   |
+| Exact room-list relation query         | One room/own read row; buyer/seller keys exactly city/created_at/id/name; listing embed succeeds. |
 
 Production Agent Browser signed in as the temporary buyer on a public page. Desktop navigation exposed `1 unread messages`; mobile exposed `Messages (1)` and `Notifications (1)`. A server acknowledgement changed the live message label 1→0; a seller message changed it 0→1 through protected Postgres Changes. Header/menu scroll width equalled 1440, 1024, 390, and 360 viewports; accessibility names exposed the counts; console/page errors were zero. The protected messages/notifications Next routes remain part of P0-005's external service-secret blocker and were not falsely claimed.
 
@@ -87,16 +97,16 @@ Catalog and seller APIs return `{items,nextCursor}` using canonical versioned ba
 
 Live API evidence used two temporary Auth users, five active rows including equal price/timestamp ties, one sold row, one draft, one eligible sold-interaction review, and one concurrent active insert:
 
-| Probe | Result |
-| --- | --- |
-| Price-low pages | Original IDs in exact `(price,id)` ascending order, once each. |
-| Price-high pages | Original IDs in exact `(price,id)` descending order, once each. |
-| Newest equal-timestamp tie | Higher ID then lower ID, deterministic. |
-| Concurrent newer insert after page one | Original traversal had no gap/duplicate; newer row correctly remained before the cursor. |
-| Category/city/condition/max-price composition | Exactly the three eligible fixtures. |
-| Cursor reused with different filter/scope | 400 `INVALID_CURSOR`. |
-| Public seller response | Safe keys only: city, createdAt, id, initials, name, rating, reviewCount. |
-| Seller inventory/rating | Seven active/sold rows exactly once; draft absent; rating 4 from one eligible review. |
+| Probe                                         | Result                                                                                   |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Price-low pages                               | Original IDs in exact `(price,id)` ascending order, once each.                           |
+| Price-high pages                              | Original IDs in exact `(price,id)` descending order, once each.                          |
+| Newest equal-timestamp tie                    | Higher ID then lower ID, deterministic.                                                  |
+| Concurrent newer insert after page one        | Original traversal had no gap/duplicate; newer row correctly remained before the cursor. |
+| Category/city/condition/max-price composition | Exactly the three eligible fixtures.                                                     |
+| Cursor reused with different filter/scope     | 400 `INVALID_CURSOR`.                                                                    |
+| Public seller response                        | Safe keys only: city, createdAt, id, initials, name, rating, reviewCount.                |
+| Seller inventory/rating                       | Seven active/sold rows exactly once; draft absent; rating 4 from one eligible review.    |
 
 The first price-high matrix exposed a secondary-ID direction error that duplicated/omitted tied rows; the implementation was corrected to explicit descending ID order and the entire matrix reran successfully. Agent Browser then observed 200 responses for `/api/listings` and `/api/sellers/[id]`, exact filtered catalog order, seven storefront cards including sold and excluding draft, rating text, exposed names for every catalog filter, no console/page errors, and matching viewport/scroll widths at 1440x900, 1024x768, 390x844, and 360x800.
 
@@ -228,13 +238,13 @@ Cleanup: the three temporary Auth users and cascaded profiles, listing, room, an
 
 ## Static and automated baseline
 
-| Command                              | Result                    | Exact summary                                                                                                                |
-| ------------------------------------ | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| npm run lint                         | Pass, exit 0              | ESLint over .js/.ts/.tsx with max-warnings=0; no warnings/output.                                                            |
-| npx tsc --noEmit                     | Pass, exit 0              | No TypeScript diagnostics.                                                                                                   |
-| npm test                             | Pass, exit 0              | Vitest: 1 file passed, 24 tests passed.                                                                                       |
-| npm run build                        | Pass, exit 0              | Next.js 15.5.19 compiled in 5.7 s; lint/type/page data passed; 37/37 static pages generated.                                 |
-| npm run test:e2e                     | Pass, exit 0              | Playwright Chromium: 4 tests passed in 2.1 s (browse home/catalog, mobile navigation, safety/user-rights, security headers). |
+| Command          | Result       | Exact summary                                                                                                                |
+| ---------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| npm run lint     | Pass, exit 0 | ESLint over .js/.ts/.tsx with max-warnings=0; no warnings/output.                                                            |
+| npx tsc --noEmit | Pass, exit 0 | No TypeScript diagnostics.                                                                                                   |
+| npm test         | Pass, exit 0 | Vitest: 1 file passed, 24 tests passed.                                                                                      |
+| npm run build    | Pass, exit 0 | Next.js 15.5.19 compiled in 5.7 s; lint/type/page data passed; 37/37 static pages generated.                                 |
+| npm run test:e2e | Pass, exit 0 | Playwright Chromium: 4 tests passed in 2.1 s (browse home/catalog, mobile navigation, safety/user-rights, security headers). |
 
 Production build route evidence:
 

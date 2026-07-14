@@ -1,4 +1,5 @@
-import { Listing } from "@/lib/types";
+import { formatAzDate } from "@/lib/i18n";
+import type { Listing } from "@/lib/types";
 
 const covers = [
   ["#213a32", "#d9b65d"],
@@ -17,7 +18,7 @@ export function normalizeListing(row: Record<string, any>): Listing {
       ) % covers.length
     ];
   const seller = row.seller ?? {};
-  const name = seller.name ?? "BookSwap reader";
+  const name = seller.name ?? "BookSwap oxucusu";
   return {
     id: String(row.id),
     title: row.title,
@@ -46,11 +47,7 @@ export function normalizeListing(row: Record<string, any>): Listing {
       city: seller.city ?? row.city,
     },
     createdAt: row.created_at,
-    posted: row.created_at
-      ? new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(
-          new Date(row.created_at),
-        )
-      : undefined,
+    posted: row.created_at ? formatAzDate(row.created_at) : undefined,
     saves: row.favorites?.[0]?.count ?? 0,
   };
 }

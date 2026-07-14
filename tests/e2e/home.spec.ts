@@ -2,15 +2,26 @@ import { expect, test } from "@playwright/test";
 
 test("reader can browse from home to catalog", async ({ page }) => {
   await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("lang", "az");
+  await expect(page).toHaveTitle(/Kitabına ikinci həyat ver/i);
   await expect(
     page.getByRole("heading", {
-      name: /Find your next book.*Give yours a second life/i,
+      name: /Növbəti kitabını tap.*Oxuduğuna ikinci həyat ver/i,
     }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Browse", exact: true }).first().click();
+  const fictionShelf = page
+    .getByRole("link", { name: "Bədii ədəbiyyat", exact: true })
+    .first();
+  await expect(fictionShelf).toHaveAttribute("href", /category=Fiction/);
+  await page
+    .getByRole("link", { name: "Kitablar", exact: true })
+    .first()
+    .click();
   await expect(
-    page.getByRole("heading", { name: /Books for sale/i }),
+    page.getByRole("heading", { name: /Satışdakı kitablar/i }),
   ).toBeVisible();
+  await expect(page.getByText(/200.*₼-dək/)).toBeVisible();
+  await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
 });
 
 test("premium navigation remains usable on mobile", async ({ page }) => {
@@ -18,11 +29,13 @@ test("premium navigation remains usable on mobile", async ({ page }) => {
   await page.goto("/");
   await expect(
     page.getByRole("heading", {
-      name: /Find your next book.*Give yours a second life/i,
+      name: /Növbəti kitabını tap.*Oxuduğuna ikinci həyat ver/i,
     }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Menu" }).click();
-  await expect(page.getByRole("link", { name: /Sell/i }).last()).toBeVisible();
+  await page.getByRole("button", { name: "Menyu" }).click();
+  await expect(
+    page.getByRole("link", { name: "Kitab sat", exact: true }).last(),
+  ).toBeVisible();
 });
 
 test("safety and user rights guidance is publicly reachable", async ({

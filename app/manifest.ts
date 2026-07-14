@@ -1,11 +1,13 @@
 import type { MetadataRoute } from "next";
+import { AZ_COPY, DOCUMENT_LANGUAGE } from "@/lib/i18n";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "BookSwap",
     short_name: "BookSwap",
-    description:
-      "A private-library marketplace for books with another chapter left.",
+    description: AZ_COPY.metadata.description,
+    lang: DOCUMENT_LANGUAGE,
+    dir: "ltr",
     start_url: "/",
     display: "standalone",
     background_color: "#f4efe5",

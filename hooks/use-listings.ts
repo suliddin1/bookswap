@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Listing } from "@/lib/types";
+import { AZ_COPY } from "@/lib/i18n";
+import type { Listing } from "@/lib/types";
 
 export function useListings(
   filters: {
@@ -52,8 +53,7 @@ export function useListings(
     fetch(`/api/listings?${buildParams()}`, { signal: controller.signal })
       .then(async (response) => {
         const body = await response.json();
-        if (!response.ok)
-          throw new Error(body.error ?? "Could not load listings");
+        if (!response.ok) throw new Error(AZ_COPY.global.listingsUnavailable);
         if (version !== requestVersion.current) return;
         setData(body.data?.items ?? []);
         setNextCursor(body.data?.nextCursor ?? null);
@@ -77,8 +77,7 @@ export function useListings(
     try {
       const response = await fetch(`/api/listings?${buildParams(nextCursor)}`);
       const body = await response.json();
-      if (!response.ok)
-        throw new Error(body.error ?? "Could not load more listings");
+      if (!response.ok) throw new Error(AZ_COPY.global.loadMoreUnavailable);
       if (version !== requestVersion.current) return;
       setData((current) => {
         const known = new Set(current.map((listing) => listing.id));
@@ -96,7 +95,7 @@ export function useListings(
         setError(
           reason instanceof Error
             ? reason.message
-            : "Could not load more listings",
+            : AZ_COPY.global.loadMoreUnavailable,
         );
     } finally {
       if (version === requestVersion.current) setLoadingMore(false);

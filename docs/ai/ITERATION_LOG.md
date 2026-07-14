@@ -1,5 +1,23 @@
 # Iteration log
 
+## 2026-07-14 - P1 Azerbaijani public discovery foundation
+
+Goal / acceptance IDs: P1-010; L10N-01, SEO-01, RESP-01, A11Y-01, TEST-01.
+
+Ownership: root exclusively owns the locale/copy contract, root metadata/manifest, global states, shared shell, home/catalog/card/cover discovery surfaces, listing normalization fallback labels, discovery hook errors, localization inventory, focused tests, and affected durable evidence for this slice. No other agent is editing these files.
+
+Starting state: clean branch `autonomous/bookswap-product` at `d10a020`. The document declares `lang=en`; root metadata, manifest, header/footer, global states, home, catalog, book cards, accessible names, money, dates, categories, conditions, and Azerbaijani locations are predominantly English or inconsistently formatted. English database/query values are already public API contracts, so translating stored values would be a destructive compatibility change.
+
+Planned contract: establish one typed Azerbaijani copy and formatting module; set the document/metadata/manifest locale; load Latin Extended glyphs; translate the complete signed-out home-to-catalog journey and shared shell/states; present stable internal category/condition/city/status codes through Azerbaijani labels; format AZN and dates through `az-AZ`; inventory every remaining UI/API/legal/email surface; prove language, query preservation, accessible names, reflow, metadata, unit/build/E2E behavior, and absence of mojibake or English leaks on the owned journey. Legal operator/contact facts remain blocked rather than fabricated.
+
+Implemented: added the typed `az`/`az-AZ` copy, label, number, and date contract plus a durable surface inventory. Root document/base/social metadata and manifest are Azerbaijani, declare the correct locale/direction, and load Fraunces/Manrope Latin Extended glyphs. Header/footer/global states and the complete home-to-catalog journey use natural Azerbaijani copy and accessible names. Cards and catalog options map stable English category/condition/city/status codes only at presentation time; raw `category=Fiction` remains in the URL/API. Money uses localized numbers plus an explicit non-breaking-space `₼` symbol.
+
+Adversarial review: the first production browser matrix exposed React hydration error 418. Node's ICU rendered `Intl` currency style as `200 ₼`, while Chromium rendered `200 AZN`; the catalog slider therefore differed across server/client. Replacing currency-style output with locale-number formatting plus an explicit symbol removed the mismatch. An isolated repeat showed zero hydration/page/console/HTTP errors. One duplicate Next RSC link prefetch is cancelled with `ERR_ABORTED` on home without a failed response or console effect; direct catalog loads are clean and this is framework request de-duplication rather than an application failure. A transient first-run Supabase DNS failure was retried, then all development reads returned without 4xx/5xx.
+
+Validation: lint, TypeScript, 30/30 unit tests, the 37-route production build, and 4/4 Playwright tests pass. Production home/catalog at 1440x900, 1024x768, 390x844, and 360x800 show `lang=az`, correct title/description, loaded Latin Extended fonts, preserved query codes, selected localized filters, `200 ₼-dək`, Azerbaijani accessible mobile navigation, no old owned-surface English copy, zero overflow/mojibake/overlay/page/console/HTTP errors, and clean mobile scroll-triggered decorative covers. Server, browser, screenshots, and logs were removed; no backend data was changed. P1-010 remains Partial because the inventory names substantial untranslated launch surfaces. Ownership for this slice is released by the local checkpoint.
+
+Next slice: translate listing detail, public seller, and favorites journeys through the same contract, including metadata, review/report/trust/status/price/date/location/error/empty states and four-viewport evidence. P0-005 remains externally blocked by the unavailable development server secret.
+
 ## 2026-07-14 - P0 listing reactivation moderation bypass
 
 Goal / acceptance IDs: P0-006; MOD-01, LIST-01, SVC-01, DB-01, TEST-01.

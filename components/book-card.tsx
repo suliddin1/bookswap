@@ -5,8 +5,9 @@ import { Heart, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { BookCover } from "@/components/book-cover";
-import { Listing } from "@/lib/types";
 import { authFetch } from "@/lib/client-api";
+import { AZ_COPY, formatAzn, formatCity, formatCondition } from "@/lib/i18n";
+import type { Listing } from "@/lib/types";
 
 export function BookCard({
   listing,
@@ -42,7 +43,9 @@ export function BookCard({
       <Link href={`/listings/${listing.id}`} className="relative block">
         <BookCover listing={listing} />
         <button
-          aria-label={isSaved ? "Remove from favorites" : "Save listing"}
+          aria-label={
+            isSaved ? AZ_COPY.listingCard.remove : AZ_COPY.listingCard.save
+          }
           onClick={toggleFavorite}
           className={`absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-[#fffaf0]/90 shadow-sm transition ${isSaved ? "text-orange" : "text-ink hover:text-orange"}`}
         >
@@ -50,11 +53,11 @@ export function BookCard({
         </button>
         {listing.status === "sold" && (
           <span className="absolute bottom-3 left-3 rounded-full bg-ink px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white">
-            Sold
+            {AZ_COPY.listingCard.sold}
           </span>
         )}
         <span className="bookmark-badge absolute -left-2 top-4 z-10 !min-h-[29px] !px-3 !pb-1">
-          {listing.condition}
+          {formatCondition(listing.condition)}
         </span>
       </Link>
       <div className="pt-5">
@@ -70,12 +73,12 @@ export function BookCard({
             </p>
           </div>
           <strong className="display text-xl text-orange">
-            ₼{listing.price}
+            {formatAzn(listing.price)}
           </strong>
         </div>
         <div className="mt-4 flex items-center justify-between border-t border-[#ece9e2] pt-3 text-[10px] font-bold text-gray-500">
           <span className="flex items-center gap-1">
-            <MapPin size={11} /> {listing.city}
+            <MapPin size={11} /> {formatCity(listing.city)}
           </span>
           {listing.seller.id ? (
             <Link

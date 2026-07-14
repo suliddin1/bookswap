@@ -46,9 +46,9 @@ Match candidates are computed from offered/owned and wanted title identities plu
 
 ## ADR-008 — Azerbaijani-first localization
 
-Status: Accepted direction; implementation incomplete.
+Status: Accepted; implementation in progress.
 
-Adopt Azerbaijani as the default locale and document language while preserving user-entered Azerbaijani/Russian/English book data. Centralize UI strings and locale-aware number/date/metadata formatting before translating piecemeal. English-only current routes remain foundation code, not launch-complete localization.
+Adopt Azerbaijani as the default locale and document language while preserving user-entered Azerbaijani/Russian/English book data. `lib/i18n.ts` is the typed copy/label/formatting contract. English category, condition, city, status, sort, and future intention values remain stable database/API/query codes and receive Azerbaijani presentation labels; unknown and user-entered values pass through unchanged. AZN formatting uses an `az-AZ` number plus an explicit non-breaking-space manat symbol because Node and Chromium expose different localized currency display names, which otherwise creates hydration mismatch. Root metadata/manifest, shell/global states, and home/catalog/cards implement this decision; all remaining surfaces are tracked in `LOCALIZATION_INVENTORY.md` and remain launch-blocking.
 
 ## ADR-009 — Preserve the established visual system
 
