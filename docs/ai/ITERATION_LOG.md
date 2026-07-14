@@ -1,5 +1,25 @@
 # Iteration log
 
+## 2026-07-14 - P1 Azerbaijani public listing and seller journeys
+
+Goal / acceptance IDs: P1-010; L10N-01, PROF-02, LIST-01, FAV-01, REV-01, REP-01, SEO-01, RESP-01, A11Y-01, TEST-01.
+
+Ownership: root exclusively owns the Azerbaijani contract additions, listing-detail/public-seller/favorites route metadata and components, their safe client error mapping and focused tests, browser fixtures/evidence, and affected durable documentation for this slice. No other agent is editing these files.
+
+Starting state: clean branch `autonomous/bookswap-product` at `332aca1`. The public-discovery foundation is Azerbaijani, but listing detail, seller storefront, and favorites still expose English headings, states, accessible names, prices, locations, categories, dates, review/report/trust copy, generic metadata, and raw server/auth errors. The seller route metadata is English; listing and favorites lack route metadata.
+
+Planned contract: extend the typed copy contract across all three journeys; keep user-entered text and English API/query codes unchanged; map displayed marketplace values and safe action error codes; make money/date formatting deterministic; add honest Azerbaijani route metadata without inventing canonical/production facts; prove active/sold/review/report/storefront/favorites states, accessible names, loading/error/empty behavior, responsive reflow, no English leaks/mojibake/hydration/runtime errors, full repository gates, and fixture cleanup.
+
+Implemented: extended the typed copy and safe API-code mapping through listing detail, public seller inventory, reviews, reports, trust guidance, and favorites. Marketplace codes remain stable while displayed category/condition/city/status values are localized; user-entered titles, authors, descriptions, and reviews remain unchanged. Listing and seller routes now publish Azerbaijani metadata plus per-ID canonical URLs, while private favorites is Azerbaijani and explicitly `noindex,nofollow`. Signed-out favorites no longer sends a protected request or exposes an English Auth error. Top-level unavailable/auth states render one semantic `h1`. Number and date helpers now use deterministic Azerbaijani decimal/group separators, month names, and the Asia/Baku calendar boundary rather than runtime-dependent ICU output.
+
+Adversarial review: `next dev` could not hydrate under the production CSP because React Refresh requires `unsafe-eval`; the policy was not weakened, and all representative verification used the optimized production runtime. The first production matrix then exposed two real browser-only localization defects: `17.5 ₼` instead of `17,5 ₼`, and `M07` instead of `iyul`. Explicit formatting fixed both. Generic listing/seller metadata is intentionally truthful but not content-derived; dynamic titles/descriptions/Open Graph images and sitemap discovery remain SEO work. A signed-out visitor can exercise review/report validation without a mutation; full authenticated favorites/report/review route execution remains attached to P0-005's missing development service secret and is not claimed here.
+
+Validation: lint, strict TypeScript, 30/30 unit tests, the 37-route production build, and 5/5 Playwright tests pass. Two temporary development Auth profiles, active/sold listings, one completed room, and one review drove real public APIs and production pages without browser mocks. Listing detail, sold/review state, seller aggregate/inventory, and signed-out favorites passed at 1440x900, 1024x768, 390x844, and 360x800 with correct `lang=az`, one `h1`, mapped labels, comma-decimal manat values, `iyul 2026`, per-ID canonicals, favorites `noindex`, zero missing/old copy, overflow, mojibake, console/page/request failures, or HTTP 4xx/5xx. Visual inspection passed for one representative page at each viewport class.
+
+Cleanup: no report, review, favorite, or message mutation was submitted in-browser. Auth sessions and refresh tokens were removed before identity/Auth deletion. Cascades removed both public profiles, both listings, the room, read state, and review; verification returned zero remnants in every touched Auth/public table. Production/dev servers, screenshots, and logs were removed. Ownership for this slice is released by the local checkpoint.
+
+Next slice: translate listing create/edit plus authentication/password-reset journeys and their validation, upload/moderation, loading, success, and error states. P0-005 remains the sole externally blocked P0.
+
 ## 2026-07-14 - P1 Azerbaijani public discovery foundation
 
 Goal / acceptance IDs: P1-010; L10N-01, SEO-01, RESP-01, A11Y-01, TEST-01.

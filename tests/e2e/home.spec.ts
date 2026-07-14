@@ -54,6 +54,27 @@ test("safety and user rights guidance is publicly reachable", async ({
   ).toBeVisible();
 });
 
+test("favorites exposes a localized private sign-in state", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/favorites");
+  await expect(page.locator("h1")).toHaveText(
+    "Seçilmişlərə baxmaq üçün daxil ol.",
+  );
+  await expect(page).toHaveTitle(/Seçilmiş kitablar/i);
+  await expect(
+    page.getByText("Seçilmişlərə baxmaq üçün daxil ol.", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Daxil ol", exact: true }).last(),
+  ).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    /noindex/i,
+  );
+});
+
 test("responses include baseline security headers", async ({ request }) => {
   const response = await request.get("/");
   expect(response.headers()["x-content-type-options"]).toBe("nosniff");

@@ -47,7 +47,11 @@ import {
   formatCategory,
   formatCity,
   formatCondition,
+  formatLoadedBooks,
   formatListingStatus,
+  formatReviewSummary,
+  formatStars,
+  localizeApiError,
 } from "../lib/i18n";
 
 const originalOpenAIKey = process.env.OPENAI_API_KEY;
@@ -62,6 +66,14 @@ describe("marketplace input validation", () => {
   it("uses one Azerbaijani locale contract for public marketplace labels", () => {
     expect(DOCUMENT_LANGUAGE).toBe("az");
     expect(APP_LOCALE).toBe("az-AZ");
+    expect(formatAzn(17.5)).toBe("17,5\u00a0₼");
+    expect(formatAzn(1234.5)).toBe("1 234,5\u00a0₼");
+    expect(
+      formatAzDate("2026-07-14T00:00:00.000Z", {
+        month: "long",
+        year: "numeric",
+      }),
+    ).toBe("iyul 2026");
     expect(AZ_COPY.metadata.title).toContain("ikinci həyat");
     expect(formatAzn(12)).toBe("12\u00a0₼");
     expect(formatAzDate("2026-07-14T00:00:00.000Z")).toBe("14 iyl 2026");
@@ -69,10 +81,17 @@ describe("marketplace input validation", () => {
     expect(formatCondition("Very good")).toBe("Çox yaxşı");
     expect(formatCity("Nakhchivan")).toBe("Naxçıvan");
     expect(formatListingStatus("sold")).toBe("Satılıb");
+    expect(formatReviewSummary(4.5, 2)).toBe("2 rəyə əsasən 4,5");
+    expect(formatLoadedBooks(7)).toBe("7 kitab yüklənib");
+    expect(formatStars(5)).toBe("5 ulduz");
+    expect(localizeApiError("REPORT_EXISTS", "fallback")).toContain(
+      "açıq şikayətin",
+    );
+    expect(localizeApiError("UNKNOWN", "fallback")).toBe("fallback");
     expect(formatCategory("User supplied value")).toBe("User supplied value");
   });
 
-  it("keeps the localized public discovery boundary free of its old English copy", () => {
+  it("keeps localized public marketplace surfaces free of their old English copy", () => {
     const sources = [
       "../app/layout.tsx",
       "../app/manifest.ts",
@@ -84,6 +103,12 @@ describe("marketplace input validation", () => {
       "../components/site-footer.tsx",
       "../components/catalog.tsx",
       "../components/book-card.tsx",
+      "../app/listings/[id]/page.tsx",
+      "../app/sellers/[id]/page.tsx",
+      "../app/favorites/page.tsx",
+      "../components/listing-detail.tsx",
+      "../components/seller-profile.tsx",
+      "../components/favorites-page.tsx",
     ]
       .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
       .join("\n");
@@ -97,6 +122,16 @@ describe("marketplace input validation", () => {
       "Catalog search card",
       "Save listing",
       "Browse available books",
+      "This book is unavailable",
+      "Back to the shelves",
+      "Available from a reader",
+      "Reader reviews",
+      "Safe exchange",
+      "Report this listing",
+      "Reader bookstore",
+      "Public inventory",
+      "Saved catalog",
+      "Sign in to see favorites",
     ]) {
       expect(sources).not.toContain(oldCopy);
     }

@@ -122,6 +122,88 @@ export const AZ_COPY = {
     sold: "Satılıb",
     cover: "üz qabığı",
   },
+  listingDetail: {
+    metadataTitle: "Kitab elanı",
+    metadataDescription: "BookSwap-da ikinci əl kitab elanı.",
+    unavailableTitle: "Bu kitab əlçatan deyil.",
+    unavailableBody: "Elan tapılmadı və ya artıq ictimai deyil.",
+    browseBooks: "Kitablara bax",
+    back: "Kitab rəflərinə qayıt",
+    communityListing: "İcma elanı",
+    photo: "Şəkil",
+    soldByReader: "Oxucu tərəfindən satılıb",
+    availableFromReader: "Oxucudan satışda",
+    author: "Müəllif:",
+    save: "Kitabı seçilmişlərə əlavə et",
+    remove: "Kitabı seçilmişlərdən çıxar",
+    condition: "Vəziyyəti",
+    category: "Kateqoriya",
+    location: "Məkan",
+    about: "Bu nüsxə haqqında",
+    reader: "BookSwap oxucusu",
+    viewSeller: "Satıcının səhifəsinə bax",
+    manage: "Elanı idarə et",
+    openingConversation: "Söhbət açılır...",
+    messageSeller: "Satıcıya yaz",
+    soldNotice: "Bu nüsxə satılıb.",
+    reviews: "Oxucu rəyləri",
+    noReviews: "Bu nüsxə üçün hələ rəy yoxdur.",
+    reviewTitle: "Tamamlanmış alışa rəy yaz",
+    rating: "Qiymət",
+    comment: "Şərh",
+    publishReview: "Rəyi dərc et",
+    reviewPublished: "Rəy dərc olundu.",
+    reviewFailed: "Rəyi dərc etmək mümkün olmadı.",
+    safetyTitle: "Təhlükəsiz alış-veriş",
+    safetyBody:
+      "İctimai yerdə görüş, elandakı nüsxəni yoxla, parol və birdəfəlik kodları heç vaxt paylaşma.",
+    safetyAction: "Təhlükəsizlik tövsiyələrini oxu",
+    report: "Bu elanı şikayət et",
+    reportPlaceholder:
+      "Təhlükəli, yanıltıcı və ya qadağan görünən məqamı izah et.",
+    reportAction: "Şikayəti göndər",
+    reportReceived:
+      "Şikayət qəbul edildi və moderatorlar tərəfindən yoxlanacaq.",
+    reportFailed: "Şikayəti göndərmək mümkün olmadı.",
+    sending: "Göndərilir...",
+    similar: "Oxşar kitablar",
+  },
+  seller: {
+    metadataTitle: "Oxucunun kitabları",
+    metadataDescription:
+      "BookSwap oxucusunun aktiv və satılmış kitab elanlarına bax.",
+    unavailableTitle: "Oxucu səhifəsi əlçatan deyil.",
+    unavailableBody: "Bu profil ictimai deyil və ya artıq mövcud deyil.",
+    browseBooks: "Kitablara bax",
+    badge: "Oxucunun kitab rəfi",
+    joined: "BookSwap-a qoşulub:",
+    noReviews: "Hələ uyğun rəy yoxdur",
+    publicInventory: "İctimai elanlar",
+    inventoryTitle: "Aktiv və satılmış kitablar.",
+    loadingMore: "Yüklənir...",
+    loadMore: "Daha çox kitab göstər",
+    emptyTitle: "Hələ ictimai kitab yoxdur.",
+    emptyBody: "Bu oxucunun göstəriləcək aktiv və ya satılmış elanı yoxdur.",
+    browseCatalog: "Kataloqa bax",
+    unavailable: "Oxucu səhifəsini yükləmək mümkün olmadı.",
+    loadMoreUnavailable: "Daha çox kitabı yükləmək mümkün olmadı.",
+  },
+  favorites: {
+    metadataTitle: "Seçilmiş kitablar",
+    metadataDescription: "BookSwap-da yadda saxladığın kitab elanlarına bax.",
+    authTitle: "Seçilmişlərə baxmaq üçün daxil ol.",
+    authBody:
+      "Yadda saxladığın kitablar hesabına daxil olduqdan sonra görünür.",
+    signIn: "Daxil ol",
+    unavailableTitle: "Seçilmişləri yükləmək mümkün olmadı.",
+    unavailableBody: "Bir az sonra yenidən cəhd et.",
+    badge: "Yadda saxlanılanlar",
+    title: "Seçilmişlər.",
+    intro: "Sonra baxmaq istədiyin kitablar.",
+    emptyTitle: "Hələ seçilmiş kitab yoxdur.",
+    emptyBody: "Kitab bazarında elanları yadda saxla; onlar burada görünəcək.",
+    browseBooks: "Kitablara bax",
+  },
 } as const;
 
 const categoryLabels: Record<string, string> = {
@@ -168,20 +250,91 @@ const listingStatusLabels: Record<string, string> = {
   locked: "Kilidlənib",
 };
 
-const currencyFormatter = new Intl.NumberFormat(APP_LOCALE, {
+const apiErrorLabels: Record<string, string> = {
+  AUTH_REQUIRED: "Davam etmək üçün daxil ol.",
+  INVALID_SESSION: "Sessiyanın müddəti bitib. Yenidən daxil ol.",
+  PROFILE_UNAVAILABLE: "Hesab profilin əlçatan deyil.",
+  ACCOUNT_SUSPENDED: "Hesabın dayandırılıb.",
+  RATE_LIMITED: "Həddən çox sorğu göndərildi. Bir az sonra yenidən cəhd et.",
+  VALIDATION_ERROR: "Daxil etdiyin məlumatları yoxla.",
+  LISTING_NOT_FOUND: AZ_COPY.listingDetail.unavailableBody,
+  LISTING_UNAVAILABLE: AZ_COPY.listingDetail.unavailableBody,
+  OWN_LISTING: "Öz elanını şikayət edə bilməzsən.",
+  REPORT_EXISTS: "Bu elan üçün artıq açıq şikayətin var.",
+  REVIEW_NOT_ALLOWED: "Yalnız tamamlanmış alışın alıcısı rəy yaza bilər.",
+};
+
+const numberFormatter = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 2,
 });
 
+const azMonthNames = [
+  "yanvar",
+  "fevral",
+  "mart",
+  "aprel",
+  "may",
+  "iyun",
+  "iyul",
+  "avqust",
+  "sentyabr",
+  "oktyabr",
+  "noyabr",
+  "dekabr",
+] as const;
+
+const azMonthAbbreviations = [
+  "yan",
+  "fev",
+  "mar",
+  "apr",
+  "may",
+  "iyn",
+  "iyl",
+  "avq",
+  "sen",
+  "okt",
+  "noy",
+  "dek",
+] as const;
+
+function formatAzNumber(value: number) {
+  return numberFormatter
+    .formatToParts(value)
+    .map((part) => {
+      if (part.type === "decimal") return ",";
+      if (part.type === "group") return " ";
+      return part.value;
+    })
+    .join("");
+}
+
 export function formatAzn(value: number) {
-  return `${currencyFormatter.format(value)}\u00a0₼`;
+  return `${formatAzNumber(value)}\u00a0₼`;
 }
 
 export function formatAzDate(
   value: string | number | Date,
   options: Intl.DateTimeFormatOptions = { dateStyle: "medium" },
 ) {
-  return new Intl.DateTimeFormat(APP_LOCALE, options).format(new Date(value));
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "numeric",
+      year: "numeric",
+      timeZone: "Asia/Baku",
+    })
+      .formatToParts(new Date(value))
+      .map((part) => [part.type, part.value]),
+  );
+  const monthIndex = Number(parts.month) - 1;
+  const year = parts.year;
+
+  if (options.month === "long" && options.day === undefined)
+    return `${azMonthNames[monthIndex]} ${year}`;
+
+  return `${parts.day} ${azMonthAbbreviations[monthIndex]} ${year}`;
 }
 
 export function formatCategory(value: string) {
@@ -198,4 +351,22 @@ export function formatCity(value: string) {
 
 export function formatListingStatus(value: string) {
   return listingStatusLabels[value] ?? value;
+}
+
+export function formatReviewSummary(rating: number, reviewCount: number) {
+  return `${formatAzNumber(reviewCount)} rəyə əsasən ${formatAzNumber(rating)}`;
+}
+
+export function formatLoadedBooks(count: number) {
+  return `${formatAzNumber(count)} kitab yüklənib`;
+}
+
+export function formatStars(count: number) {
+  return `${count} ulduz`;
+}
+
+export function localizeApiError(code: unknown, fallback: string) {
+  return typeof code === "string"
+    ? (apiErrorLabels[code] ?? fallback)
+    : fallback;
 }

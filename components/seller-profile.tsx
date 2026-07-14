@@ -5,6 +5,13 @@ import { BookOpen, CalendarDays, MapPin, Star } from "lucide-react";
 import { BookCard } from "@/components/book-card";
 import { BookSkeleton } from "@/components/book-skeleton";
 import { EmptyState } from "@/components/empty-state";
+import {
+  AZ_COPY,
+  formatAzDate,
+  formatCity,
+  formatLoadedBooks,
+  formatReviewSummary,
+} from "@/lib/i18n";
 import type { Listing } from "@/lib/types";
 
 type PublicSeller = {
@@ -39,8 +46,7 @@ export function SellerProfile({ id }: { id: string }) {
     fetch(`/api/sellers/${id}`, { signal: controller.signal })
       .then(async (response) => {
         const body = await response.json();
-        if (!response.ok)
-          throw new Error(body.error ?? "Could not load this bookstore.");
+        if (!response.ok) throw new Error(AZ_COPY.seller.unavailable);
         if (version !== requestVersion.current) return;
         setSeller(body.data.seller);
         setItems(body.data.items ?? []);
@@ -51,11 +57,7 @@ export function SellerProfile({ id }: { id: string }) {
         if (reason instanceof DOMException && reason.name === "AbortError")
           return;
         if (version === requestVersion.current)
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : "Could not load this bookstore.",
-          );
+          setError(AZ_COPY.seller.unavailable);
       })
       .finally(() => {
         if (version === requestVersion.current) setLoading(false);
@@ -72,8 +74,7 @@ export function SellerProfile({ id }: { id: string }) {
         `/api/sellers/${id}?cursor=${encodeURIComponent(nextCursor)}`,
       );
       const body = await response.json();
-      if (!response.ok)
-        throw new Error(body.error ?? "Could not load more books.");
+      if (!response.ok) throw new Error(AZ_COPY.seller.loadMoreUnavailable);
       if (version !== requestVersion.current) return;
       setItems((current) => {
         const known = new Set(current.map((listing) => listing.id));
@@ -86,13 +87,9 @@ export function SellerProfile({ id }: { id: string }) {
       });
       setNextCursor(body.data.nextCursor ?? null);
       setError("");
-    } catch (reason) {
+    } catch {
       if (version === requestVersion.current)
-        setError(
-          reason instanceof Error
-            ? reason.message
-            : "Could not load more books.",
-        );
+        setError(AZ_COPY.seller.loadMoreUnavailable);
     } finally {
       if (version === requestVersion.current) setLoadingMore(false);
     }
@@ -114,18 +111,19 @@ export function SellerProfile({ id }: { id: string }) {
     return (
       <div className="container-shell py-16">
         <EmptyState
-          title="Reader bookstore unavailable."
-          body={error || "This profile is not public or no longer exists."}
-          action="Browse books"
+          title={AZ_COPY.seller.unavailableTitle}
+          body={error || AZ_COPY.seller.unavailableBody}
+          action={AZ_COPY.seller.browseBooks}
           href="/listings"
+          headingLevel="h1"
         />
       </div>
     );
 
-  const joined = new Intl.DateTimeFormat("en", {
+  const joined = formatAzDate(seller.createdAt, {
     month: "long",
     year: "numeric",
-  }).format(new Date(seller.createdAt));
+  });
 
   return (
     <div className="container-shell py-10 md:py-14">
@@ -135,22 +133,22 @@ export function SellerProfile({ id }: { id: string }) {
             {seller.initials}
           </span>
           <div className="min-w-0 flex-1">
-            <span className="bookmark-badge">Reader bookstore</span>
+            <span className="bookmark-badge">{AZ_COPY.seller.badge}</span>
             <h1 className="display mt-4 text-4xl font-semibold md:text-6xl">
               {seller.name}
             </h1>
             <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[10px] font-bold text-gray-500">
               <span className="flex items-center gap-1.5">
-                <MapPin size={12} /> {seller.city || "Azerbaijan"}
+                <MapPin size={12} /> {formatCity(seller.city || "Azerbaijan")}
               </span>
               <span className="flex items-center gap-1.5">
-                <CalendarDays size={12} /> Reader since {joined}
+                <CalendarDays size={12} /> {AZ_COPY.seller.joined} {joined}
               </span>
               <span className="flex items-center gap-1.5">
                 <Star size={12} className="text-orange" />
                 {seller.rating === null
-                  ? "No eligible reviews yet"
-                  : `${seller.rating} from ${seller.reviewCount} review${seller.reviewCount === 1 ? "" : "s"}`}
+                  ? AZ_COPY.seller.noReviews
+                  : formatReviewSummary(seller.rating, seller.reviewCount)}
               </span>
             </div>
           </div>
@@ -160,13 +158,14 @@ export function SellerProfile({ id }: { id: string }) {
       <section className="mt-10">
         <div className="mb-7 flex items-end justify-between border-b-2 border-[#5b3c25] pb-4">
           <div>
-            <span className="eyebrow">Public inventory</span>
+            <span className="eyebrow">{AZ_COPY.seller.publicInventory}</span>
             <h2 className="display mt-3 text-3xl font-semibold">
-              Active and sold books.
+              {AZ_COPY.seller.inventoryTitle}
             </h2>
           </div>
           <span className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[.12em] text-gray-500">
-            <BookOpen size={13} className="text-orange" /> {items.length} loaded
+            <BookOpen size={13} className="text-orange" />{" "}
+            {formatLoadedBooks(items.length)}
           </span>
         </div>
 
@@ -184,16 +183,18 @@ export function SellerProfile({ id }: { id: string }) {
                   onClick={loadMore}
                   disabled={loadingMore}
                 >
-                  {loadingMore ? "Loading more..." : "Load more books"}
+                  {loadingMore
+                    ? AZ_COPY.seller.loadingMore
+                    : AZ_COPY.seller.loadMore}
                 </button>
               </div>
             )}
           </>
         ) : (
           <EmptyState
-            title="No public books yet."
-            body="This reader has no active or sold listings to show."
-            action="Browse catalog"
+            title={AZ_COPY.seller.emptyTitle}
+            body={AZ_COPY.seller.emptyBody}
+            action={AZ_COPY.seller.browseCatalog}
             href="/listings"
           />
         )}
