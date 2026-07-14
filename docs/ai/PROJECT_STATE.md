@@ -50,14 +50,13 @@ Known absent product areas include explicit exchange intention, title/edition id
 
 The backend schema matches the repository migrations and generated type shape. Public catalog and detail compatibility and chat-room ownership are now fixed. Remaining critical compatibility/security work is:
 
-1. Chat message code emits an additional room broadcast without private-channel authorization.
-2. The connector provides public project configuration but not a service-role/secret key. Full protected-route browser verification therefore remains externally blocked until a development secret is configured locally outside Git.
-3. The free development project cannot enable the Pro-only leaked-password protection advisor recommendation without explicit cost authorization.
+1. The connector provides public project configuration but not a service-role/secret key. Full protected-route browser verification therefore remains externally blocked until a development secret is configured locally outside Git.
+2. The free development project cannot enable the Pro-only leaked-password protection advisor recommendation without explicit cost authorization.
 
 ## Baseline
 
-Passed after the current P0 slices: lint, TypeScript, 10/10 unit tests, production build (37 generated routes), and 4/4 existing Playwright tests. Real catalog and detail APIs return 200 with safe sellers; four-viewport production rendering has meaningful content, no horizontal overflow, and no console/page errors. Signed-out favorites render safely and the mobile save control reliably redirects to login without a protected request or browser error. `next dev` still logs a React Refresh `unsafe-eval` CSP incompatibility, while the production build remains clean. See QA_EVIDENCE.md.
+Passed after the current P0 slices: lint, TypeScript, 11/11 unit tests, production build (37 generated routes), and 4/4 existing Playwright tests. Real catalog and detail APIs return 200 with safe sellers; four-viewport production rendering has meaningful content, no horizontal overflow, and no console/page errors. Signed-out favorites render safely and the mobile save control reliably redirects to login without a protected request or browser error. Live buyer-to-seller Postgres Changes delivery is RLS-filtered from a third subscriber. `next dev` still logs a React Refresh `unsafe-eval` CSP incompatibility, while the production build remains clean. See QA_EVIDENCE.md.
 
 ## Readiness
 
-Goal mode is active. P0-001, P0-002, and P0-003 are complete; P0-004 is the next independent security slice, while P0-005 remains externally blocked by the missing development secret. The product is not complete or launch-ready.
+Goal mode is active. P0-001 through P0-004 are complete; P0-005 is the only remaining P0 and is externally blocked by the missing development secret. Independent P1 work can continue while that external action remains outstanding. The product is not complete or launch-ready.

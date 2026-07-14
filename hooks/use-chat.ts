@@ -11,10 +11,7 @@ export function useChat(roomId: string) {
     const supabase = getSupabaseClient();
     if (!supabase) return;
     const channel = supabase
-      .channel(`room:${roomId}`)
-      .on("broadcast", { event: "message" }, ({ payload }) =>
-        setMessages((current) => [...current, payload]),
-      )
+      .channel(`messages:${roomId}`)
       .on(
         "postgres_changes",
         {
@@ -23,7 +20,12 @@ export function useChat(roomId: string) {
           table: "messages",
           filter: `room_id=eq.${roomId}`,
         },
-        ({ new: message }) => setMessages((current) => [...current, message]),
+        ({ new: message }) =>
+          setMessages((current) =>
+            current.some((item) => item.id === message.id)
+              ? current
+              : [...current, message],
+          ),
       )
       .subscribe();
     return () => {

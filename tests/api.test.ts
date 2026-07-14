@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import {
   favoriteInput,
   listingInput,
@@ -116,5 +117,26 @@ describe("marketplace input validation", () => {
       isFavoriteListingVisible({ status: "active", seller: { banned: true } }),
     ).toBe(false);
     expect(isFavoriteListingVisible({ status: "active" })).toBe(false);
+  });
+
+  it("uses only RLS-protected Postgres Changes for chat delivery", () => {
+    const messageRoute = readFileSync(
+      new URL("../app/api/chat/message/route.ts", import.meta.url),
+      "utf8",
+    );
+    const chatHook = readFileSync(
+      new URL("../hooks/use-chat.ts", import.meta.url),
+      "utf8",
+    );
+    const chatPanel = readFileSync(
+      new URL("../components/chat-panel.tsx", import.meta.url),
+      "utf8",
+    );
+
+    expect(messageRoute).not.toContain("broadcast");
+    expect(messageRoute).not.toContain(".channel(");
+    expect(chatHook).not.toContain("broadcast");
+    expect(chatHook).toContain('"postgres_changes"');
+    expect(chatPanel).toContain('"postgres_changes"');
   });
 });

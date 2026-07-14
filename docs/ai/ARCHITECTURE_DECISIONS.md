@@ -66,7 +66,7 @@ Replace fixed-limit catalog retrieval with opaque cursor pagination using a dete
 
 Status: Accepted.
 
-Messages and notifications may use RLS-protected Postgres Changes subscriptions, which the current active chat UI already uses. Any Broadcast channel carrying private data must be private and authorized through realtime.messages policies. Remove redundant public room broadcasts rather than maintaining two delivery paths.
+Messages and notifications use RLS-protected Postgres Changes subscriptions. The redundant public room Broadcast and listener were removed; a source-contract test prevents reintroduction. Live buyer/seller/third-user evidence confirms the published `public.messages` stream delivers only rows permitted by table SELECT RLS. Any future Broadcast carrying private data would require a separate decision, private channel configuration, `realtime.messages` policies, and proof that public access is disabled.
 
 ## ADR-012 — No integrated payment or controlled shipping yet
 

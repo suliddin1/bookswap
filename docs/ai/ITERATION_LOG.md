@@ -2,6 +2,20 @@
 
 Use one entry per autonomous slice. Record facts, ownership, migrations, validation, evidence, and remaining failures. Do not use this log as a completion claim.
 
+## 2026-07-14 — P0 protected message delivery
+
+Goal / acceptance IDs: P0-004; CHAT-02, DB-01, TEST-01.
+
+Ownership: root exclusively owned the message-delivery slice: `app/api/chat/message/route.ts`, `hooks/use-chat.ts`, the focused source-contract test, and durable documentation. Deployed RLS/publication evidence proved the existing Postgres Changes path sufficient, so no migration was added. Ownership is released by this completed local checkpoint.
+
+Starting state: clean branch `autonomous/bookswap-product` at `5ffb0a4`. `ChatPanel` already receives `public.messages` INSERT events through Postgres Changes and de-duplicates the optimistic HTTP result. The send route additionally emits the same private message on public `room:{id}` Broadcast without `realtime.messages` authorization. The dormant `useChat` hook listens to both paths and can duplicate or accept unprotected payloads. Official Supabase documentation confirms Postgres Changes respects table SELECT RLS, while secure Broadcast would require private channels, `realtime.messages` policies, and disabled public access.
+
+Implemented: deleted the send route's public `room:{id}` Broadcast, removed the dormant hook's Broadcast listener, aligned the hook channel name with the active message path, and de-duplicated Postgres Changes by message ID. Added a source-contract unit test that requires Postgres Changes in both clients and rejects Broadcast/channel sends in the route.
+
+Backend evidence: buyer message insert succeeds; seller reads it; third user reads zero; nonmember send, spoofed sender, banned sender, and anonymous read fail. A real authenticated WebSocket test explicitly set each access token, subscribed buyer/seller/third clients to the room-filtered `public.messages` INSERT stream, and inserted through the buyer's RLS client. Buyer and seller each received the matching row; the third subscriber received zero. `messages` is present once in `supabase_realtime`, RLS is enabled, and exactly one member SELECT and one active-member INSERT policy are deployed. Advisors are unchanged.
+
+Validation: lint, TypeScript, 11/11 unit tests, production build, and 4/4 Playwright tests pass. Agent Browser shows the signed-out messages state at 1440x900, 1024x768, 390x844, and 360x800 with scroll width equal to viewport, no protected chat request, and no console/page errors. All temporary Auth/profile/listing/room/message fixtures were deleted and zero rows remain. Live protected route-handler testing still belongs to P0-005 because the development service secret is unavailable.
+
 ## 2026-07-14 — P0 favorite visibility
 
 Goal / acceptance IDs: P0-003; FAV-01, SVC-01, DB-01, TEST-01.

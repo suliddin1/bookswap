@@ -29,9 +29,6 @@ export async function POST(request: Request) {
       .select()
       .single();
     if (error) throw error;
-    await supabase
-      .channel(`room:${input.roomId}`)
-      .send({ type: "broadcast", event: "message", payload: data });
     const recipientId =
       room.buyer_id === user.id ? room.seller_id : room.buyer_id;
     void notifyUser(recipientId, "MESSAGE", {

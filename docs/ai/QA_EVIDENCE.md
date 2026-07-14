@@ -74,6 +74,28 @@ Current command/browser gate: lint pass; TypeScript pass; Vitest 10/10; producti
 
 Cleanup: three temporary Auth users, their profiles, seven temporary listings, and all temporary favorite rows were removed; all verification counts are zero.
 
+## P0 protected message delivery — current evidence
+
+No migration was required. The active client already used `postgres_changes` on `public.messages`, and official Supabase documentation confirms records from RLS-enabled tables are delivered only when the subscriber may SELECT them. The unauthorised public Broadcast send and dormant Broadcast listener were removed; both clients now use only the published table stream and de-duplicate IDs.
+
+Direct role-level matrix:
+
+| Probe | Result |
+| --- | --- |
+| Buyer INSERT as own sender in own room | Success. |
+| Seller SELECT in the room | 1 visible message. |
+| Third-user SELECT | 0 visible messages. |
+| Third-user INSERT | 42501 RLS denial. |
+| Buyer spoofing seller sender ID | 42501 RLS denial. |
+| Banned buyer INSERT | 42501 RLS denial. |
+| Anonymous SELECT | 42501 table permission denial. |
+
+Live Realtime evidence used independent authenticated Supabase clients with explicit Realtime access tokens. A buyer insert produced the matching Postgres Changes event for the buyer and seller subscriptions; an already-subscribed third user received zero events. Catalog inspection confirms `public.messages` appears exactly once in `supabase_realtime`, RLS is enabled, and the member SELECT plus active-member INSERT policies are deployed. A source-contract unit test rejects `.channel()`/Broadcast in the send route and requires `postgres_changes` in both chat clients.
+
+Current gate: lint pass; TypeScript pass; Vitest 11/11; Next.js production build 37 routes; Playwright 4/4. Agent Browser rendered the signed-out messages state at 1440x900, 1024x768, 390x844, and 360x800 with matching viewport/scroll widths, no `/api/chat` request, and zero console/page errors. Security advisor remains at the single Pro-only Auth warning; performance advisor remains informational only.
+
+Cleanup: the three temporary Auth users and cascaded profiles, listing, room, and messages were removed; every verification count is zero.
+
 ## Static and automated baseline
 
 | Command | Result | Exact summary |
