@@ -1,4 +1,5 @@
 import { authFetch } from "@/lib/client-api";
+import { AZ_COPY, localizeApiError } from "@/lib/i18n";
 
 export const MAX_LISTING_IMAGES = 5;
 export const MAX_LISTING_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -10,7 +11,7 @@ export const LISTING_IMAGE_TYPES = [
 
 export function validateListingImageFiles(files: File[]) {
   if (files.length > MAX_LISTING_IMAGES)
-    return "Choose no more than five photos.";
+    return AZ_COPY.listingForm.invalidImageCount;
   const invalid = files.find(
     (file) =>
       file.size > MAX_LISTING_IMAGE_BYTES ||
@@ -18,9 +19,7 @@ export function validateListingImageFiles(files: File[]) {
         file.type as (typeof LISTING_IMAGE_TYPES)[number],
       ),
   );
-  return invalid
-    ? "Each photo must be JPEG, PNG, or WebP and no larger than 5 MB."
-    : null;
+  return invalid ? AZ_COPY.listingForm.invalidImageFile : null;
 }
 
 export async function uploadListingImages(files: File[]) {
@@ -32,7 +31,9 @@ export async function uploadListingImages(files: File[]) {
   });
   const body = await response.json();
   if (!response.ok)
-    throw new Error(body.error ?? "Could not upload listing photos.");
+    throw new Error(
+      localizeApiError(body.code, AZ_COPY.listingForm.uploadFailed),
+    );
   return body.data as string[];
 }
 
@@ -45,6 +46,8 @@ export async function cleanupUploadedListingImages(images: string[]) {
   });
   const body = await response.json();
   if (!response.ok)
-    throw new Error(body.error ?? "Could not schedule image cleanup.");
+    throw new Error(
+      localizeApiError(body.code, AZ_COPY.listingForm.cleanupFailed),
+    );
   return { cleanupPending: Boolean(body.cleanupPending) };
 }

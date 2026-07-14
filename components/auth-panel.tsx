@@ -1,8 +1,10 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { ArrowRight, Check, Mail, Wand2 } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase";
+import { AZ_COPY, localizeAuthError } from "@/lib/i18n";
+import type { CSSProperties, FormEvent } from "react";
 
 type Mode = "login" | "signup" | "reset" | "sent";
 
@@ -17,10 +19,7 @@ export function AuthPanel() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     const supabase = getSupabaseClient();
-    if (!supabase)
-      return setError(
-        "Supabase is not configured. Add the public URL and anon key to .env.local.",
-      );
+    if (!supabase) return setError(AZ_COPY.auth.configurationUnavailable);
     setBusy(true);
     setError("");
     try {
@@ -47,9 +46,7 @@ export function AuthPanel() {
         window.location.href = "/profile";
       }
     } catch (reason) {
-      setError(
-        reason instanceof Error ? reason.message : "Authentication failed.",
-      );
+      setError(localizeAuthError(reason));
     } finally {
       setBusy(false);
     }
@@ -57,14 +54,15 @@ export function AuthPanel() {
 
   async function magicLink() {
     const supabase = getSupabaseClient();
-    if (!supabase) return setError("Supabase is not configured.");
+    if (!supabase) return setError(AZ_COPY.auth.configurationUnavailable);
     setBusy(true);
+    setError("");
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: `${window.location.origin}/profile` },
     });
     setBusy(false);
-    if (error) setError(error.message);
+    if (error) setError(localizeAuthError(error));
     else setMode("sent");
   }
 
@@ -76,16 +74,16 @@ export function AuthPanel() {
             <Check size={22} />
           </span>
           <h1 className="display mt-6 text-4xl font-semibold">
-            Check your inbox.
+            {AZ_COPY.auth.sentTitle}
           </h1>
           <p className="mt-4 text-xs leading-6 text-gray-500">
-            Your secure BookSwap email is on its way.
+            {AZ_COPY.auth.sentBody}
           </p>
           <button
             onClick={() => setMode("login")}
             className="btn-secondary mt-7"
           >
-            Back to sign in
+            {AZ_COPY.auth.backToSignIn}
           </button>
         </div>
       </div>
@@ -94,31 +92,29 @@ export function AuthPanel() {
   return (
     <div className="desk-surface relative grid min-h-[calc(100vh-74px)] place-items-center overflow-hidden p-5 py-14">
       <div className="spine-stack absolute bottom-0 left-8 hidden opacity-70 lg:flex">
-        {["Fiction", "History", "Design", "Essays", "Poetry"].map(
-          (title, index) => (
-            <span
-              key={title}
-              className="spine"
-              style={
-                {
-                  "--spine-color": [
-                    "#63372d",
-                    "#263d35",
-                    "#49364e",
-                    "#806428",
-                    "#24394a",
-                  ][index],
-                  height: `${135 + index * 13}px`,
-                } as React.CSSProperties
-              }
-            >
-              {title}
-            </span>
-          ),
-        )}
+        {AZ_COPY.auth.decorativeTitles.slice(0, 5).map((title, index) => (
+          <span
+            key={title}
+            className="spine"
+            style={
+              {
+                "--spine-color": [
+                  "#63372d",
+                  "#263d35",
+                  "#49364e",
+                  "#806428",
+                  "#24394a",
+                ][index],
+                height: `${135 + index * 13}px`,
+              } as CSSProperties
+            }
+          >
+            {title}
+          </span>
+        ))}
       </div>
       <div className="spine-stack absolute bottom-0 right-8 hidden opacity-70 lg:flex">
-        {["Science", "Notes", "Literature", "Business"].map((title, index) => (
+        {AZ_COPY.auth.decorativeTitles.slice(5).map((title, index) => (
           <span
             key={title}
             className="spine"
@@ -128,7 +124,7 @@ export function AuthPanel() {
                   index
                 ],
                 height: `${155 - index * 10}px`,
-              } as React.CSSProperties
+              } as CSSProperties
             }
           >
             {title}
@@ -139,43 +135,43 @@ export function AuthPanel() {
         <form onSubmit={submit}>
           <span className="bookmark-badge">
             {mode === "signup"
-              ? "New reader card"
+              ? AZ_COPY.auth.signupBadge
               : mode === "reset"
-                ? "Account recovery"
-                : "Reader login"}
+                ? AZ_COPY.auth.recoveryBadge
+                : AZ_COPY.auth.loginBadge}
           </span>
-          <h2 className="display mt-4 text-4xl font-semibold">
+          <h1 className="display mt-4 text-4xl font-semibold">
             {mode === "signup"
-              ? "Make room for more stories."
+              ? AZ_COPY.auth.signupTitle
               : mode === "reset"
-                ? "Reset your password."
-                : "Sign in to your shelf."}
-          </h2>
+                ? AZ_COPY.auth.recoveryTitle
+                : AZ_COPY.auth.loginTitle}
+          </h1>
           <p className="mt-3 text-xs leading-6 text-gray-500">
-            Access your listings, saved books, and reader conversations.
+            {AZ_COPY.auth.intro}
           </p>
           <div className="mt-7 space-y-4">
             {mode === "signup" && (
               <Field
-                label="Name"
+                label={AZ_COPY.auth.name}
                 value={name}
                 onChange={setName}
-                placeholder="Your name"
+                placeholder={AZ_COPY.auth.namePlaceholder}
               />
             )}
             <Field
-              label="Email address"
+              label={AZ_COPY.auth.email}
               value={email}
               onChange={setEmail}
-              placeholder="reader@example.com"
+              placeholder={AZ_COPY.auth.emailPlaceholder}
               type="email"
             />
             {mode !== "reset" && (
               <Field
-                label="Password"
+                label={AZ_COPY.auth.password}
                 value={password}
                 onChange={setPassword}
-                placeholder="At least 8 characters"
+                placeholder={AZ_COPY.auth.passwordPlaceholder}
                 type="password"
                 minLength={8}
               />
@@ -190,12 +186,12 @@ export function AuthPanel() {
             )}
             <button disabled={busy} className="btn-primary w-full">
               {busy
-                ? "Please wait..."
+                ? AZ_COPY.auth.busy
                 : mode === "signup"
-                  ? "Create account"
+                  ? AZ_COPY.auth.createAccount
                   : mode === "reset"
-                    ? "Send reset link"
-                    : "Sign in"}{" "}
+                    ? AZ_COPY.auth.sendReset
+                    : AZ_COPY.auth.signIn}{" "}
               <ArrowRight size={15} />
             </button>
           </div>
@@ -203,7 +199,9 @@ export function AuthPanel() {
             <>
               <div className="my-6 flex items-center gap-3">
                 <span className="h-px flex-1 bg-[#ded4c1]" />
-                <span className="text-[9px] font-bold text-gray-400">OR</span>
+                <span className="text-[9px] font-bold text-gray-400">
+                  {AZ_COPY.auth.separator}
+                </span>
                 <span className="h-px flex-1 bg-[#ded4c1]" />
               </div>
               <button
@@ -212,7 +210,7 @@ export function AuthPanel() {
                 disabled={!email || busy}
                 className="btn-secondary w-full"
               >
-                <Wand2 size={15} /> Email me a magic link
+                <Wand2 size={15} /> {AZ_COPY.auth.magicLink}
               </button>
             </>
           )}
@@ -223,8 +221,8 @@ export function AuthPanel() {
               onClick={() => setMode(mode === "signup" ? "login" : "signup")}
             >
               {mode === "signup"
-                ? "Already a member? Sign in"
-                : "Create an account"}
+                ? AZ_COPY.auth.alreadyMember
+                : AZ_COPY.auth.createPrompt}
             </button>
             {mode === "login" && (
               <button
@@ -232,7 +230,7 @@ export function AuthPanel() {
                 onClick={() => setMode("reset")}
                 className="flex items-center gap-1"
               >
-                <Mail size={11} /> Forgot password?
+                <Mail size={11} /> {AZ_COPY.auth.forgotPassword}
               </button>
             )}
           </div>

@@ -204,6 +204,154 @@ export const AZ_COPY = {
     emptyBody: "Kitab bazarında elanları yadda saxla; onlar burada görünəcək.",
     browseBooks: "Kitablara bax",
   },
+  listingForm: {
+    newMetadataTitle: "Kitab elanı yarat",
+    newMetadataDescription: "BookSwap-da ikinci əl kitabını satışa çıxar.",
+    editMetadataTitle: "Kitab elanını redaktə et",
+    editMetadataDescription: "BookSwap kitab elanının məlumatlarını yenilə.",
+    steps: ["Kitab məlumatları", "Vəziyyət", "Şəkillər və qiymət", "Yoxlama"],
+    cancel: "Ləğv et",
+    secureListing: "Qorunan BookSwap elanı",
+    badge: "Kitabı yeni oxucuya ötür",
+    title: "Kitab elanı yarat.",
+    intro: "Dəqiq və aydın elan uyğun oxucunun kitabı tapmasına kömək edir.",
+    detailsTitle: "Kitab haqqında məlumat ver.",
+    detailsBody:
+      "Oxucuların kitabı tapa bilməsi üçün dəqiq məlumatlardan istifadə et.",
+    isbn: "ISBN (istəyə bağlı)",
+    bookTitle: "Kitabın adı",
+    author: "Müəllif / mövzu",
+    category: "Kateqoriya",
+    condition: "Vəziyyəti",
+    location: "Məkan",
+    description: "Təsvir",
+    descriptionPlaceholder:
+      "Vəziyyəti, nəşr məlumatını və növbəti oxucunun bilməli olduğu məqamları yaz...",
+    conditionTitle: "Kitabın vəziyyəti necədir?",
+    conditionBody: "Dürüst vəziyyət qeydləri etibar yaradır.",
+    photosTitle: "Kitabın real nüsxəsini göstər.",
+    photosBody:
+      "1–5 aydın JPEG, PNG və ya WebP şəkli yüklə; hər biri 5 MB-dan kiçik olmalıdır.",
+    choosePhotos: "Kitab şəkillərini seç",
+    photosHint: "Üz qabığı, kitabın beli və istifadə izləri",
+    selectedPhotos: "Seçilmiş kitab şəkilləri",
+    selectedPhoto: "Seçilmiş kitab şəkli",
+    removeSelectedPhoto: "Seçilmiş şəkli sil",
+    selectedCount: (count: number) => `${count} şəkil seçilib`,
+    price: "Qiymət (AZN)",
+    protectedUpload:
+      "Şəkillər qorunan listing-images yaddaş bölməsində saxlanılır.",
+    reviewTitle: "Kitab növbəti oxucuya hazırdır?",
+    reviewBody: "Yayımlamadan əvvəl ictimai kartı yoxla.",
+    preview: "Ön baxış",
+    previewTitle: "Kitabın adı",
+    previewAuthor: "Müəllif",
+    back: "Geri",
+    continue: "Davam et",
+    publishing: "Yayımlanır...",
+    publish: "Elanı yayımla",
+    publishedTitle: "Kitab elanınız yayımlandı.",
+    publishedBody: "Elan BookSwap kitab bazarında oxuculara görünür.",
+    myShelf: "Kitab rəfim",
+    browseBooks: "Kitablara bax",
+    publishFailed: "Elanı yayımlamaq mümkün olmadı.",
+    cleanupQueued:
+      "Yüklənmiş şəkillər təhlükəsiz təmizləmə növbəsinə əlavə edildi.",
+    invalidImageCount: "1–5 şəkil seç.",
+    invalidImageFile:
+      "Hər şəkil JPEG, PNG və ya WebP formatında və ən çoxu 5 MB olmalıdır.",
+    invalidImageContent: "Seçilmiş fayllardan biri etibarlı şəkil deyil.",
+    uploadFailed: "Kitab şəkillərini yükləmək mümkün olmadı.",
+    cleanupFailed: "Şəkillərin təmizlənməsini planlaşdırmaq mümkün olmadı.",
+    maxPhotos: "Elanda ən çoxu 5 şəkil saxlamaq olar.",
+    atLeastOnePhoto: "Ən azı bir kitab şəklini saxla və ya əlavə et.",
+    editUnavailableTitle: "Bu elanı redaktə etmək mümkün deyil.",
+    editUnavailableBody: "Elan tapılmadı və ya artıq əlçatan deyil.",
+    manageBadge: "Elanı idarə et",
+    editTitle: "Kitab məlumatlarını redaktə et.",
+    photos: "Kitab şəkilləri",
+    photosEditBody:
+      "1–5 şəkil saxla. Yadda saxlamazdan əvvəl köhnə şəkli silib yenisini əlavə edə bilərsən.",
+    listingPhotos: "Elanın şəkilləri",
+    currentPhoto: "Cari kitab şəkli",
+    newPhoto: "Yeni kitab şəkli",
+    removeCurrentPhoto: "Cari şəkli sil",
+    removeNewPhoto: "Yeni şəkli sil",
+    addReplacementPhotos: "Yeni şəkillər əlavə et",
+    saving: "Yadda saxlanılır...",
+    save: "Dəyişiklikləri yadda saxla",
+    saved: "Dəyişikliklər yadda saxlanıldı.",
+    saveFailed: "Elan dəyişikliklərini yadda saxlamaq mümkün olmadı.",
+    cleanupPending:
+      "Elan yadda saxlanıldı. Köhnə şəkillər təhlükəsiz təmizləmə növbəsindədir.",
+  },
+  auth: {
+    metadataTitle: "Daxil ol və ya hesab yarat",
+    metadataDescription:
+      "BookSwap hesabına daxil ol və ya yeni oxucu hesabı yarat.",
+    loginBadge: "Oxucu girişi",
+    loginTitle: "Kitab rəfinə daxil ol.",
+    signupBadge: "Yeni oxucu hesabı",
+    signupTitle: "Yeni hekayələrə yer aç.",
+    recoveryBadge: "Hesabı bərpa et",
+    recoveryTitle: "Parolunu yenilə.",
+    intro: "Elanlarına, seçilmiş kitablarına və oxucu söhbətlərinə bax.",
+    name: "Ad",
+    namePlaceholder: "Adınız",
+    email: "E-poçt ünvanı",
+    emailPlaceholder: "oxucu@example.com",
+    password: "Parol",
+    passwordPlaceholder: "Ən azı 8 simvol",
+    busy: "Gözləyin...",
+    createAccount: "Hesab yarat",
+    sendReset: "Bərpa keçidini göndər",
+    signIn: "Daxil ol",
+    separator: "VƏ YA",
+    magicLink: "E-poçtla giriş keçidi göndər",
+    alreadyMember: "Hesabın var? Daxil ol",
+    createPrompt: "Yeni hesab yarat",
+    forgotPassword: "Parolu unutmusunuz?",
+    sentTitle: "E-poçtunuzu yoxlayın.",
+    sentBody: "Təhlükəsiz BookSwap keçidi e-poçt ünvanınıza göndərildi.",
+    backToSignIn: "Girişə qayıt",
+    configurationUnavailable: "Giriş xidməti hazırda əlçatan deyil.",
+    failed: "Giriş əməliyyatını tamamlamaq mümkün olmadı.",
+    invalidCredentials: "E-poçt ünvanı və ya parol yanlışdır.",
+    emailNotConfirmed: "Daxil olmazdan əvvəl e-poçt ünvanını təsdiqlə.",
+    accountExists: "Bu e-poçt ünvanı ilə hesab artıq mövcuddur.",
+    signupDisabled: "Yeni hesab yaradılması hazırda əlçatan deyil.",
+    invalidEmail: "Etibarlı e-poçt ünvanı daxil et.",
+    weakPassword: "Daha güclü parol seç.",
+    rateLimited: "Həddən çox cəhd edildi. Bir az sonra yenidən yoxla.",
+    sessionMissing: "Bərpa keçidinin müddəti bitib. Yeni keçid istə.",
+    samePassword: "Yeni parol əvvəlki paroldan fərqli olmalıdır.",
+    decorativeTitles: [
+      "Bədii ədəbiyyat",
+      "Tarix",
+      "Dizayn",
+      "Esselər",
+      "Poeziya",
+      "Elm",
+      "Qeydlər",
+      "Ədəbiyyat",
+      "Biznes",
+    ],
+  },
+  resetPassword: {
+    metadataTitle: "Parolu yenilə",
+    metadataDescription: "BookSwap hesabınız üçün yeni parol seçin.",
+    badge: "Hesabı bərpa et",
+    title: "Yeni parol seç.",
+    newPassword: "Yeni parol",
+    confirmPassword: "Parolu təkrar et",
+    minLength: "Ən azı 8 simvoldan istifadə et.",
+    mismatch: "Parollar eyni deyil.",
+    updating: "Yenilənir...",
+    update: "Parolu yenilə",
+    failed: "Parolu yeniləmək mümkün olmadı.",
+    completeTitle: "Parol yeniləndi.",
+    openDashboard: "Kabineti aç",
+  },
 } as const;
 
 const categoryLabels: Record<string, string> = {
@@ -262,6 +410,28 @@ const apiErrorLabels: Record<string, string> = {
   OWN_LISTING: "Öz elanını şikayət edə bilməzsən.",
   REPORT_EXISTS: "Bu elan üçün artıq açıq şikayətin var.",
   REVIEW_NOT_ALLOWED: "Yalnız tamamlanmış alışın alıcısı rəy yaza bilər.",
+  INVALID_IMAGE_COUNT: AZ_COPY.listingForm.invalidImageCount,
+  INVALID_IMAGE_FILE: AZ_COPY.listingForm.invalidImageFile,
+  INVALID_IMAGE_CONTENT: AZ_COPY.listingForm.invalidImageContent,
+  LISTING_LOCKED: "Kilidlənmiş elanı redaktə etmək mümkün deyil.",
+  MODERATION_UNAVAILABLE:
+    "Məzmun yoxlaması hazırda əlçatan deyil. Bir az sonra yenidən cəhd et.",
+  CONTENT_REJECTED:
+    "Elanın məzmunu BookSwap qaydalarına uyğun olmadığı üçün qəbul edilmədi.",
+};
+
+const authErrorLabels: Record<string, string> = {
+  invalid_credentials: AZ_COPY.auth.invalidCredentials,
+  email_not_confirmed: AZ_COPY.auth.emailNotConfirmed,
+  user_already_exists: AZ_COPY.auth.accountExists,
+  email_exists: AZ_COPY.auth.accountExists,
+  signup_disabled: AZ_COPY.auth.signupDisabled,
+  email_address_invalid: AZ_COPY.auth.invalidEmail,
+  weak_password: AZ_COPY.auth.weakPassword,
+  over_email_send_rate_limit: AZ_COPY.auth.rateLimited,
+  over_request_rate_limit: AZ_COPY.auth.rateLimited,
+  session_not_found: AZ_COPY.auth.sessionMissing,
+  same_password: AZ_COPY.auth.samePassword,
 };
 
 const numberFormatter = new Intl.NumberFormat("en-US", {
@@ -368,5 +538,16 @@ export function formatStars(count: number) {
 export function localizeApiError(code: unknown, fallback: string) {
   return typeof code === "string"
     ? (apiErrorLabels[code] ?? fallback)
+    : fallback;
+}
+
+export function localizeAuthError(
+  error: unknown,
+  fallback: string = AZ_COPY.auth.failed,
+) {
+  if (!error || typeof error !== "object") return fallback;
+  const code = "code" in error ? error.code : undefined;
+  return typeof code === "string"
+    ? (authErrorLabels[code] ?? fallback)
     : fallback;
 }

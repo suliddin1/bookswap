@@ -1,5 +1,25 @@
 # Iteration log
 
+## 2026-07-14 - P1 Azerbaijani listing authoring and authentication
+
+Goal / acceptance IDs: P1-010; L10N-01, AUTH-01, AUTH-02, LIST-01, IMG-02, MOD-01, SEO-01, RESP-01, A11Y-01, BROW-01, TEST-01.
+
+Ownership: root exclusively owns the Azerbaijani contract additions, listing create/edit/auth/password-reset route metadata and components, client upload/auth error mapping, focused tests, browser evidence, and affected durable documentation for this slice. No other agent is editing these files.
+
+Starting state: clean branch `autonomous/bookswap-product` at `7b4365e`. Public discovery, detail, seller, and favorites are Azerbaijani, but listing create/edit and login/signup/magic-link/reset surfaces expose English steps, fields, values, accessible image controls, validation, raw Supabase/API errors, recovery states, and generic/missing metadata.
+
+Planned contract: centralize the complete authoring/auth copy and safe machine-error mappings; preserve marketplace wire values while translating controls; localize image validation/upload/cleanup and moderation/listing failures without leaking backend prose; add honest route metadata/robots; prove form states, keyboard names, preview/currency, sign-in/signup/recovery transitions, responsive reflow, no old copy/mojibake/runtime errors, full repository gates, and cleanup. Protected create/edit route mutation remains honestly blocked by P0-005 unless the development service secret becomes available.
+
+Implemented: extended the typed copy contract through listing creation/editing, local image validation/upload/cleanup, login, signup, password recovery/update, and authenticated-client preconditions. Category/condition/city controls show Azerbaijani while retaining English wire values. Listing API and Supabase Auth failures map recognized machine codes to safe Azerbaijani fallbacks; provider/database prose and configuration instructions are no longer exposed. Authoring previews use deterministic manat formatting, edit adds localized selectors for all stored marketplace codes, condition choices expose `aria-pressed`, and top-level auth/edit states use one `h1`. All four private routes have Azerbaijani title/description metadata and `noindex,nofollow`.
+
+Adversarial review: the production form journey retained `Fiction` and `Baku` in the controls while rendering `Bədii ədəbiyyat` and `Bakı`. A browser-local valid PNG reached the final `24,5 ₼` preview without upload or publication. One real invalid-credential request returned the expected Auth 400 and displayed only `E-poçt ünvanı və ya parol yanlışdır.`; a clean context remained console/network-error free. Signup, magic-link, reset-email, password update, upload, and listing mutation were deliberately not submitted. The missing development service secret still prevents truthful end-to-end protected create/edit verification, while outbound email and account creation would be external side effects outside this localization proof.
+
+Validation: lint, strict TypeScript, 30/30 unit tests, the 37-route production build, and 7/7 Playwright tests pass. Production new/edit/login/reset routes passed a clean 16-case matrix at 1440x900, 1024x768, 390x844, and 360x800 with `lang=az`, one `h1`, private robots, zero stale owned English, overflow, mojibake, console/page/request failures, or HTTP 4xx/5xx. Interactions covered authoring steps, stable select values, selected condition semantics, browser-only image preview/removal vocabulary, localized edit controls, login/signup/recovery modes, safe Auth failure mapping, and local password mismatch. Visual inspection passed one representative page at each viewport class.
+
+Cleanup: one temporary Auth-backed seller/listing supplied the real edit GET; no browser data mutation or Storage upload occurred. Sessions and refresh tokens were removed before identity/Auth deletion, and final Auth user/identity/session/refresh-token/public profile/listing counts are zero. The production server, screenshots, and logs were removed. Ownership for this slice is released by the local checkpoint.
+
+Next slice: translate profile dashboard and privacy-request journeys, including listing states/actions, counts, price/date/location, account updates, privacy types/outcomes, and safe route errors. P0-005 remains the sole externally blocked P0.
+
 ## 2026-07-14 - P1 Azerbaijani public listing and seller journeys
 
 Goal / acceptance IDs: P1-010; L10N-01, PROF-02, LIST-01, FAV-01, REV-01, REP-01, SEO-01, RESP-01, A11Y-01, TEST-01.

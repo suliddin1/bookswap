@@ -52,6 +52,7 @@ import {
   formatReviewSummary,
   formatStars,
   localizeApiError,
+  localizeAuthError,
 } from "../lib/i18n";
 
 const originalOpenAIKey = process.env.OPENAI_API_KEY;
@@ -88,6 +89,12 @@ describe("marketplace input validation", () => {
       "açıq şikayətin",
     );
     expect(localizeApiError("UNKNOWN", "fallback")).toBe("fallback");
+    expect(localizeAuthError({ code: "invalid_credentials" })).toBe(
+      AZ_COPY.auth.invalidCredentials,
+    );
+    expect(localizeAuthError({ message: "provider detail" })).toBe(
+      AZ_COPY.auth.failed,
+    );
     expect(formatCategory("User supplied value")).toBe("User supplied value");
   });
 
@@ -109,6 +116,16 @@ describe("marketplace input validation", () => {
       "../components/listing-detail.tsx",
       "../components/seller-profile.tsx",
       "../components/favorites-page.tsx",
+      "../app/listings/new/page.tsx",
+      "../app/listings/[id]/edit/page.tsx",
+      "../app/login/page.tsx",
+      "../app/reset-password/page.tsx",
+      "../components/listing-wizard.tsx",
+      "../components/edit-listing-form.tsx",
+      "../components/auth-panel.tsx",
+      "../components/reset-password-panel.tsx",
+      "../lib/client-listing-images.ts",
+      "../lib/client-api.ts",
     ]
       .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
       .join("\n");
@@ -132,6 +149,19 @@ describe("marketplace input validation", () => {
       "Public inventory",
       "Saved catalog",
       "Sign in to see favorites",
+      "List a book",
+      "Book details",
+      "Choose book photos",
+      "Publish listing",
+      "Manage listing",
+      "Edit book details",
+      "Reader login",
+      "Sign in to your shelf",
+      "Create account",
+      "Forgot password",
+      "Choose a new password",
+      "Authentication failed",
+      "Supabase is not configured",
     ]) {
       expect(sources).not.toContain(oldCopy);
     }
@@ -816,7 +846,7 @@ describe("marketplace input validation", () => {
     expect(wizard).toContain("URL.revokeObjectURL");
     expect(wizard).toContain("cleanupUploadedListingImages");
     expect(editForm).toContain("URL.revokeObjectURL");
-    expect(editForm).toContain("Remove current photo");
+    expect(editForm).toContain("AZ_COPY.listingForm.removeCurrentPhoto");
     expect(migration).toContain("after update of images or delete");
     expect(migration).toContain("enable row level security");
     expect(migration).toContain("from anon, authenticated");
