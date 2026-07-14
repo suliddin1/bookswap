@@ -88,19 +88,22 @@ export const moderationInput = z
   })
   .strict()
   .refine((value) => value.text || value.imageUrl, "Text or image is required");
+const adminActionReason = z.string().trim().min(10).max(1000);
 export const adminModerationInput = z
   .object({
     listingId: uuid,
     action: z.enum(["approve", "reject"]),
+    reason: adminActionReason,
   })
   .strict();
 export const adminBanInput = z
-  .object({ userId: uuid, banned: z.boolean() })
+  .object({ userId: uuid, banned: z.boolean(), reason: adminActionReason })
   .strict();
 export const adminReportInput = z
   .object({
     reportId: uuid,
     status: z.enum(["resolved", "dismissed"]),
+    reason: adminActionReason,
   })
   .strict();
 export const privacyRequestInput = z
@@ -120,6 +123,7 @@ export const adminPrivacyRequestInput = z
   .object({
     requestId: uuid,
     status: z.enum(["in_progress", "completed", "rejected"]),
+    reason: adminActionReason,
   })
   .strict();
 

@@ -15,6 +15,18 @@ export async function notifyUser(
     .select("id")
     .single();
   if (insertError) throw insertError;
+  return {
+    notificationId: notification.id,
+    ...(await sendOptionalNotificationEmail(userId, type, payload)),
+  };
+}
+
+export async function sendOptionalNotificationEmail(
+  userId: string,
+  type: "MESSAGE" | "SYSTEM",
+  payload: Record<string, unknown>,
+) {
+  const supabase = requireSupabaseAdmin();
   const { data: user, error: userError } = await supabase
     .from("users")
     .select("email")
@@ -23,7 +35,6 @@ export async function notifyUser(
   if (userError) {
     console.error("Notification email recipient lookup failed", userError);
     return {
-      notificationId: notification.id,
       emailAttempted: false,
       emailDelivered: false,
     };
@@ -48,13 +59,11 @@ export async function notifyUser(
     });
     if (error) console.error("Notification email delivery failed", error);
     return {
-      notificationId: notification.id,
       emailAttempted: true,
       emailDelivered: !error,
     };
   }
   return {
-    notificationId: notification.id,
     emailAttempted: false,
     emailDelivered: false,
   };

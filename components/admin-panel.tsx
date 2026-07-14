@@ -21,58 +21,89 @@ export function AdminPanel() {
     reports: any[];
     privacyRequests: any[];
     moderationDecisions: any[];
+    auditLog: any[];
   } | null>(null);
   const [error, setError] = useState("");
+  const [actionReason, setActionReason] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
 
   function load() {
     authFetch("/api/admin/dashboard")
       .then(async (response) => {
         const body = await response.json();
         if (!response.ok) throw new Error(body.error);
+        setError("");
         setData(body.data);
       })
       .catch((reason) => setError(reason.message));
   }
   useEffect(load, []);
 
+  async function runAdminAction(
+    url: string,
+    method: "POST" | "PATCH",
+    payload: Record<string, unknown>,
+  ) {
+    const reason = actionReason.trim();
+    if (reason.length < 10) {
+      setActionError("Enter a specific reason of at least 10 characters.");
+      return;
+    }
+    setActionBusy(true);
+    setActionError("");
+    try {
+      const response = await authFetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, reason }),
+      });
+      const body = await response.json();
+      if (!response.ok)
+        throw new Error(body.error ?? "The administrator action failed.");
+      setActionReason("");
+      load();
+    } catch (reason) {
+      setActionError(
+        reason instanceof Error
+          ? reason.message
+          : "The administrator action failed.",
+      );
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
   async function moderate(listingId: string, action: "approve" | "reject") {
-    await authFetch("/api/admin/moderate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ listingId, action }),
+    await runAdminAction("/api/admin/moderate", "POST", {
+      listingId,
+      action,
     });
-    load();
   }
   async function ban(userId: string, banned: boolean) {
-    await authFetch("/api/admin/ban", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, banned }),
-    });
-    load();
+    await runAdminAction("/api/admin/ban", "POST", { userId, banned });
   }
   async function resolveReport(
     reportId: string,
     status: "resolved" | "dismissed",
   ) {
-    await authFetch("/api/admin/reports", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reportId, status }),
+    await runAdminAction("/api/admin/reports", "PATCH", {
+      reportId,
+      status,
     });
-    load();
   }
   async function resolvePrivacyRequest(
     requestId: string,
     status: "in_progress" | "completed" | "rejected",
   ) {
-    await authFetch("/api/admin/privacy-requests", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId, status }),
+    await runAdminAction("/api/admin/privacy-requests", "PATCH", {
+      requestId,
+      status,
     });
-    load();
   }
+
+  const actionReady =
+    actionReason.trim().length >= 10 && actionReason.trim().length <= 1000;
 
   if (error)
     return (
@@ -132,6 +163,98 @@ export function AdminPanel() {
           );
         })}
       </div>
+      <section className="card mt-8 p-5">
+        <label htmlFor="admin-action-reason" className="block">
+          <span className="text-[9px] font-bold uppercase tracking-[.13em] text-gray-500">
+            Reason for the next administrator action
+          </span>
+          <textarea
+            id="admin-action-reason"
+            className="input mt-3 min-h-24 py-3"
+            value={actionReason}
+            minLength={10}
+            maxLength={1000}
+            disabled={actionBusy}
+            aria-describedby="admin-action-reason-help"
+            onChange={(event) => {
+              setActionReason(event.target.value);
+              setActionError("");
+            }}
+            placeholder="Record the evidence and rationale for the next action..."
+          />
+        </label>
+        <div
+          id="admin-action-reason-help"
+          className="mt-2 flex flex-wrap justify-between gap-2 text-[9px] text-gray-500"
+        >
+          <span>
+            Required for listing, account, report, privacy, and appeal actions.
+            It is stored in immutable history.
+          </span>
+          <span>{actionReason.length}/1000</span>
+        </div>
+        {actionError && (
+          <p role="alert" className="mt-3 text-[10px] text-red-700">
+            {actionError}
+          </p>
+        )}
+        {actionBusy && (
+          <p role="status" className="mt-3 text-[10px] text-gray-500">
+            Recording administrator action...
+          </p>
+        )}
+      </section>
+      <section className="card mt-8 overflow-hidden">
+        <div className="border-b border-[#d8cbb5] p-5">
+          <h2 className="display text-2xl font-semibold">
+            Immutable administrator action history
+          </h2>
+          <p className="mt-2 text-[10px] leading-5 text-gray-500">
+            Each state change and its reason is committed atomically.
+            Application roles cannot insert, edit, or remove these records.
+          </p>
+        </div>
+        {data.auditLog.length ? (
+          <div className="divide-y divide-[#e8dfcf]">
+            {data.auditLog.map((entry) => (
+              <div
+                key={entry.id}
+                className="grid gap-3 p-4 text-[10px] sm:grid-cols-[1fr_auto] sm:items-start"
+              >
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="pill">
+                      {entry.target_type.replaceAll("_", " ")}
+                    </span>
+                    <b>{entry.action.replaceAll("_", " ")}</b>
+                  </div>
+                  <p className="mt-2 break-words leading-5 text-gray-600">
+                    {entry.reason}
+                  </p>
+                  <code className="mt-2 block break-all text-[8px] text-gray-500">
+                    {JSON.stringify(entry.before_state)} →{" "}
+                    {JSON.stringify(entry.after_state)}
+                  </code>
+                  <span className="mt-2 block text-[8px] text-gray-400">
+                    {entry.actor_name} · {entry.actor_id} · Target{" "}
+                    {entry.target_id}
+                  </span>
+                </div>
+                <time className="text-[9px] text-gray-400">
+                  {new Intl.DateTimeFormat("az-AZ", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(new Date(entry.created_at))}
+                </time>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="p-6 text-xs text-gray-500">
+            No administrator actions have been recorded yet.
+          </p>
+        )}
+      </section>
       <section className="card mt-8 overflow-hidden">
         <div className="border-b border-[#d8cbb5] p-5">
           <h2 className="display text-2xl font-semibold">Recent listings</h2>
@@ -165,15 +288,17 @@ export function AdminPanel() {
                     <div className="flex justify-end gap-2">
                       <button
                         aria-label="Approve"
+                        disabled={!actionReady || actionBusy}
                         onClick={() => moderate(listing.id, "approve")}
-                        className="grid h-8 w-8 place-items-center rounded-full bg-[#eee3c8] text-orange"
+                        className="grid h-8 w-8 place-items-center rounded-full bg-[#eee3c8] text-orange disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <Check size={13} />
                       </button>
                       <button
                         aria-label="Reject"
+                        disabled={!actionReady || actionBusy}
                         onClick={() => moderate(listing.id, "reject")}
-                        className="grid h-8 w-8 place-items-center rounded-full bg-red-50 text-red-700"
+                        className="grid h-8 w-8 place-items-center rounded-full bg-red-50 text-red-700 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <X size={13} />
                       </button>
@@ -202,12 +327,13 @@ export function AdminPanel() {
                 </span>
               </div>
               <button
+                disabled={!actionReady || actionBusy}
                 onClick={() => ban(user.id, !user.banned)}
-                className={
+                className={`${
                   user.banned
                     ? "btn-secondary !min-h-[34px]"
                     : "btn-dark !min-h-[34px]"
-                }
+                } disabled:cursor-not-allowed disabled:opacity-40`}
               >
                 {user.banned ? "Unban" : "Ban"}
               </button>
@@ -234,14 +360,16 @@ export function AdminPanel() {
                 </div>
                 <div className="flex gap-2">
                   <button
+                    disabled={!actionReady || actionBusy}
                     onClick={() => resolveReport(report.id, "resolved")}
-                    className="btn-secondary !min-h-[34px]"
+                    className="btn-secondary !min-h-[34px] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Resolve
                   </button>
                   <button
+                    disabled={!actionReady || actionBusy}
                     onClick={() => resolveReport(report.id, "dismissed")}
-                    className="btn-ghost !min-h-[34px]"
+                    className="btn-ghost !min-h-[34px] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Dismiss
                   </button>
@@ -277,24 +405,27 @@ export function AdminPanel() {
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <button
+                      disabled={!actionReady || actionBusy}
                       onClick={() =>
                         resolvePrivacyRequest(item.id, "in_progress")
                       }
-                      className="btn-ghost !min-h-[34px]"
+                      className="btn-ghost !min-h-[34px] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       Reviewing
                     </button>
                     <button
+                      disabled={!actionReady || actionBusy}
                       onClick={() =>
                         resolvePrivacyRequest(item.id, "completed")
                       }
-                      className="btn-secondary !min-h-[34px]"
+                      className="btn-secondary !min-h-[34px] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       Complete
                     </button>
                     <button
+                      disabled={!actionReady || actionBusy}
                       onClick={() => resolvePrivacyRequest(item.id, "rejected")}
-                      className="btn-ghost !min-h-[34px]"
+                      className="btn-ghost !min-h-[34px] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       Reject
                     </button>

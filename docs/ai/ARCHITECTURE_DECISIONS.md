@@ -34,7 +34,7 @@ The existing listings table represents a physical copy. Add a normalized book/ti
 
 ## ADR-006 — Explicit sale/exchange intention
 
-Status: Accepted and implemented.
+Status: Accepted direction; implementation pending.
 
 Each physical-copy offer is sale, exchange, or both. Price is required only when sale is enabled. Negotiability is separate. Desired exchange titles are structured preferences with a free-text fallback. Existing sale listings migrate to sale intent without data loss.
 
@@ -58,7 +58,7 @@ Fraunces/Manrope, warm ivory/walnut/paper palette, restrained gold, shelves, car
 
 ## ADR-010 — Stable cursor pagination
 
-Status: Proposed, launch-required.
+Status: Accepted and implemented.
 
 Replace fixed-limit catalog retrieval with opaque cursor pagination using a deterministic sort tuple. Newest uses (created_at, id); price sorts include price plus a deterministic tie-breaker. Filters and sort are part of cursor validity. Responses provide items and nextCursor; no duplicates or gaps under normal concurrent inserts.
 
@@ -119,3 +119,11 @@ Status: Accepted.
 Automated moderation has exactly three application outcomes: approved, rejected, and unavailable. Local marketplace rules may reject known unsafe input, but an absent, timed-out, unreachable, rate-limited, failed, or malformed provider can never produce approval. Required listing text/images and chat text therefore fail with an explicit Azerbaijani 503 when moderation is unavailable and 422 when rejected. Authentication, listing ownership, and room membership are checked before provider use.
 
 Every automated text/image outcome must be written before the mutation continues to an RLS-enabled ledger that exposes only request/actor/target IDs, surface, provider/outcome/reason/category diagnostics, provider decision ID, and timestamp. Submitted text and image URLs are intentionally absent. The application service role may insert and select but not update or delete; anon/authenticated roles have no grants and an explicit false policy. Admins review recent decisions through the protected dashboard. A ledger-write failure is itself fail-closed. The optional configured adapter uses OpenAI's Moderations API for validated text and multimodal image results, but production provider ownership, escalation, retention policy, and credentials remain external launch decisions.
+
+## ADR-019 - Administrator actions are transactional and append-only
+
+Status: Accepted.
+
+Administrator bans, listing moderation, report decisions, privacy-request decisions, and appeal decisions execute through narrowly granted service-role RPCs. Each RPC repeats an active, non-banned administrator lookup from `public.users`, validates a bounded reason and state transition, locks the target, applies the mutation, and inserts the actor/target/action/reason/before/after/timestamp history in one database transaction. Required in-app listing-moderation notification creation shares that transaction; optional email does not.
+
+The administrator ledger is separate from automated moderation decisions because it records human accountability and state changes rather than provider diagnostics. It is RLS-enabled and content-minimized, gives service role SELECT only, denies direct client access, and rejects update/delete attempts with a trigger. Public security-definer functions revoke default `PUBLIC`, anon, and authenticated execution and grant only service role. Actor names are snapshotted and actor IDs deliberately do not cascade so account deletion cannot erase who performed a historical action. Application roles cannot insert, edit, or remove history.

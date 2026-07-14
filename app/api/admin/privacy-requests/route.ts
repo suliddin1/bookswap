@@ -1,27 +1,25 @@
 import { adminPrivacyRequestInput, apiError } from "@/lib/api";
+import { throwAdminActionError } from "@/lib/admin-actions";
 import { requireAdmin } from "@/lib/auth";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 
 export async function PATCH(request: Request) {
   try {
-    await requireAdmin(request);
+    const admin = await requireAdmin(request);
     const input = adminPrivacyRequestInput.parse(await request.json());
     const supabase = requireSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("privacy_requests")
-      .update({
-        status: input.status,
-        resolved_at:
-          input.status === "completed" || input.status === "rejected"
-            ? new Date().toISOString()
-            : null,
-      })
-      .eq("id", input.requestId)
-      .select("id,status,resolved_at")
-      .single();
-    if (error) throw error;
+    const { data, error } = await supabase.rpc(
+      "admin_resolve_privacy_request",
+      {
+        p_actor_id: admin.id,
+        p_request_id: input.requestId,
+        p_status: input.status,
+        p_reason: input.reason,
+      },
+    );
+    throwAdminActionError(error);
     return Response.json({ data });
   } catch (error) {
-    return apiError(error, 403);
+    return apiError(error, 500);
   }
 }

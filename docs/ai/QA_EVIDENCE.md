@@ -4,6 +4,31 @@ Evidence date: 2026-07-14 (Asia/Baku). Repository: D:\Codex Projects\2HandedBook
 
 No production database, deployment, remote branch, or protected secondary checkout was touched. Public development configuration was supplied only to validation processes; no credential was written to tracked files. Transient server logs and Playwright output are under ignored test-results.
 
+## P1 transactional immutable administrator actions - current evidence
+
+Applied additive development migration: `add_transactional_admin_audit`. Development now has 16 migrations, 13/13 RLS public tables, 61 constraints, and 47 indexes. `admin_audit_log` records an administrator identity/name snapshot, target kind/ID, bounded action/reason, before/after object state, and server timestamp. It intentionally has no direct insert path: anon/authenticated have no privileges plus an explicit false policy; service role has SELECT only; update/delete are rejected by an immutable trigger even for the table owner. Current Supabase guidance confirms that Data API grants are separate from RLS and that public security-definer functions must revoke default `PUBLIC` execution. All four action RPCs revoke `PUBLIC`/anon/authenticated execution, grant service role only, use `search_path=""`, and repeat an active, non-banned administrator lookup inside the transaction. The schema security advisor is empty; performance output is only unused-index INFO on the cleaned zero-row dataset.
+
+Every administrator route requires a trimmed 10-1000 character reason and delegates the state change plus audit insert to one database transaction. Ban/unban rejects self-targets, administrator targets, missing users, and no-op transitions. Listing approve/reject writes the required SYSTEM notification in the same transaction; optional email is attempted separately and reported. Reports move only from open to resolved/dismissed. Privacy and appeal requests reject repeated/final transitions, set `resolved_at` on the server, and use distinct `privacy_request.*` or `appeal.*` audit actions. The dashboard now fails when any constituent query fails and returns the latest 100 administrator actions separately from automated moderation decisions.
+
+Live rollback-only development evidence used temporary administrator, seller, reporter, listing, report, access-request, and appeal fixtures:
+
+| Probe | Result |
+| --- | --- |
+| User actions | Ban and unban produced `user.banned` and `user.unbanned`. |
+| Listing actions | Reject and approve produced two audit rows and exactly two atomic SYSTEM notifications. |
+| Report action | Open to resolved produced `report.resolved`. |
+| Privacy actions | Open to in-progress to completed produced both audited transitions. |
+| Appeal action | Open to rejected produced `appeal.rejected`, not a generic privacy action. |
+| History shape | Exactly eight rows, correct actor snapshot, valid reasons, before/after state, target, action, and timestamp; privacy details were absent. |
+| Forced audit failure | An injected audit check failure returned 23514 and rolled back the preceding ban completely. |
+| Invalid cases | Self-ban, administrator target, missing target, short reason, banned actor, repeated report resolution, and reopening a final privacy request all failed without side effects. |
+| Direct access | Anon/authenticated SELECT, service INSERT/UPDATE/DELETE, and authenticated RPC execution were denied; service SELECT succeeded. |
+| Tamper | Owner UPDATE and DELETE each raised SQLSTATE 55000; neither persisted. |
+
+Catalog verification shows the four RPCs are security-definer with empty search paths and execute ACLs limited to postgres/service_role; private helpers and the mutation-rejection trigger are postgres-only. Generated types contain the audit table and all four RPC signatures. A final query confirms zero rows/objects across Auth, all fixture-bearing public tables, the audit/moderation/cleanup ledgers, and Storage.
+
+Current gate: lint pass; TypeScript pass; Vitest 26/26; Next.js production build 37 routes; Playwright 4/4. Agent Browser rendered the production admin component at 1440x900, 1024x768, 390x844, and 360x800 with a browser-only representative dashboard response: immutable history and its reason/state/actor/target were visible, the required reason enabled all applicable controls, accessible labels/help were present, action targets were at least 32x32 CSS pixels, viewport and scroll widths matched, and console/page errors and framework overlays were zero. This UI-only payload was not used as backend evidence and no action was submitted. The authenticated Next admin route remains honestly blocked by P0-005's unavailable development service secret.
+
 ## P1 fail-closed reviewable moderation — current evidence
 
 Applied additive development migration: `add_reviewable_moderation_decisions`. Development now has 15 migrations, 12/12 RLS public tables, 54 constraints, and 43 indexes. The new ledger contains request/actor/target identifiers, surface, content type, provider, outcome, bounded reason/category diagnostics, provider decision ID, and timestamp; raw submitted text and image URLs have no columns and are not retained. Anon/authenticated have no privileges plus an explicit false policy. Service role has SELECT/INSERT only; direct UPDATE/DELETE is grant-denied. Generated types agree with the deployed columns and actor relationship. Schema security lint is empty; performance output is unused-index INFO on the zero-row development dataset.

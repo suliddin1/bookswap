@@ -23,6 +23,22 @@ type Timestamps = { created_at: string };
 export type Database = {
   public: {
     Tables: {
+      admin_audit_log: Table<
+        Timestamps & {
+          id: string;
+          actor_id: string;
+          actor_name: string;
+          target_type: string;
+          target_id: string;
+          action: string;
+          reason: string;
+          before_state: Json;
+          after_state: Json;
+        },
+        never,
+        never,
+        []
+      >;
       users: Table<
         Timestamps & {
           id: string;
@@ -443,7 +459,44 @@ export type Database = {
       >;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      admin_set_user_ban: {
+        Args: {
+          p_actor_id: string;
+          p_target_id: string;
+          p_banned: boolean;
+          p_reason: string;
+        };
+        Returns: Json;
+      };
+      admin_moderate_listing: {
+        Args: {
+          p_actor_id: string;
+          p_listing_id: string;
+          p_action: string;
+          p_reason: string;
+        };
+        Returns: Json;
+      };
+      admin_resolve_report: {
+        Args: {
+          p_actor_id: string;
+          p_report_id: string;
+          p_status: string;
+          p_reason: string;
+        };
+        Returns: Json;
+      };
+      admin_resolve_privacy_request: {
+        Args: {
+          p_actor_id: string;
+          p_request_id: string;
+          p_status: string;
+          p_reason: string;
+        };
+        Returns: Json;
+      };
+    };
     Enums: {
       listing_status: "draft" | "active" | "sold" | "locked";
       notification_type: "MESSAGE" | "SYSTEM";

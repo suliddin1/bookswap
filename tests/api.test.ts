@@ -2,6 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import {
   favoriteInput,
+  adminBanInput,
+  adminModerationInput,
+  adminPrivacyRequestInput,
+  adminReportInput,
   listingImageCleanupInput,
   listingInput,
   listingUpdateInput,
@@ -32,6 +36,7 @@ import {
   moderateImage,
   moderateText,
 } from "../lib/moderation";
+import { throwAdminActionError } from "../lib/admin-actions";
 
 const originalOpenAIKey = process.env.OPENAI_API_KEY;
 
@@ -90,6 +95,55 @@ describe("marketplace input validation", () => {
     expect(() =>
       privacyRequestInput.parse({ type: "deletion", details: "short" }),
     ).toThrow();
+  });
+
+  it("requires a bounded reason for every administrator action", () => {
+    const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    expect(() => adminBanInput.parse({ userId: id, banned: true })).toThrow();
+    expect(() =>
+      adminModerationInput.parse({
+        listingId: id,
+        action: "reject",
+        reason: "too short",
+      }),
+    ).toThrow();
+    expect(
+      adminReportInput.parse({
+        reportId: id,
+        status: "resolved",
+        reason: "Verified report evidence.",
+      }).reason,
+    ).toBe("Verified report evidence.");
+    expect(
+      adminPrivacyRequestInput.parse({
+        requestId: id,
+        status: "completed",
+        reason: "Identity and request scope verified.",
+      }).reason,
+    ).toBe("Identity and request scope verified.");
+  });
+
+  it("maps transactional admin conflicts without exposing database errors", () => {
+    for (const [databaseCode, status, code] of [
+      ["P0002", 404, "TARGET_NOT_FOUND"],
+      ["42501", 403, "ADMIN_ACTION_FORBIDDEN"],
+      ["23514", 409, "ADMIN_ACTION_CONFLICT"],
+      ["22023", 422, "INVALID_ADMIN_ACTION"],
+    ] as const) {
+      let captured: unknown;
+      try {
+        throwAdminActionError({
+          code: databaseCode,
+          message: "private detail",
+        });
+      } catch (error) {
+        captured = error;
+      }
+      expect(captured).toMatchObject({ status, code });
+      expect(String((captured as Error).message)).not.toContain(
+        "private detail",
+      );
+    }
   });
 
   it("rejects role fields in profile updates", () => {
@@ -469,6 +523,33 @@ describe("marketplace input validation", () => {
       new URL("../app/api/admin/moderate/route.ts", import.meta.url),
       "utf8",
     );
+    const adminBanRoute = readFileSync(
+      new URL("../app/api/admin/ban/route.ts", import.meta.url),
+      "utf8",
+    );
+    const adminReportsRoute = readFileSync(
+      new URL("../app/api/admin/reports/route.ts", import.meta.url),
+      "utf8",
+    );
+    const adminPrivacyRoute = readFileSync(
+      new URL("../app/api/admin/privacy-requests/route.ts", import.meta.url),
+      "utf8",
+    );
+    const adminDashboardRoute = readFileSync(
+      new URL("../app/api/admin/dashboard/route.ts", import.meta.url),
+      "utf8",
+    );
+    const adminPanel = readFileSync(
+      new URL("../components/admin-panel.tsx", import.meta.url),
+      "utf8",
+    );
+    const adminAuditMigration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260714073000_add_transactional_admin_audit.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
     const automatedModerationRoute = readFileSync(
       new URL("../app/api/moderate/route.ts", import.meta.url),
       "utf8",
@@ -506,8 +587,37 @@ describe("marketplace input validation", () => {
     expect(notificationMigration).toContain(
       "alter publication supabase_realtime add table public.chat_room_reads",
     );
-    expect(moderationRoute).toContain("await notifyUser");
-    expect(moderationRoute).not.toContain("void notifyUser");
+    expect(moderationRoute).toContain('.rpc("admin_moderate_listing"');
+    expect(moderationRoute).toContain("sendOptionalNotificationEmail");
+    expect(moderationRoute).not.toContain('.from("listings")');
+    expect(adminBanRoute).toContain("admin_set_user_ban");
+    expect(adminReportsRoute).toContain("admin_resolve_report");
+    expect(adminPrivacyRoute).toContain("admin_resolve_privacy_request");
+    expect(adminDashboardRoute).toContain('.from("admin_audit_log")');
+    expect(adminDashboardRoute).toContain("listingsError");
+    expect(adminDashboardRoute).toContain("auditError");
+    expect(adminPanel).toContain("admin-action-reason");
+    expect(adminPanel).toContain("Immutable administrator action history");
+    expect(adminAuditMigration).toContain(
+      "create table public.admin_audit_log",
+    );
+    expect(adminAuditMigration).toContain(
+      "create trigger reject_admin_audit_mutation",
+    );
+    expect(adminAuditMigration).toContain(
+      "grant select on table public.admin_audit_log to service_role",
+    );
+    expect(adminAuditMigration).not.toContain(
+      "grant insert on table public.admin_audit_log to service_role",
+    );
+    for (const rpc of [
+      "admin_set_user_ban",
+      "admin_moderate_listing",
+      "admin_resolve_report",
+      "admin_resolve_privacy_request",
+    ]) {
+      expect(adminAuditMigration).toContain(`function public.${rpc}`);
+    }
     expect(automatedModerationRoute).toContain("MODERATION_UNAVAILABLE");
     expect(moderationLibrary).not.toContain("Demo moderation passed");
     expect(moderationLibrary).not.toContain("Demo image check passed");

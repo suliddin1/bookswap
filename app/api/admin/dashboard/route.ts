@@ -8,11 +8,12 @@ export async function GET(request: Request) {
     await requireAdmin(request);
     const supabase = requireSupabaseAdmin();
     const [
-      { data: listings },
-      { data: users },
-      { data: reports },
-      { data: privacyRequests },
+      { data: listings, error: listingsError },
+      { data: users, error: usersError },
+      { data: reports, error: reportsError },
+      { data: privacyRequests, error: privacyRequestsError },
       { data: moderationDecisions, error: moderationError },
+      { data: auditLog, error: auditError },
     ] = await Promise.all([
       supabase
         .from("listings")
@@ -41,8 +42,23 @@ export async function GET(request: Request) {
         )
         .order("created_at", { ascending: false })
         .limit(50),
+      supabase
+        .from("admin_audit_log")
+        .select(
+          "id,actor_id,actor_name,target_type,target_id,action,reason,before_state,after_state,created_at",
+        )
+        .order("created_at", { ascending: false })
+        .limit(100),
     ]);
-    if (moderationError) throw moderationError;
+    const dashboardError = [
+      listingsError,
+      usersError,
+      reportsError,
+      privacyRequestsError,
+      moderationError,
+      auditError,
+    ].find(Boolean);
+    if (dashboardError) throw dashboardError;
     return Response.json({
       data: {
         listings: (listings ?? []).map(normalizeListing),
@@ -50,9 +66,10 @@ export async function GET(request: Request) {
         reports: reports ?? [],
         privacyRequests: privacyRequests ?? [],
         moderationDecisions: moderationDecisions ?? [],
+        auditLog: auditLog ?? [],
       },
     });
   } catch (error) {
-    return apiError(error, 403);
+    return apiError(error, 500);
   }
 }

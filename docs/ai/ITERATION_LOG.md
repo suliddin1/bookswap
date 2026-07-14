@@ -1,5 +1,23 @@
 # Iteration log
 
+## 2026-07-14 - P1 transactional immutable administrator actions
+
+Goal / acceptance IDs: P1-009; ADMIN-01, ADMIN-02, REP-01, DB-01, DB-02, TEST-01.
+
+Ownership: root exclusively owns the additive administrator-audit migration/types, administrator action/dashboard routes, action-error mapping, notification split, admin panel, focused tests, and durable evidence. No other agent edited these files.
+
+Starting state: clean branch `autonomous/bookswap-product` at `232f56e`. Administrator mutations perform direct service-role updates, accept no reason, create no durable human-action history, and are not atomic with notification/audit side effects. The dashboard ignores database errors for listings, users, reports, and privacy requests. The development service secret remains unavailable, so protected Next-route execution must not be fabricated.
+
+Planned contract: an RLS-enabled append-only human-action ledger separate from automated moderation; service-read-only table grants; service-execute-only security-definer RPCs with empty search paths and database-derived active-admin checks; bounded reasons and target transition guards; target mutation, required notification, and audit insertion in one transaction; safe error mapping; dashboard failure surfacing; action/reason/history UI; live action, rollback, grant, tamper, type, build, and four-viewport browser evidence.
+
+Implemented: `add_transactional_admin_audit` adds the ledger, immutable update/delete trigger, private actor/reason guards, and four RPCs for ban/unban, listing approve/reject, report resolution/dismissal, and privacy/appeal transitions. Routes require a 10-1000 character reason and no longer directly mutate targets. Listing moderation atomically creates its SYSTEM notification; optional email is attempted separately. The dashboard checks every query and returns the latest 100 human actions separately from automated decisions. The admin UI exposes a labelled reason field, busy/error status, reason-gated actions, and actor/target/action/reason/before/after/timestamp history.
+
+Live evidence: eight rollback-only actions produced the exact expected history and state, including distinct privacy and appeal actions and two atomic listing notifications. Injected audit failure rolled back the preceding ban. Self/admin/missing/no-op/short-reason/banned-actor/repeated/final-state cases failed without side effects. Anon/authenticated ledger reads, service insert/update/delete, and authenticated RPC calls are denied; service SELECT succeeds. Owner update/delete attempts raise 55000. Function ACL/search-path/owner inspection, generated types, migration history, and advisors pass. Development has 16 migrations, 13/13 RLS public tables, 61 constraints, and 47 indexes; final Auth/public/Storage fixture counts are all zero.
+
+Validation: lint, TypeScript, 26/26 unit tests, the 37-route production build, and 4/4 Playwright tests pass. Agent Browser rendered the production admin UI with a representative browser-only dashboard response at 1440x900, 1024x768, 390x844, and 360x800: immutable history and reason gating are visible, controls have accessible names/help and at least 32x32 targets, widths match, and console/page errors/overlays are zero. No mutation was sent, and this mock was not treated as backend proof. P0-005 still blocks the real authenticated Next admin route. P1-009/ADMIN-02 and ownership are released by this local checkpoint.
+
+Next slice: P1-010 Azerbaijani-first localization is the highest independent ready area. Start with the document language, centralized locale/formatting contract, shell/navigation, shared state/error vocabulary, and a complete user-visible string inventory; legal identity placeholders remain blocked rather than fabricated.
+
 ## 2026-07-14 — P1 fail-closed reviewable moderation
 
 Goal / acceptance IDs: P1-008; MOD-01, DB-01, TEST-01.
