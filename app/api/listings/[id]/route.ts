@@ -13,6 +13,7 @@ import {
   assertModerationApproved,
   moderateAndRecordImage,
   moderateAndRecordText,
+  planListingUpdateModeration,
 } from "@/lib/moderation";
 import {
   drainListingImageCleanupJobs,
@@ -64,7 +65,7 @@ export async function PATCH(
     supabase = requireSupabaseAdmin();
     const { data: existing, error: existingError } = await supabase
       .from("listings")
-      .select("id,title,description,images")
+      .select("id,title,description,images,status")
       .eq("id", id)
       .eq("seller_id", user.id)
       .maybeSingle();
@@ -75,10 +76,24 @@ export async function PATCH(
         404,
         "LISTING_NOT_FOUND",
       );
+    if (existing.status === "locked")
+      throw new ApiError(
+        "This listing is locked and cannot be changed.",
+        409,
+        "LISTING_LOCKED",
+      );
 
     const requestId = randomUUID();
     const checks = [];
-    if (input.title !== undefined || input.description !== undefined) {
+    const moderationPlan = planListingUpdateModeration({
+      currentStatus: existing.status,
+      requestedStatus: input.status,
+      textChanged:
+        input.title !== undefined || input.description !== undefined,
+      currentImages: existing.images,
+      requestedImages: input.images,
+    });
+    if (moderationPlan.moderateText) {
       checks.push(
         moderateAndRecordText(
           supabase,
@@ -92,10 +107,7 @@ export async function PATCH(
         ),
       );
     }
-    const existingImages = new Set(existing.images);
-    for (const imageUrl of input.images?.filter(
-      (image) => !existingImages.has(image),
-    ) ?? []) {
+    for (const imageUrl of moderationPlan.imageUrls) {
       checks.push(
         moderateAndRecordImage(supabase, imageUrl, {
           actorId: user.id,

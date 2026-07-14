@@ -17,6 +17,34 @@ const moderationResponse = z.object({
 });
 
 export type ModerationOutcome = "approved" | "rejected" | "unavailable";
+
+type ListingUpdateModerationInput = {
+  currentStatus: "draft" | "active" | "sold" | "locked";
+  requestedStatus?: "active" | "sold";
+  textChanged: boolean;
+  currentImages: string[];
+  requestedImages?: string[];
+};
+
+export function planListingUpdateModeration({
+  currentStatus,
+  requestedStatus,
+  textChanged,
+  currentImages,
+  requestedImages,
+}: ListingUpdateModerationInput) {
+  const finalImages = requestedImages ?? currentImages;
+  const becomingPublic =
+    requestedStatus === "active" && currentStatus !== "active";
+  const currentImageSet = new Set(currentImages);
+
+  return {
+    moderateText: becomingPublic || textChanged,
+    imageUrls: becomingPublic
+      ? finalImages
+      : finalImages.filter((imageUrl) => !currentImageSet.has(imageUrl)),
+  };
+}
 export type ModerationSurface =
   | "listing_create"
   | "listing_update"

@@ -127,3 +127,11 @@ Status: Accepted.
 Administrator bans, listing moderation, report decisions, privacy-request decisions, and appeal decisions execute through narrowly granted service-role RPCs. Each RPC repeats an active, non-banned administrator lookup from `public.users`, validates a bounded reason and state transition, locks the target, applies the mutation, and inserts the actor/target/action/reason/before/after/timestamp history in one database transaction. Required in-app listing-moderation notification creation shares that transaction; optional email does not.
 
 The administrator ledger is separate from automated moderation decisions because it records human accountability and state changes rather than provider diagnostics. It is RLS-enabled and content-minimized, gives service role SELECT only, denies direct client access, and rejects update/delete attempts with a trigger. Public security-definer functions revoke default `PUBLIC`, anon, and authenticated execution and grant only service role. Actor names are snapshotted and actor IDs deliberately do not cascade so account deletion cannot erase who performed a historical action. Application roles cannot insert, edit, or remove history.
+
+## ADR-020 - Public listing mutations use the protected server boundary
+
+Status: Accepted.
+
+All listing INSERT, UPDATE, and DELETE operations pass through authenticated Next route handlers. Anon and authenticated database roles may SELECT listings under RLS but have no direct table mutation grants; service role receives explicit CRUD for the server boundary. Existing ownership and active-user RLS policies remain defense in depth rather than the primary publication path. Browser Storage upload remains separately owner-folder-scoped and does not grant listing-row mutation.
+
+Any transition from a non-active state into public `active` status is a publication event. It must moderate the final title/description and every final image before the state change, even when the request changes only status. An already-active edit moderates changed text and new images, avoiding redundant checks without creating a bypass. Locked listings cannot be edited through the seller route. Missing, failed, or malformed required moderation remains unavailable and prevents publication.

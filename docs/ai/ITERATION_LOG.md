@@ -1,5 +1,23 @@
 # Iteration log
 
+## 2026-07-14 - P0 listing reactivation moderation bypass
+
+Goal / acceptance IDs: P0-006; MOD-01, LIST-01, SVC-01, DB-01, TEST-01.
+
+Ownership: root exclusively owns the protected listing mutation routes, listing input/state contracts, listing grants/policies migration and generated types if required, focused tests, affected listing/profile UI, and durable evidence for this slice. No other agent is editing these files.
+
+Starting state: clean branch `autonomous/bookswap-product` at `456321b`. The final P1-009 adversarial review found that a seller can PATCH only `{status:"active"}` on a draft or administrator-rejected listing. Because the edit route moderates only changed text and newly added images, this transition performs zero moderation checks and succeeds even when the provider is unavailable. Authenticated Data API INSERT/UPDATE/DELETE grants also let a direct client bypass protected server moderation entirely. This contradicts the fail-closed publication contract and is stop-ship.
+
+Planned contract: inventory every listing write consumer; make every transition into public `active` state review the final text and every final image; keep unchanged draft edits from doing unnecessary publication checks; remove direct authenticated listing mutations while retaining RLS as defense in depth; prove server/service behavior, direct-role denial, no partial state change, generated compatibility, full repository gates, and affected four-viewport browser behavior.
+
+Implemented: added a pure listing-update moderation planner and wired it into the protected edit route. Draft/sold-to-active transitions review final title/description plus all final images; active edits review changed text/new images only; locked targets fail before provider work. The additive `require_protected_listing_mutations` migration revokes browser-role INSERT/UPDATE/DELETE on listings while keeping SELECT and explicitly grants service-role CRUD. All application listing writes were traced to protected `/api/listings` routes; no browser consumer depended on direct table mutation.
+
+Live evidence: development now has 17 migrations, 13/13 RLS public tables, 61 constraints, and 47 indexes. Catalog privileges show anon/authenticated SELECT=true and INSERT/UPDATE/DELETE=false, while service role has all four. Functional authenticated insert/update/delete statements each fail 42501; a rollback-only service insert/update/delete succeeds. Generated types remain compatible, schema security advisors are empty, and performance notices are zero-data unused-index INFO only.
+
+Validation: lint, TypeScript, 28/28 unit tests, the 37-route production build, and 4/4 Playwright tests pass. One temporary confirmed development Auth user signed in through the real product login form; Auth `/user` returned 200. With only `/api/profile` represented in-browser, the production dashboard exposed active/sold transition controls at 1440x900, 1024x768, 390x844, and 360x800 with matching widths, no overlay/errors/HTTP failures, and 79x34 mobile targets. No mutation was submitted and the profile mock was not backend evidence. The browser session/server/artifacts were removed; Auth sessions were revoked before user deletion; Auth/identity/profile and all other fixture counts are zero. P0-006 and ownership are released by this local checkpoint.
+
+Next slice: P1-010 Azerbaijani-first localization is again the highest independent ready work. P0-005 remains the sole P0 and requires the external development server secret.
+
 ## 2026-07-14 - P1 transactional immutable administrator actions
 
 Goal / acceptance IDs: P1-009; ADMIN-01, ADMIN-02, REP-01, DB-01, DB-02, TEST-01.

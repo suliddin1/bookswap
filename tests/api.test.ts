@@ -35,6 +35,7 @@ import {
   moderateAndRecordText,
   moderateImage,
   moderateText,
+  planListingUpdateModeration,
 } from "../lib/moderation";
 import { throwAdminActionError } from "../lib/admin-actions";
 
@@ -121,6 +122,49 @@ describe("marketplace input validation", () => {
         reason: "Identity and request scope verified.",
       }).reason,
     ).toBe("Identity and request scope verified.");
+  });
+
+  it("fully moderates the final copy whenever a listing becomes public", () => {
+    const currentImages = ["https://example.com/one.png"];
+    const finalImages = [
+      "https://example.com/one.png",
+      "https://example.com/two.png",
+    ];
+    expect(
+      planListingUpdateModeration({
+        currentStatus: "draft",
+        requestedStatus: "active",
+        textChanged: false,
+        currentImages,
+        requestedImages: finalImages,
+      }),
+    ).toEqual({ moderateText: true, imageUrls: finalImages });
+    expect(
+      planListingUpdateModeration({
+        currentStatus: "sold",
+        requestedStatus: "active",
+        textChanged: false,
+        currentImages,
+      }),
+    ).toEqual({ moderateText: true, imageUrls: currentImages });
+  });
+
+  it("moderates only changed content while an active listing stays public", () => {
+    expect(
+      planListingUpdateModeration({
+        currentStatus: "active",
+        requestedStatus: "active",
+        textChanged: false,
+        currentImages: ["https://example.com/one.png"],
+        requestedImages: [
+          "https://example.com/one.png",
+          "https://example.com/two.png",
+        ],
+      }),
+    ).toEqual({
+      moderateText: false,
+      imageUrls: ["https://example.com/two.png"],
+    });
   });
 
   it("maps transactional admin conflicts without exposing database errors", () => {
@@ -565,6 +609,17 @@ describe("marketplace input validation", () => {
       ),
       "utf8",
     );
+    const listingUpdateRoute = readFileSync(
+      new URL("../app/api/listings/[id]/route.ts", import.meta.url),
+      "utf8",
+    );
+    const protectedListingMutationMigration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260714080000_require_protected_listing_mutations.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
 
     expect(messageRoute).not.toContain("broadcast");
     expect(messageRoute).not.toContain(".channel(");
@@ -629,6 +684,14 @@ describe("marketplace input validation", () => {
     );
     expect(moderationMigration).toContain(
       "Raw submitted content is intentionally excluded",
+    );
+    expect(listingUpdateRoute).toContain("planListingUpdateModeration");
+    expect(listingUpdateRoute).toContain('existing.status === "locked"');
+    expect(protectedListingMutationMigration).toContain(
+      "revoke insert, update, delete on table public.listings from authenticated",
+    );
+    expect(protectedListingMutationMigration).toContain(
+      "grant select, insert, update, delete on table public.listings to service_role",
     );
   });
 
