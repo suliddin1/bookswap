@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import {
   favoriteInput,
@@ -26,6 +26,20 @@ import {
   parseListingLimit,
   parseListingSort,
 } from "../lib/listing-pagination";
+import {
+  assertModerationApproved,
+  moderateAndRecordText,
+  moderateImage,
+  moderateText,
+} from "../lib/moderation";
+
+const originalOpenAIKey = process.env.OPENAI_API_KEY;
+
+afterEach(() => {
+  if (originalOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
+  else process.env.OPENAI_API_KEY = originalOpenAIKey;
+  vi.unstubAllGlobals();
+});
 
 describe("marketplace input validation", () => {
   it("accepts a complete listing", () => {
@@ -279,6 +293,150 @@ describe("marketplace input validation", () => {
     expect(isFavoriteListingVisible({ status: "active" })).toBe(false);
   });
 
+  it("reports an unconfigured moderation provider as unavailable", async () => {
+    delete process.env.OPENAI_API_KEY;
+    const decision = await moderateText("Normal marketplace description");
+    expect(decision).toMatchObject({
+      outcome: "unavailable",
+      provider: "none",
+      reasonCode: "PROVIDER_NOT_CONFIGURED",
+    });
+    expect(JSON.stringify(decision)).not.toContain("Demo");
+    expect(() => assertModerationApproved(decision)).toThrow(
+      "Məzmun yoxlama xidməti",
+    );
+  });
+
+  it("rejects a local unsafe fixture even without a provider", async () => {
+    delete process.env.OPENAI_API_KEY;
+    const decision = await moderateText("This is a scam payment request");
+    expect(decision).toMatchObject({
+      outcome: "rejected",
+      provider: "local_rules",
+      reasonCode: "LOCAL_MARKETPLACE_RULE",
+    });
+    expect(() => assertModerationApproved(decision)).toThrow(
+      "təhlükəsizlik qaydalarına",
+    );
+  });
+
+  it("parses provider decisions and sends image moderation as multimodal input", async () => {
+    process.env.OPENAI_API_KEY = "test-key";
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: "modr-test",
+          results: [
+            {
+              flagged: false,
+              categories: { harassment: false, violence: false },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const decision = await moderateImage("https://example.com/book.jpg");
+    expect(decision).toMatchObject({
+      outcome: "approved",
+      provider: "openai",
+      reasonCode: "PROVIDER_APPROVED",
+      providerDecisionId: "modr-test",
+    });
+    const request = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(JSON.parse(String(request.body)).input).toEqual([
+      {
+        type: "image_url",
+        image_url: { url: "https://example.com/book.jpg" },
+      },
+    ]);
+  });
+
+  it("fails closed on malformed provider responses", async () => {
+    process.env.OPENAI_API_KEY = "test-key";
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ results: [] }), { status: 200 }),
+        ),
+    );
+    expect(await moderateText("Normal marketplace description")).toMatchObject({
+      outcome: "unavailable",
+      reasonCode: "PROVIDER_RESPONSE_INVALID",
+    });
+  });
+
+  it("maps provider transport failures to explicit unavailable reasons", async () => {
+    process.env.OPENAI_API_KEY = "test-key";
+    const scenarios: Array<[unknown, string]> = [
+      [new Response(null, { status: 429 }), "PROVIDER_RATE_LIMITED"],
+      [new Response(null, { status: 500 }), "PROVIDER_REQUEST_FAILED"],
+      [new Error("offline"), "PROVIDER_UNREACHABLE"],
+      [
+        Object.assign(new Error("timed out"), { name: "TimeoutError" }),
+        "PROVIDER_TIMEOUT",
+      ],
+    ];
+    for (const [result, reasonCode] of scenarios) {
+      vi.stubGlobal(
+        "fetch",
+        result instanceof Response
+          ? vi.fn().mockResolvedValue(result)
+          : vi.fn().mockRejectedValue(result),
+      );
+      expect(
+        await moderateText("Normal marketplace description"),
+      ).toMatchObject({ outcome: "unavailable", reasonCode });
+    }
+  });
+
+  it("records decision metadata without storing submitted content", async () => {
+    delete process.env.OPENAI_API_KEY;
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    const supabase = { from: vi.fn(() => ({ insert })) };
+    await moderateAndRecordText(
+      supabase as never,
+      "Private text that must not enter the ledger",
+      {
+        actorId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        requestId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        surface: "moderation_api",
+      },
+    );
+    expect(supabase.from).toHaveBeenCalledWith("moderation_decisions");
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outcome: "unavailable",
+        reason_code: "PROVIDER_NOT_CONFIGURED",
+      }),
+    );
+    expect(JSON.stringify(insert.mock.calls[0][0])).not.toContain(
+      "Private text",
+    );
+  });
+
+  it("fails closed when the moderation ledger cannot be written", async () => {
+    delete process.env.OPENAI_API_KEY;
+    const supabase = {
+      from: vi.fn(() => ({
+        insert: vi.fn().mockResolvedValue({ error: { message: "denied" } }),
+      })),
+    };
+    await expect(
+      moderateAndRecordText(supabase as never, "Normal text", {
+        actorId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        requestId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        surface: "moderation_api",
+      }),
+    ).rejects.toMatchObject({
+      status: 503,
+      code: "MODERATION_AUDIT_UNAVAILABLE",
+    });
+  });
+
   it("uses only RLS-protected Postgres Changes for chat delivery", () => {
     const messageRoute = readFileSync(
       new URL("../app/api/chat/message/route.ts", import.meta.url),
@@ -311,6 +469,21 @@ describe("marketplace input validation", () => {
       new URL("../app/api/admin/moderate/route.ts", import.meta.url),
       "utf8",
     );
+    const automatedModerationRoute = readFileSync(
+      new URL("../app/api/moderate/route.ts", import.meta.url),
+      "utf8",
+    );
+    const moderationLibrary = readFileSync(
+      new URL("../lib/moderation.ts", import.meta.url),
+      "utf8",
+    );
+    const moderationMigration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260714070000_add_reviewable_moderation_decisions.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
 
     expect(messageRoute).not.toContain("broadcast");
     expect(messageRoute).not.toContain(".channel(");
@@ -335,6 +508,18 @@ describe("marketplace input validation", () => {
     );
     expect(moderationRoute).toContain("await notifyUser");
     expect(moderationRoute).not.toContain("void notifyUser");
+    expect(automatedModerationRoute).toContain("MODERATION_UNAVAILABLE");
+    expect(moderationLibrary).not.toContain("Demo moderation passed");
+    expect(moderationLibrary).not.toContain("Demo image check passed");
+    expect(moderationMigration).toContain(
+      "create table public.moderation_decisions",
+    );
+    expect(moderationMigration).toContain(
+      "grant select, insert on table public.moderation_decisions to service_role",
+    );
+    expect(moderationMigration).toContain(
+      "Raw submitted content is intentionally excluded",
+    );
   });
 
   it("keeps listing image cleanup owner-checked, durable, and revocable", () => {

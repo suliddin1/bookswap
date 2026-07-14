@@ -4,6 +4,18 @@ Evidence date: 2026-07-14 (Asia/Baku). Repository: D:\Codex Projects\2HandedBook
 
 No production database, deployment, remote branch, or protected secondary checkout was touched. Public development configuration was supplied only to validation processes; no credential was written to tracked files. Transient server logs and Playwright output are under ignored test-results.
 
+## P1 fail-closed reviewable moderation — current evidence
+
+Applied additive development migration: `add_reviewable_moderation_decisions`. Development now has 15 migrations, 12/12 RLS public tables, 54 constraints, and 43 indexes. The new ledger contains request/actor/target identifiers, surface, content type, provider, outcome, bounded reason/category diagnostics, provider decision ID, and timestamp; raw submitted text and image URLs have no columns and are not retained. Anon/authenticated have no privileges plus an explicit false policy. Service role has SELECT/INSERT only; direct UPDATE/DELETE is grant-denied. Generated types agree with the deployed columns and actor relationship. Schema security lint is empty; performance output is unused-index INFO on the zero-row development dataset.
+
+The moderation adapter has three explicit outcomes: approved, rejected, and unavailable. Without `OPENAI_API_KEY`, normal text/image input returns `PROVIDER_NOT_CONFIGURED`; provider timeout, network failure, non-success status, rate limit, and malformed success bodies also return unavailable. Local marketplace rules may reject known unsafe text without a provider, but can never approve content when the provider is absent. The configured OpenAI adapter validates the response shape and uses the documented multimodal image input for `omni-moderation-latest`; no paid/provider request was made during this unconfigured test slice.
+
+Publishing and messaging fail closed: unavailable becomes Azerbaijani `MODERATION_UNAVAILABLE`/HTTP 503, rejected becomes `CONTENT_REJECTED`/HTTP 422, and an audit-write failure becomes `MODERATION_AUDIT_UNAVAILABLE`/HTTP 503. Listing creation checks final text plus every image; edits check the merged final text and only newly added images. Chat verifies authentication and room membership before provider use. Listing edits verify ownership before provider use. The authenticated preflight route records text/image results and returns 503 if either required check is unavailable. The protected admin dashboard queries and displays the last 50 decisions while explaining that raw content is excluded.
+
+Focused fixtures prove normal unconfigured input is unavailable, the unsafe local fixture is rejected, a valid mocked multimodal response is approved, malformed provider output is unavailable, ledger inserts exclude the submitted string, and ledger-write failure is 503. Live development SQL proved service-role insert/select succeeds while anon SELECT, authenticated INSERT, service-role UPDATE, and service-role DELETE each fail with 42501. The attempted tamper/delete did not change the row; the fixture was then removed as postgres and the ledger returned to zero rows.
+
+Current gate: lint pass; TypeScript pass; Vitest 24/24; Next.js production build 37 routes; Playwright 4/4. Agent Browser production checks at 1440x900, 1024x768, 390x844, and 360x800 show meaningful home content, usable navigation/search controls, no horizontal overflow, no framework overlay, and zero console/page errors. Browser sessions, server, screenshots, and database fixtures were cleaned. Live authenticated Next-route and admin-browser journeys remain honestly blocked by P0-005's missing development service secret; a real configured moderation-provider response was intentionally not claimed.
+
 ## P1 unread chat state and durable notifications — current evidence
 
 Applied additive development migration: `add_chat_read_state_and_durable_notifications`. Development now has 14 migrations, 11/11 RLS public tables, 45 constraints, and 40 indexes. `chat_room_reads` is authenticated-SELECT-only, has one owner/member policy and one read-ack trigger, and appears exactly once in `supabase_realtime`. `messages` has one durable delivery trigger. The three private trigger functions are SECURITY DEFINER with `search_path=""` and postgres-only execute. Generated types contain the new table, room activity, and notification message link. Schema security lint is clean; the known Pro-only Auth warning remains; performance output is unused-index INFO on the cleaned dataset.
@@ -181,18 +193,18 @@ Cleanup: the three temporary Auth users and cascaded profiles, listing, room, an
 
 | Command                              | Result                    | Exact summary                                                                                                                |
 | ------------------------------------ | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| npm run lint                         | Pass, exit 0, about 4 s   | ESLint over .js/.ts/.tsx with max-warnings=0; no warnings/output.                                                            |
-| npx tsc --noEmit --incremental false | Pass, exit 0, about 5.7 s | No TypeScript diagnostics.                                                                                                   |
-| npm test                             | Pass, exit 0, about 2.3 s | Vitest: 1 file passed, 9 tests passed; test duration 811 ms.                                                                 |
-| npm run build                        | Pass, exit 0, 21.5 s      | Next.js 15.5.19 compiled in 3.3 s; lint/type/page data passed; 37/37 static pages generated.                                 |
-| npm run test:e2e                     | Pass, exit 0, 4.1 s       | Playwright Chromium: 4 tests passed in 2.0 s (browse home/catalog, mobile navigation, safety/user-rights, security headers). |
+| npm run lint                         | Pass, exit 0              | ESLint over .js/.ts/.tsx with max-warnings=0; no warnings/output.                                                            |
+| npx tsc --noEmit                     | Pass, exit 0              | No TypeScript diagnostics.                                                                                                   |
+| npm test                             | Pass, exit 0              | Vitest: 1 file passed, 24 tests passed.                                                                                       |
+| npm run build                        | Pass, exit 0              | Next.js 15.5.19 compiled in 5.7 s; lint/type/page data passed; 37/37 static pages generated.                                 |
+| npm run test:e2e                     | Pass, exit 0              | Playwright Chromium: 4 tests passed in 2.1 s (browse home/catalog, mobile navigation, safety/user-rights, security headers). |
 
 Production build route evidence:
 
 - 37 route entries generated.
 - Shared first-load JavaScript: 102 kB.
-- Home: 211 kB first load.
-- Catalog: 210 kB.
+- Home: 212 kB first load.
+- Catalog: 211 kB.
 - Listing detail: 217 kB.
 - Favorites: 208 kB.
 - Build success does not override runtime API failures below.

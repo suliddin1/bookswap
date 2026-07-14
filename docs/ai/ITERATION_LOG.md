@@ -1,5 +1,23 @@
 # Iteration log
 
+## 2026-07-14 — P1 fail-closed reviewable moderation
+
+Goal / acceptance IDs: P1-008; MOD-01, DB-01, TEST-01.
+
+Ownership: root exclusively owns the typed moderation adapter, listing/chat/preflight integrations, content-minimized moderation ledger migration/types, protected admin review surface, focused tests, and durable evidence. No other agent edited these files.
+
+Starting state: clean branch `autonomous/bookswap-product` at `fa222b7`. Missing text/image provider credentials return successful “Demo ... passed” values. The configured Cloudflare image classifier ignores its result and always passes. Listing and chat mutations accept the boolean contract, call moderation before some ownership/authentication checks, and persist no reviewable outcome. The development service secret and a production-approved provider remain unavailable.
+
+Planned contract: explicit approved/rejected/unavailable outcomes; missing/failed/timed-out/rate-limited/malformed providers never approve; local rules may reject but not approve without a provider; ownership/membership before provider spend; required listing text/new images and chat text fail closed; every outcome written to a raw-content-free service-append-only ledger before mutation; protected admin review; normal/unsafe/malformed/audit-failure, grant, tamper, type, build, and browser evidence.
+
+Implemented: replaced both demo paths with a validated OpenAI Moderations adapter for configured text/multimodal-image checks and explicit unavailable reasons otherwise. Azerbaijani API errors map unavailable to 503, rejection to 422, and ledger-write failure to 503. Listing creation checks final text and every image; edit checks merged final text/new images after ownership; chat checks membership first; authenticated preflight records both requested types. `moderation_decisions` stores bounded identifiers and diagnostics but no submitted text/image URL, enables RLS, denies direct users, and grants service role SELECT/INSERT only. The admin dashboard reviews the latest 50 outcomes and explains the content-minimization boundary.
+
+Live evidence: development has 15 migrations, 12/12 RLS public tables, 54 constraints, and 43 indexes. Service-role insert/select succeeds; anon SELECT, authenticated INSERT, service-role UPDATE, and service-role DELETE each fail 42501. Denied tamper/delete attempts leave the fixture unchanged; postgres cleanup returns the ledger to zero. Generated types match. Schema security lint is empty; performance notices are unused-index INFO only. No real provider or paid request was made and no provider credential was written.
+
+Validation: lint, TypeScript, 24/24 unit tests, 37-route production build, and 4/4 Playwright pass. Unit fixtures cover normal missing-provider unavailable, local unsafe rejection, valid multimodal approval parsing, malformed/failed/rate-limited/unreachable/timed-out provider outcomes, content exclusion, and audit-write failure. Agent Browser at 1440x900, 1024x768, 390x844, and 360x800 shows meaningful content, usable navigation/search, no horizontal overflow, no framework overlay, and zero console/page errors. Browser sessions, screenshots, server, and database fixtures are cleaned. P1-008/MOD-01 and ownership are released by this local checkpoint; authenticated route/admin-browser execution remains honestly attached to P0-005's missing development secret.
+
+Next slice: P1-009 immutable admin action history is the highest independent ready trust/safety gap. It must use transactional database operations rather than reusing the automated moderation ledger.
+
 ## 2026-07-14 — P1 unread chat state and durable notifications
 
 Goal / acceptance IDs: P1-007; CHAT-03, NOTIF-01, DB-01, TEST-01, A11Y-01.

@@ -12,6 +12,7 @@ export async function GET(request: Request) {
       { data: users },
       { data: reports },
       { data: privacyRequests },
+      { data: moderationDecisions, error: moderationError },
     ] = await Promise.all([
       supabase
         .from("listings")
@@ -33,13 +34,22 @@ export async function GET(request: Request) {
         .select("id,user_id,type,details,status,created_at")
         .in("status", ["open", "in_progress"])
         .order("created_at", { ascending: true }),
+      supabase
+        .from("moderation_decisions")
+        .select(
+          "id,request_id,surface,target_id,content_type,provider,outcome,reason_code,categories,created_at,actor:users!moderation_decisions_actor_id_fkey(id,name)",
+        )
+        .order("created_at", { ascending: false })
+        .limit(50),
     ]);
+    if (moderationError) throw moderationError;
     return Response.json({
       data: {
         listings: (listings ?? []).map(normalizeListing),
         users: users ?? [],
         reports: reports ?? [],
         privacyRequests: privacyRequests ?? [],
+        moderationDecisions: moderationDecisions ?? [],
       },
     });
   } catch (error) {

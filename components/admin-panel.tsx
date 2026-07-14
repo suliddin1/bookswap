@@ -20,6 +20,7 @@ export function AdminPanel() {
     users: any[];
     reports: any[];
     privacyRequests: any[];
+    moderationDecisions: any[];
   } | null>(null);
   const [error, setError] = useState("");
 
@@ -101,11 +102,16 @@ export function AdminPanel() {
           Admin-role access for listings, readers, and community reports.
         </p>
       </div>
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           [BookOpen, "Listings", data.listings.length],
           [Users, "Readers", data.users.length],
           [AlertTriangle, "Open reports", data.reports.length],
+          [
+            ShieldCheck,
+            "Moderation decisions",
+            data.moderationDecisions.length,
+          ],
         ].map(([Icon, label, value]) => {
           const Item = Icon as typeof BookOpen;
           return (
@@ -299,6 +305,59 @@ export function AdminPanel() {
           </div>
         ) : (
           <p className="p-6 text-xs text-gray-500">No open privacy requests.</p>
+        )}
+      </section>
+      <section className="card mt-8 overflow-hidden">
+        <div className="border-b border-[#d8cbb5] p-5">
+          <h2 className="display text-2xl font-semibold">
+            Automated moderation decisions
+          </h2>
+          <p className="mt-2 text-[10px] leading-5 text-gray-500">
+            Outcomes and provider diagnostics are retained for review. Submitted
+            text and image URLs are not stored in this ledger.
+          </p>
+        </div>
+        {data.moderationDecisions.length ? (
+          <div className="divide-y divide-[#e8dfcf]">
+            {data.moderationDecisions.map((decision) => (
+              <div
+                key={decision.id}
+                className="grid gap-3 p-4 text-[10px] sm:grid-cols-[1fr_auto] sm:items-center"
+              >
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="pill">{decision.outcome}</span>
+                    <b>{decision.surface.replaceAll("_", " ")}</b>
+                    <span className="text-gray-500">
+                      {decision.content_type} · {decision.provider}
+                    </span>
+                  </div>
+                  <p className="mt-2 break-words text-gray-500">
+                    {decision.reason_code}
+                    {decision.categories.length
+                      ? ` · ${decision.categories.join(", ")}`
+                      : ""}
+                  </p>
+                  <span className="mt-1 block text-[8px] text-gray-400">
+                    Actor {decision.actor?.name ?? "Deleted account"}
+                    {decision.target_id
+                      ? ` · Target ${decision.target_id}`
+                      : ""}
+                  </span>
+                </div>
+                <time className="text-[9px] text-gray-400">
+                  {new Intl.DateTimeFormat("az-AZ", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(new Date(decision.created_at))}
+                </time>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="p-6 text-xs text-gray-500">
+            No automated moderation decisions yet.
+          </p>
         )}
       </section>
       <div className="mt-8 flex gap-3 rounded-xl border border-[#d8cbb5] bg-[#fffaf0]/60 p-5">

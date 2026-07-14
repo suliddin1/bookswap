@@ -1,5 +1,10 @@
 import { ApiError, apiError, assertRateLimit, listingInput } from "@/lib/api";
-import { moderateText } from "@/lib/moderation";
+import { randomUUID } from "node:crypto";
+import {
+  assertModerationApproved,
+  moderateAndRecordImage,
+  moderateAndRecordText,
+} from "@/lib/moderation";
 import { requireSupabaseAdmin, requireSupabaseClient } from "@/lib/supabase";
 import { assertOwnedListingImages } from "@/lib/security";
 import { requireUser } from "@/lib/auth";
@@ -121,8 +126,22 @@ export async function POST(request: Request) {
     submittedImages = input.images;
     assertOwnedListingImages(input.images, user.id);
     supabase = requireSupabaseAdmin();
-    const check = await moderateText(`${input.title}\n${input.description}`);
-    if (!check.safe) throw new ApiError(check.reason, 422, "CONTENT_REJECTED");
+    const requestId = randomUUID();
+    const checks = await Promise.all([
+      moderateAndRecordText(supabase, `${input.title}\n${input.description}`, {
+        actorId: user.id,
+        requestId,
+        surface: "listing_create",
+      }),
+      ...input.images.map((imageUrl) =>
+        moderateAndRecordImage(supabase!, imageUrl, {
+          actorId: user.id,
+          requestId,
+          surface: "listing_create",
+        }),
+      ),
+    ]);
+    checks.forEach(assertModerationApproved);
     await drainListingImageCleanupJobs(supabase, user.id);
     const { data, error } = await supabase
       .from("listings")

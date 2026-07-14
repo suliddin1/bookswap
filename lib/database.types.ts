@@ -402,6 +402,45 @@ export type Database = {
           },
         ]
       >;
+      moderation_decisions: Table<
+        Timestamps & {
+          id: string;
+          request_id: string;
+          actor_id: string | null;
+          surface: string;
+          target_id: string | null;
+          content_type: string;
+          provider: string;
+          outcome: string;
+          reason_code: string;
+          categories: string[];
+          provider_decision_id: string | null;
+        },
+        {
+          id?: string;
+          request_id: string;
+          actor_id?: string | null;
+          surface: string;
+          target_id?: string | null;
+          content_type: string;
+          provider: string;
+          outcome: string;
+          reason_code: string;
+          categories?: string[];
+          provider_decision_id?: string | null;
+          created_at?: string;
+        },
+        never,
+        [
+          {
+            foreignKeyName: "moderation_decisions_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ]
+      >;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

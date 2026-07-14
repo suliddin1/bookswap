@@ -8,7 +8,12 @@ import {
 } from "@/lib/api";
 import { normalizeListing } from "@/lib/listings";
 import { requireUser } from "@/lib/auth";
-import { moderateText } from "@/lib/moderation";
+import { randomUUID } from "node:crypto";
+import {
+  assertModerationApproved,
+  moderateAndRecordImage,
+  moderateAndRecordText,
+} from "@/lib/moderation";
 import {
   drainListingImageCleanupJobs,
   queueListingImageCleanup,
@@ -57,13 +62,50 @@ export async function PATCH(
       assertOwnedListingImages(input.images, user.id);
     }
     supabase = requireSupabaseAdmin();
-    if (input.title || input.description) {
-      const check = await moderateText(
-        `${input.title ?? ""}\n${input.description ?? ""}`,
+    const { data: existing, error: existingError } = await supabase
+      .from("listings")
+      .select("id,title,description,images")
+      .eq("id", id)
+      .eq("seller_id", user.id)
+      .maybeSingle();
+    if (existingError) throw existingError;
+    if (!existing)
+      throw new ApiError(
+        "Listing not found or not owned by you",
+        404,
+        "LISTING_NOT_FOUND",
       );
-      if (!check.safe)
-        throw new ApiError(check.reason, 422, "CONTENT_REJECTED");
+
+    const requestId = randomUUID();
+    const checks = [];
+    if (input.title !== undefined || input.description !== undefined) {
+      checks.push(
+        moderateAndRecordText(
+          supabase,
+          `${input.title ?? existing.title}\n${input.description ?? existing.description}`,
+          {
+            actorId: user.id,
+            requestId,
+            surface: "listing_update",
+            targetId: id,
+          },
+        ),
+      );
     }
+    const existingImages = new Set(existing.images);
+    for (const imageUrl of input.images?.filter(
+      (image) => !existingImages.has(image),
+    ) ?? []) {
+      checks.push(
+        moderateAndRecordImage(supabase, imageUrl, {
+          actorId: user.id,
+          requestId,
+          surface: "listing_update",
+          targetId: id,
+        }),
+      );
+    }
+    (await Promise.all(checks)).forEach(assertModerationApproved);
     await drainListingImageCleanupJobs(supabase, user.id);
     const updates = {
       title: input.title,
