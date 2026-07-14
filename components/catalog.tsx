@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import { BookOpen, ChevronDown, MapPin, Search, Tag, X } from "lucide-react";
 import { BookCard } from "@/components/book-card";
 import { BookSkeleton } from "@/components/book-skeleton";
@@ -17,32 +17,48 @@ const categories = ["All books", ...BOOK_CATEGORIES];
 export function Catalog({
   initialCategory = "All books",
   initialQuery = "",
+  initialCity = "",
+  initialCondition = "",
+  initialMaxPrice = 200,
+  initialSort = "newest",
 }: {
   initialCategory?: string;
   initialQuery?: string;
+  initialCity?: string;
+  initialCondition?: string;
+  initialMaxPrice?: number;
+  initialSort?: string;
 }) {
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState(initialCategory);
-  const [city, setCity] = useState("");
-  const [condition, setCondition] = useState("");
-  const [maxPrice, setMaxPrice] = useState(200);
-  const [sort, setSort] = useState("newest");
+  const [city, setCity] = useState(initialCity);
+  const [condition, setCondition] = useState(initialCondition);
+  const [maxPrice, setMaxPrice] = useState(initialMaxPrice);
+  const [sort, setSort] = useState(initialSort);
   const deferredQuery = useDeferredValue(query);
-  const { data, loading, error } = useListings({
+  const { data, loading, loadingMore, error, hasMore, loadMore } = useListings({
     query: deferredQuery,
     category: category === "All books" ? "" : category,
     city,
+    condition,
+    maxPrice,
     sort,
   });
-  const filtered = useMemo(
-    () =>
-      data.filter(
-        (listing) =>
-          listing.price <= maxPrice &&
-          (!condition || listing.condition === condition),
-      ),
-    [data, maxPrice, condition],
-  );
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (query) params.set("query", query);
+    if (category !== "All books") params.set("category", category);
+    if (city) params.set("city", city);
+    if (condition) params.set("condition", condition);
+    if (maxPrice !== 200) params.set("maxPrice", String(maxPrice));
+    if (sort !== "newest") params.set("sort", sort);
+    window.history.replaceState(
+      null,
+      "",
+      `/listings${params.size ? `?${params}` : ""}`,
+    );
+  }, [query, category, city, condition, maxPrice, sort]);
 
   return (
     <div className="container-shell py-10 md:py-14">
@@ -78,6 +94,8 @@ export function Catalog({
               <input
                 className="input !min-h-[42px] !pl-9"
                 placeholder="Search catalog..."
+                aria-label="Search by title, author, or ISBN"
+                maxLength={200}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
@@ -85,6 +103,7 @@ export function Catalog({
                 <button
                   onClick={() => setQuery("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
+                  aria-label="Clear catalog search"
                 >
                   <X size={13} />
                 </button>
@@ -93,6 +112,7 @@ export function Catalog({
           </CatalogField>
           <CatalogField label="Location">
             <Select
+              label="Filter by location"
               value={city}
               onChange={setCity}
               options={[
@@ -106,6 +126,7 @@ export function Catalog({
           </CatalogField>
           <CatalogField label="Condition">
             <Select
+              label="Filter by condition"
               value={condition}
               onChange={setCondition}
               options={[
@@ -124,7 +145,9 @@ export function Catalog({
                 type="range"
                 min="5"
                 max="200"
+                step="1"
                 value={maxPrice}
+                aria-label="Maximum price in AZN"
                 onChange={(event) => setMaxPrice(Number(event.target.value))}
               />
               <span className="mt-1 block text-center text-[9px] font-bold">
@@ -145,6 +168,7 @@ export function Catalog({
               <button
                 key={item}
                 onClick={() => setCategory(item)}
+                aria-pressed={category === item}
                 className={`flex w-full items-center justify-between py-3 text-left text-[10px] font-bold transition ${category === item ? "text-orange" : "text-gray-600 hover:pl-1 hover:text-ink"}`}
               >
                 <span>{item}</span>
@@ -166,7 +190,7 @@ export function Catalog({
         <section>
           <div className="mb-6 flex items-center justify-between border-b border-[#cdbd9e] pb-3">
             <p className="text-[9px] font-bold uppercase tracking-[.14em]">
-              {filtered.length} catalog entries
+              {data.length} loaded catalog entries
             </p>
             <label className="relative">
               <span className="sr-only">Sort listings</span>
@@ -191,12 +215,33 @@ export function Catalog({
                 <BookSkeleton key={item} />
               ))}
             </div>
-          ) : filtered.length ? (
-            <div className="shelf-row grid grid-cols-2 gap-x-5 gap-y-14 md:grid-cols-3 xl:grid-cols-4">
-              {filtered.map((listing) => (
-                <BookCard key={listing.id} listing={listing} />
-              ))}
-            </div>
+          ) : data.length ? (
+            <>
+              <div className="shelf-row grid grid-cols-2 gap-x-5 gap-y-14 md:grid-cols-3 xl:grid-cols-4">
+                {data.map((listing) => (
+                  <BookCard key={listing.id} listing={listing} />
+                ))}
+              </div>
+              {hasMore && (
+                <div className="mt-12 flex justify-center">
+                  <button
+                    className="btn-secondary"
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                  >
+                    {loadingMore ? "Loading more..." : "Load more books"}
+                  </button>
+                </div>
+              )}
+              {error && (
+                <p
+                  role="alert"
+                  className="mt-5 text-center text-xs text-red-700"
+                >
+                  {error}
+                </p>
+              )}
+            </>
           ) : (
             <EmptyState
               title="No matching catalog entries."
@@ -232,11 +277,13 @@ function CatalogField({
 }
 
 function Select({
+  label,
   value,
   onChange,
   options,
   icon: Icon,
 }: {
+  label: string;
   value: string;
   onChange: (value: string) => void;
   options: [string, string][];
@@ -251,6 +298,7 @@ function Select({
       <select
         className="input !min-h-[42px] appearance-none !pl-8 !pr-8 text-[10px]"
         value={value}
+        aria-label={label}
         onChange={(event) => onChange(event.target.value)}
       >
         {options.map(([id, label]) => (

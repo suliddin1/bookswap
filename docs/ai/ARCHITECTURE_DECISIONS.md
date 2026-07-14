@@ -34,7 +34,7 @@ The existing listings table represents a physical copy. Add a normalized book/ti
 
 ## ADR-006 — Explicit sale/exchange intention
 
-Status: Proposed, launch-required.
+Status: Accepted and implemented.
 
 Each physical-copy offer is sale, exchange, or both. Price is required only when sale is enabled. Negotiability is separate. Desired exchange titles are structured preferences with a free-text fallback. Existing sale listings migrate to sale intent without data loss.
 
@@ -61,6 +61,8 @@ Fraunces/Manrope, warm ivory/walnut/paper palette, restrained gold, shelves, car
 Status: Proposed, launch-required.
 
 Replace fixed-limit catalog retrieval with opaque cursor pagination using a deterministic sort tuple. Newest uses (created_at, id); price sorts include price plus a deterministic tie-breaker. Filters and sort are part of cursor validity. Responses provide items and nextCursor; no duplicates or gaps under normal concurrent inserts.
+
+The deployed contract uses versioned canonical base64url JSON, a SHA-256 scope over normalized filters or seller ID, strict tuple validation, and PostgREST keyset predicates. Catalog and seller clients accumulate pages with stale-request/version guards and ID de-duplication. Active-price and public-seller partial indexes support the access paths. Live equal-price/equal-timestamp/concurrent-insert tests are required regression evidence.
 
 ## ADR-011 — Protected Realtime only
 

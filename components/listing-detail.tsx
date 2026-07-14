@@ -290,15 +290,28 @@ export function ListingDetail({ id }: { id: string }) {
                 {listing.seller.initials}
               </span>
               <div>
-                <b className="block text-xs">{listing.seller.name}</b>
+                <Link
+                  href={`/sellers/${listing.seller.id}`}
+                  className="block text-xs font-bold hover:text-orange"
+                >
+                  {listing.seller.name}
+                </Link>
                 <span className="mt-1 block text-[9px] text-gray-500">
                   BookSwap reader
                 </span>
               </div>
             </div>
-            <span className="flex items-center gap-1 text-[9px] text-gray-500">
-              <MapPin size={11} /> {listing.seller.city ?? listing.city}
-            </span>
+            <div className="text-right">
+              <span className="flex items-center gap-1 text-[9px] text-gray-500">
+                <MapPin size={11} /> {listing.seller.city ?? listing.city}
+              </span>
+              <Link
+                href={`/sellers/${listing.seller.id}`}
+                className="mt-1 block text-[9px] font-bold text-orange"
+              >
+                View bookstore
+              </Link>
+            </div>
           </div>
           {ownListing ? (
             <Link

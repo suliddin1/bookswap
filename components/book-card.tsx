@@ -77,7 +77,16 @@ export function BookCard({
           <span className="flex items-center gap-1">
             <MapPin size={11} /> {listing.city}
           </span>
-          <span className="truncate">{listing.seller.name}</span>
+          {listing.seller.id ? (
+            <Link
+              href={`/sellers/${listing.seller.id}`}
+              className="truncate hover:text-orange"
+            >
+              {listing.seller.name}
+            </Link>
+          ) : (
+            <span className="truncate">{listing.seller.name}</span>
+          )}
         </div>
       </div>
     </motion.article>

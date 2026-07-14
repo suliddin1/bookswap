@@ -4,6 +4,29 @@ Evidence date: 2026-07-14 (Asia/Baku). Repository: D:\Codex Projects\2HandedBook
 
 No production database, deployment, remote branch, or protected secondary checkout was touched. Public development configuration was supplied only to validation processes; no credential was written to tracked files. Transient server logs and Playwright output are under ignored test-results.
 
+## P1 catalog pagination and seller inventory — current evidence
+
+Applied additive development migration: `add_listing_pagination_indexes`. It adds the partial `(price,id)` index for active catalog price traversal and `(seller_id,created_at desc,id desc)` for public active/sold seller inventory. The development catalog now has 13 migrations, 10 RLS-enabled public tables, 40 constraints, and 35 indexes. The security advisor is empty; performance notices are only unused-index INFO on the cleaned development dataset.
+
+Catalog and seller APIs return `{items,nextCursor}` using canonical versioned base64url cursors bound to normalized filters or seller scope. Newest uses `(created_at desc,id desc)`; price-low uses `(price asc,id asc)`; price-high uses `(price desc,id desc)`. Limit+1 detects continuation. Query/category/city/condition/maximum-price/sort are server-side; filter/cursor or catalog/seller scope mismatches return 400. Clients cancel/reset stale first pages, reject stale load-more results, de-duplicate IDs, preserve valid filters in the URL, and normalize malformed deep links.
+
+Live API evidence used two temporary Auth users, five active rows including equal price/timestamp ties, one sold row, one draft, one eligible sold-interaction review, and one concurrent active insert:
+
+| Probe | Result |
+| --- | --- |
+| Price-low pages | Original IDs in exact `(price,id)` ascending order, once each. |
+| Price-high pages | Original IDs in exact `(price,id)` descending order, once each. |
+| Newest equal-timestamp tie | Higher ID then lower ID, deterministic. |
+| Concurrent newer insert after page one | Original traversal had no gap/duplicate; newer row correctly remained before the cursor. |
+| Category/city/condition/max-price composition | Exactly the three eligible fixtures. |
+| Cursor reused with different filter/scope | 400 `INVALID_CURSOR`. |
+| Public seller response | Safe keys only: city, createdAt, id, initials, name, rating, reviewCount. |
+| Seller inventory/rating | Seven active/sold rows exactly once; draft absent; rating 4 from one eligible review. |
+
+The first price-high matrix exposed a secondary-ID direction error that duplicated/omitted tied rows; the implementation was corrected to explicit descending ID order and the entire matrix reran successfully. Agent Browser then observed 200 responses for `/api/listings` and `/api/sellers/[id]`, exact filtered catalog order, seven storefront cards including sold and excluding draft, rating text, exposed names for every catalog filter, no console/page errors, and matching viewport/scroll widths at 1440x900, 1024x768, 390x844, and 360x800.
+
+Current gate: lint pass; TypeScript pass; Vitest 17/17; Next.js production build 37 routes; Playwright 4/4. Cleanup counts are zero for both Auth users, public users, listings, reviews, cleanup jobs, and Storage objects.
+
 ## P1 image lifecycle — current evidence
 
 Applied additive development migrations:

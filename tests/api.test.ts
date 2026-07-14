@@ -18,6 +18,14 @@ import {
   getOwnedListingImagePath,
   partitionListingImageCleanupJobs,
 } from "../lib/listing-images";
+import {
+  createListingCursorScope,
+  decodeListingCursor,
+  encodeListingCursor,
+  getListingCursorFilter,
+  parseListingLimit,
+  parseListingSort,
+} from "../lib/listing-pagination";
 
 describe("marketplace input validation", () => {
   it("accepts a complete listing", () => {
@@ -174,6 +182,82 @@ describe("marketplace input validation", () => {
 
     expect(result.referencedJobs).toEqual([shared]);
     expect(result.removableJobs).toEqual([obsolete]);
+  });
+
+  it("round-trips deterministic listing cursors and binds them to scope", () => {
+    const scope = createListingCursorScope({
+      type: "catalog",
+      query: "kitab",
+      city: "Baku",
+    });
+    expect(scope).toBe(
+      createListingCursorScope({
+        city: "Baku",
+        query: "kitab",
+        type: "catalog",
+      }),
+    );
+    const encoded = encodeListingCursor(
+      {
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        created_at: "2026-07-14T05:00:00.000Z",
+        price: 12,
+      },
+      "newest",
+      scope,
+    );
+    const decoded = decodeListingCursor(encoded, "newest", scope);
+    expect(decoded).toEqual({
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      createdAt: "2026-07-14T05:00:00.000Z",
+      sort: "newest",
+      scope,
+    });
+    expect(getListingCursorFilter(decoded!)).toContain(
+      "and(created_at.eq.2026-07-14T05:00:00.000Z,id.lt.aaaaaaaa",
+    );
+    expect(() =>
+      decodeListingCursor(
+        encoded,
+        "newest",
+        createListingCursorScope({ type: "seller" }),
+      ),
+    ).toThrow();
+    expect(() => decodeListingCursor(`${encoded}x`, "newest", scope)).toThrow();
+  });
+
+  it("uses deterministic price cursor directions", () => {
+    const scope = createListingCursorScope({ type: "catalog", sort: "price" });
+    const row = {
+      id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      created_at: "2026-07-14T05:00:00.000Z",
+      price: 17.5,
+    };
+    const low = decodeListingCursor(
+      encodeListingCursor(row, "price-low", scope),
+      "price-low",
+      scope,
+    );
+    const high = decodeListingCursor(
+      encodeListingCursor(row, "price-high", scope),
+      "price-high",
+      scope,
+    );
+    expect(getListingCursorFilter(low!)).toBe(
+      `price.gt.17.5,and(price.eq.17.5,id.gt.${row.id})`,
+    );
+    expect(getListingCursorFilter(high!)).toBe(
+      `price.lt.17.5,and(price.eq.17.5,id.lt.${row.id})`,
+    );
+  });
+
+  it("validates public listing sort and page limits", () => {
+    expect(parseListingSort(null)).toBe("newest");
+    expect(parseListingSort("price-low")).toBe("price-low");
+    expect(() => parseListingSort("popular")).toThrow();
+    expect(parseListingLimit(null)).toBe(24);
+    expect(parseListingLimit("99")).toBe(50);
+    expect(() => parseListingLimit("2.5")).toThrow();
   });
 
   it("only exposes favorites for public states and active sellers", () => {

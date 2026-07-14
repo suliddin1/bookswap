@@ -1,5 +1,23 @@
 # Iteration log
 
+## 2026-07-14 — P1 catalog pagination and seller inventory
+
+Goal / acceptance IDs: P1-003, P1-004; PROF-02, PAGE-01, PERF-01, FILTER-01, A11Y-01, TEST-01.
+
+Ownership: root exclusively owns the stable listing cursor contract, public catalog GET/hook/UI, public seller API/page/component, seller navigation links, additive pagination indexes, focused tests, and durable documentation. No other agent is editing these files.
+
+Starting state: clean branch `autonomous/bookswap-product` at `a2a78ab`. Catalog GET limits to 24/50 with no cursor or next-page metadata. Newest uses `(created_at,id)`, but price sort ties only on `id` without a matching index. The client applies condition and maximum-price after the fixed server page, making later eligible copies unreachable and the displayed count incomplete. No public seller route exists; seller names are plain text. Catalog search/location/condition controls also retain the previously recorded empty accessible-name gap.
+
+Planned contract: versioned base64url cursor bound to normalized filters/seller scope and validated sort tuple; deterministic keyset predicates for newest and both price directions; `limit + 1` next-page detection; server-side condition/price filters; deduplicating load-more clients; safe active/sold seller inventory plus eligible sold-interaction rating context; exact safe profile fields; supporting partial indexes; equal-sort/concurrent-insert/direct API/browser/accessibility evidence.
+
+Implemented: catalog and seller APIs now return `{items,nextCursor}` pages using filter-bound, versioned cursors and deterministic `(created_at,id)` or `(price,id)` tuples. Condition and maximum price moved to the server query; URL state, stale-request cancellation, de-duplication, and load-more states are handled in the client. Malformed deep-link values are normalized before the first request. Public seller routes expose only id/name/city/createdAt plus derived initials/rating counts, include only active/sold inventory, and link from catalog/detail seller names. The additive `add_listing_pagination_indexes` migration supplies active-price and public-seller partial indexes.
+
+Live evidence: a temporary seller, buyer, five equal-price/timestamp active listings, one sold listing, one draft, one eligible sold-interaction review, and a concurrent insert exercised both price directions, newest ties, filter composition, cursor/filter and catalog/seller scope mismatch rejection, safe seller shape, rating aggregation, and inventory state exclusion. The first matrix exposed a descending-price tie direction defect; explicit descending id order fixed it, and the complete rerun returned every original ID exactly once with no gaps or duplicates while omitting the newer concurrent row. Seller inventory returned seven active/sold rows, excluded the draft, and reported rating 4 from one eligible review.
+
+Validation: lint, TypeScript, 17/17 unit tests, the 37-route production build, and 4/4 Playwright tests pass. Agent Browser returned 200 for both production APIs, exact filtered price-high order, exact seller inventory/rating, usable named filter controls, no console/page errors, and no horizontal overflow at 1440x900, 1024x768, 390x844, or 360x800. All temporary Auth users, public users, listings, reviews, cleanup jobs, and Storage objects were removed; final counts are zero. Development now has 13 migrations, 10 RLS public tables, 40 constraints, and 35 indexes. The security advisor is empty; new-index notices are informational only on the cleaned dataset. P1-003/P1-004 and ownership are released by this local checkpoint.
+
+Next slice: continue with the highest independent P1 gap while P0-005 and protected image-route failure injection remain externally blocked by the missing development secret.
+
 ## 2026-07-14 — P1 image lifecycle implementation
 
 Goal / acceptance IDs: P1-006; IMG-01, IMG-02, IMG-03, STOR-01, TEST-01.
