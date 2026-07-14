@@ -292,12 +292,49 @@ describe("marketplace input validation", () => {
       new URL("../components/chat-panel.tsx", import.meta.url),
       "utf8",
     );
+    const unreadHook = readFileSync(
+      new URL("../hooks/use-chat-unread.ts", import.meta.url),
+      "utf8",
+    );
+    const notificationsHook = readFileSync(
+      new URL("../hooks/use-notifications.ts", import.meta.url),
+      "utf8",
+    );
+    const notificationMigration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260714063000_add_chat_read_state_and_durable_notifications.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const moderationRoute = readFileSync(
+      new URL("../app/api/admin/moderate/route.ts", import.meta.url),
+      "utf8",
+    );
 
     expect(messageRoute).not.toContain("broadcast");
     expect(messageRoute).not.toContain(".channel(");
+    expect(messageRoute).not.toContain("notifyUser");
+    expect(messageRoute).toContain("notificationDelivered: true");
     expect(chatHook).not.toContain("broadcast");
     expect(chatHook).toContain('"postgres_changes"');
     expect(chatPanel).toContain('"postgres_changes"');
+    expect(chatPanel).toContain('method: "PATCH"');
+    expect(unreadHook).toContain('table: "chat_room_reads"');
+    expect(unreadHook).toContain('event: "UPDATE"');
+    expect(notificationsHook).toContain('event: "UPDATE"');
+    expect(notificationMigration).toContain(
+      "create table if not exists public.chat_room_reads",
+    );
+    expect(notificationMigration).toContain(
+      "create trigger deliver_chat_message",
+    );
+    expect(notificationMigration).toContain("insert into public.notifications");
+    expect(notificationMigration).toContain(
+      "alter publication supabase_realtime add table public.chat_room_reads",
+    );
+    expect(moderationRoute).toContain("await notifyUser");
+    expect(moderationRoute).not.toContain("void notifyUser");
   });
 
   it("keeps listing image cleanup owner-checked, durable, and revocable", () => {

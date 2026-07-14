@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     if (error) throw error;
     return Response.json({ data: data ?? [] });
   } catch (error) {
-    return apiError(error, 401);
+    return apiError(error, 500);
   }
 }
 
@@ -31,6 +31,6 @@ export async function PATCH(request: Request) {
     if (error) throw error;
     return Response.json({ updated: true });
   } catch (error) {
-    return apiError(error, 401);
+    return apiError(error, 500);
   }
 }

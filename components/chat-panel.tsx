@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, CheckCheck, MapPin, Send, ShieldCheck } from "lucide-react";
 import { BookCover } from "@/components/book-cover";
@@ -27,6 +27,26 @@ export function ChatPanel({ roomId }: { roomId: string }) {
   const [room, setRoom] = useState<Room | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
+  const [readError, setReadError] = useState("");
+
+  const markRead = useCallback(async () => {
+    try {
+      const response = await authFetch(`/api/chat/rooms/${roomId}`, {
+        method: "PATCH",
+      });
+      if (!response.ok) {
+        const body = await response.json();
+        throw new Error(body.error ?? "Could not update message read state.");
+      }
+      setReadError("");
+    } catch (reason) {
+      setReadError(
+        reason instanceof Error
+          ? reason.message
+          : "Could not update message read state.",
+      );
+    }
+  }, [roomId]);
 
   useEffect(() => {
     authFetch(`/api/chat/rooms/${roomId}`)
@@ -60,13 +80,28 @@ export function ChatPanel({ roomId }: { roomId: string }) {
                 }
               : current,
           );
+          if (document.visibilityState === "visible" && document.hasFocus())
+            void markRead();
         },
       )
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [roomId]);
+  }, [markRead, roomId]);
+
+  useEffect(() => {
+    const acknowledgeVisibleRoom = () => {
+      if (document.visibilityState === "visible" && document.hasFocus())
+        void markRead();
+    };
+    document.addEventListener("visibilitychange", acknowledgeVisibleRoom);
+    window.addEventListener("focus", acknowledgeVisibleRoom);
+    return () => {
+      document.removeEventListener("visibilitychange", acknowledgeVisibleRoom);
+      window.removeEventListener("focus", acknowledgeVisibleRoom);
+    };
+  }, [markRead]);
 
   async function send() {
     if (!text.trim() || !room) return;
@@ -106,6 +141,14 @@ export function ChatPanel({ roomId }: { roomId: string }) {
   return (
     <div className="container-shell py-8 md:py-10">
       <div className="overflow-hidden rounded-[22px] border border-[#d8cbb5] bg-[#fffaf0] shadow-card">
+        {readError && (
+          <p
+            role="alert"
+            className="border-b border-red-200 bg-red-50 p-3 text-center text-xs text-red-700"
+          >
+            {readError}
+          </p>
+        )}
         <div className="grid min-h-[680px] lg:grid-cols-[1fr_290px]">
           <section className="flex min-w-0 flex-col">
             <div className="flex h-[72px] items-center justify-between border-b border-[#d8cbb5] px-5">
@@ -163,11 +206,16 @@ export function ChatPanel({ roomId }: { roomId: string }) {
                 <input
                   className="input flex-1"
                   placeholder="Write a message..."
+                  aria-label="Message text"
                   value={text}
                   onChange={(event) => setText(event.target.value)}
                   onKeyDown={(event) => event.key === "Enter" && send()}
                 />
-                <button onClick={send} className="btn-primary !px-4">
+                <button
+                  onClick={send}
+                  className="btn-primary !px-4"
+                  aria-label="Send message"
+                >
                   <Send size={15} />
                 </button>
               </div>

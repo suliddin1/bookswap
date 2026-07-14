@@ -17,11 +17,11 @@ export async function POST(request: Request) {
       .select("seller_id")
       .single();
     if (error) throw error;
-    void notifyUser(data.seller_id, "SYSTEM", {
+    const notificationDelivery = await notifyUser(data.seller_id, "SYSTEM", {
       listingId,
       message: `Your listing was ${action === "approve" ? "approved" : "rejected"}.`,
     });
-    return Response.json({ data });
+    return Response.json({ data, notificationDelivery });
   } catch (error) {
     return apiError(error, 403);
   }

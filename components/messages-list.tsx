@@ -40,6 +40,13 @@ export function MessagesList() {
     <div className="container-shell py-12 md:py-16">
       <span className="eyebrow">Reader to reader</span>
       <h1 className="display mt-4 text-5xl font-semibold">Messages.</h1>
+      <p role="status" className="mt-3 text-[10px] font-bold text-gray-500">
+        {rooms.reduce(
+          (total, room) => total + Number(room.unreadCount ?? 0),
+          0,
+        )}{" "}
+        unread messages
+      </p>
       {rooms.length ? (
         <div className="card mt-9 divide-y divide-[#e8dfcf] overflow-hidden">
           {rooms.map((room) => {
@@ -61,7 +68,16 @@ export function MessagesList() {
                     {room.listing.title}
                   </span>
                 </div>
-                <MessageCircle size={15} className="text-orange" />
+                {room.unreadCount > 0 ? (
+                  <span
+                    aria-label={`${room.unreadCount} unread messages`}
+                    className="grid h-7 min-w-7 place-items-center rounded-full bg-orange px-2 text-[9px] font-bold text-white"
+                  >
+                    {room.unreadCount > 99 ? "99+" : room.unreadCount}
+                  </span>
+                ) : (
+                  <MessageCircle size={15} className="text-orange" />
+                )}
               </Link>
             );
           })}

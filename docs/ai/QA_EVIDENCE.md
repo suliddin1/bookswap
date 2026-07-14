@@ -4,6 +4,32 @@ Evidence date: 2026-07-14 (Asia/Baku). Repository: D:\Codex Projects\2HandedBook
 
 No production database, deployment, remote branch, or protected secondary checkout was touched. Public development configuration was supplied only to validation processes; no credential was written to tracked files. Transient server logs and Playwright output are under ignored test-results.
 
+## P1 unread chat state and durable notifications — current evidence
+
+Applied additive development migration: `add_chat_read_state_and_durable_notifications`. Development now has 14 migrations, 11/11 RLS public tables, 45 constraints, and 40 indexes. `chat_room_reads` is authenticated-SELECT-only, has one owner/member policy and one read-ack trigger, and appears exactly once in `supabase_realtime`. `messages` has one durable delivery trigger. The three private trigger functions are SECURITY DEFINER with `search_path=""` and postgres-only execute. Generated types contain the new table, room activity, and notification message link. Schema security lint is clean; the known Pro-only Auth warning remains; performance output is unused-index INFO on the cleaned dataset.
+
+Room creation initializes buyer/seller count zero. Message insert atomically validates membership, increments only the recipient, advances `last_message_at`, and creates exactly one notification keyed by `message_id`; trigger failure rolls back the message. Read acknowledgement atomically sets count zero/server marker and marks matching message notifications read. Direct clients cannot mutate read state. System notification insertion is awaited, unexpected database errors are 500, and optional email outcome is returned instead of detached.
+
+Live RLS/Realtime/reconnect evidence used three temporary confirmed users, one listing, and one room:
+
+| Probe | Result |
+| --- | --- |
+| Initial participant state | Buyer and seller each see one own row/count 0; third sees 0 rows. |
+| Direct authenticated read-state update | Denied even for owner; mutation is server-managed. |
+| Three buyer messages | Seller count 3, buyer count 0, exactly three unique linked notifications. |
+| Read-state Realtime | Seller receives `[3]`; buyer and third receive no seller update. |
+| Third/spoofed send | RLS denied; no message/count/notification side effect. |
+| Privileged nonmember send | Trigger rejects 23514, proving service writes cannot bypass membership. |
+| Seller acknowledgement | Count 0, read marker present, all three room notifications read. |
+| Seller reconnect/reply | Persisted 0/all-read; reply makes buyer count 1 and one linked notification. |
+| Notification ownership | Seller cross-mark affects 0 rows; buyer self-mark affects 1. |
+| Cross-device read event | Seller receives notification `read=true` and count `0`; third receives neither. |
+| Exact room-list relation query | One room/own read row; buyer/seller keys exactly city/created_at/id/name; listing embed succeeds. |
+
+Production Agent Browser signed in as the temporary buyer on a public page. Desktop navigation exposed `1 unread messages`; mobile exposed `Messages (1)` and `Notifications (1)`. A server acknowledgement changed the live message label 1→0; a seller message changed it 0→1 through protected Postgres Changes. Header/menu scroll width equalled 1440, 1024, 390, and 360 viewports; accessibility names exposed the counts; console/page errors were zero. The protected messages/notifications Next routes remain part of P0-005's external service-secret blocker and were not falsely claimed.
+
+Current gate: lint pass; TypeScript pass; Vitest 17/17; Next.js production build 37 routes; Playwright 4/4. Cleanup counts are zero for temporary Auth users, public users, listing, room, read states, messages, notifications, cleanup jobs, and Storage objects.
+
 ## P1 catalog pagination and seller inventory — current evidence
 
 Applied additive development migration: `add_listing_pagination_indexes`. It adds the partial `(price,id)` index for active catalog price traversal and `(seller_id,created_at desc,id desc)` for public active/sold seller inventory. The development catalog now has 13 migrations, 10 RLS-enabled public tables, 40 constraints, and 35 indexes. The security advisor is empty; performance notices are only unused-index INFO on the cleaned development dataset.

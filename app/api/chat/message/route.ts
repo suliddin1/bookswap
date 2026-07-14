@@ -2,7 +2,6 @@ import { ApiError, apiError, assertRateLimit, messageInput } from "@/lib/api";
 import { moderateText } from "@/lib/moderation";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 import { requireUser } from "@/lib/auth";
-import { notifyUser } from "@/lib/notify";
 
 export async function POST(request: Request) {
   try {
@@ -29,14 +28,11 @@ export async function POST(request: Request) {
       .select()
       .single();
     if (error) throw error;
-    const recipientId =
-      room.buyer_id === user.id ? room.seller_id : room.buyer_id;
-    void notifyUser(recipientId, "MESSAGE", {
-      roomId: input.roomId,
-      preview: input.text.slice(0, 120),
-    });
-    return Response.json({ data }, { status: 201 });
+    return Response.json(
+      { data, notificationDelivered: true },
+      { status: 201 },
+    );
   } catch (error) {
-    return apiError(error);
+    return apiError(error, 500);
   }
 }

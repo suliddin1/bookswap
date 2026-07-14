@@ -103,3 +103,11 @@ Status: Accepted.
 Uploaded listing images use the public `listing-images` bucket for intentional cover delivery and the exact `{user_id}/{safe filename}` object shape for ownership. Every privileged cleanup first converts a URL from the configured Supabase host into that exact owner path; foreign hosts/folders, nested paths, traversal encoding, queries, fragments, and unsupported extensions are rejected. Authenticated Storage metadata selection and deletion are limited to the caller's first path segment.
 
 Replacing images or deleting a listing enqueues obsolete URLs through a security-definer database trigger in the same transaction as the listing mutation. The queue is RLS-enabled, grant-revoked, explicitly false for anon/authenticated, and accessible only to trusted server code. The server drains through the Storage API, discards a job if any owner listing still references the URL, records failures for retry, and exposes pending cleanup without rolling back an already-successful listing mutation. Fresh uploads abandoned by validation, moderation, or database failure use the same reference check and durable queue. Direct edits to `storage.objects` remain prohibited.
+
+## ADR-017 — Message delivery owns unread and in-app notification state
+
+Status: Accepted.
+
+Every chat room has one service-maintained read-state row per participant. Clients may SELECT only their own row through RLS and receive only permitted Postgres Changes; they cannot write counts directly. A restricted security-definer trigger validates the sender against the room even for privileged inserts, increments only the recipient, updates room activity, and creates one uniquely message-linked notification in the same transaction as the message. Any required in-app delivery failure aborts the message instead of becoming a detached promise.
+
+Read acknowledgement sets the participant count to zero, records server time, and marks that room's linked message notifications read in the same transaction. Visible chat tabs acknowledge live messages; hidden tabs retain unread state. Reconnect always reloads the database before merging later events. Optional email is not the required delivery channel: system notification insertion is awaited, while email attempt/delivery outcome is explicit and may be retried by future infrastructure without weakening the in-app guarantee.

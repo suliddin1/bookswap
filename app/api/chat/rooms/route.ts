@@ -10,20 +10,30 @@ export async function GET(request: Request) {
     const { data, error } = await supabase
       .from("chat_rooms")
       .select(
-        "*, listing:listings(*, seller:users!listings_seller_id_fkey(id,name,city,created_at)), buyer:users!chat_rooms_buyer_id_fkey(id,name,city,created_at), seller:users!chat_rooms_seller_id_fkey(id,name,city,created_at)",
+        "*, read_states:chat_room_reads(user_id,unread_count,last_read_at), listing:listings(*, seller:users!listings_seller_id_fkey(id,name,city,created_at)), buyer:users!chat_rooms_buyer_id_fkey(id,name,city,created_at), seller:users!chat_rooms_seller_id_fkey(id,name,city,created_at)",
       )
       .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-      .order("created_at", { ascending: false });
+      .eq("read_states.user_id", user.id)
+      .order("last_message_at", { ascending: false });
     if (error) throw error;
     return Response.json({
-      data: (data ?? []).map((room: any) => ({
-        ...room,
-        listing: normalizeListing(room.listing),
-        currentUserId: user.id,
-      })),
+      data: (data ?? []).map((room: any) => {
+        const readState = room.read_states?.find(
+          (state: { user_id: string }) => state.user_id === user.id,
+        );
+        const safeRoom = { ...room };
+        delete safeRoom.read_states;
+        return {
+          ...safeRoom,
+          listing: normalizeListing(room.listing),
+          currentUserId: user.id,
+          unreadCount: Number(readState?.unread_count ?? 0),
+          lastReadAt: readState?.last_read_at ?? null,
+        };
+      }),
     });
   } catch (error) {
-    return apiError(error, 401);
+    return apiError(error, 500);
   }
 }
 

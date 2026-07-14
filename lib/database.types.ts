@@ -115,6 +115,7 @@ export type Database = {
           listing_id: string;
           buyer_id: string;
           seller_id: string;
+          last_message_at: string;
         },
         {
           id?: string;
@@ -122,8 +123,9 @@ export type Database = {
           buyer_id: string;
           seller_id: string;
           created_at?: string;
+          last_message_at?: string;
         },
-        never,
+        { last_message_at?: string },
         [
           {
             foreignKeyName: "chat_rooms_listing_id_fkey";
@@ -142,6 +144,44 @@ export type Database = {
           {
             foreignKeyName: "chat_rooms_seller_id_fkey";
             columns: ["seller_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ]
+      >;
+      chat_room_reads: Table<
+        Timestamps & {
+          room_id: string;
+          user_id: string;
+          unread_count: number;
+          last_read_at: string | null;
+          updated_at: string;
+        },
+        {
+          room_id: string;
+          user_id: string;
+          unread_count?: number;
+          last_read_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        },
+        {
+          unread_count?: number;
+          last_read_at?: string | null;
+          updated_at?: string;
+        },
+        [
+          {
+            foreignKeyName: "chat_room_reads_room_id_fkey";
+            columns: ["room_id"];
+            isOneToOne: false;
+            referencedRelation: "chat_rooms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "chat_room_reads_user_id_fkey";
+            columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
             referencedColumns: ["id"];
@@ -221,6 +261,7 @@ export type Database = {
           type: Database["public"]["Enums"]["notification_type"];
           payload: Json;
           read: boolean;
+          message_id: string | null;
         },
         {
           id?: string;
@@ -228,15 +269,23 @@ export type Database = {
           type: Database["public"]["Enums"]["notification_type"];
           payload?: Json;
           read?: boolean;
+          message_id?: string | null;
           created_at?: string;
         },
-        { read?: boolean },
+        { read?: boolean; message_id?: string | null },
         [
           {
             foreignKeyName: "notifications_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_message_id_fkey";
+            columns: ["message_id"];
+            isOneToOne: false;
+            referencedRelation: "messages";
             referencedColumns: ["id"];
           },
         ]

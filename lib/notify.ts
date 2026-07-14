@@ -9,15 +9,25 @@ export async function notifyUser(
 ) {
   const supabase = requireSupabaseAdmin();
   const safePayload = JSON.parse(JSON.stringify(payload)) as Json;
-  const { error: insertError } = await supabase
+  const { data: notification, error: insertError } = await supabase
     .from("notifications")
-    .insert({ user_id: userId, type, payload: safePayload });
-  if (insertError) console.error("In-app notification failed", insertError);
-  const { data: user } = await supabase
+    .insert({ user_id: userId, type, payload: safePayload })
+    .select("id")
+    .single();
+  if (insertError) throw insertError;
+  const { data: user, error: userError } = await supabase
     .from("users")
     .select("email")
     .eq("id", userId)
     .single();
+  if (userError) {
+    console.error("Notification email recipient lookup failed", userError);
+    return {
+      notificationId: notification.id,
+      emailAttempted: false,
+      emailDelivered: false,
+    };
+  }
   if (user?.email) {
     const message = escapeHtml(
       String(
@@ -37,5 +47,15 @@ export async function notifyUser(
       },
     });
     if (error) console.error("Notification email delivery failed", error);
+    return {
+      notificationId: notification.id,
+      emailAttempted: true,
+      emailDelivered: !error,
+    };
   }
+  return {
+    notificationId: notification.id,
+    emailAttempted: false,
+    emailDelivered: false,
+  };
 }

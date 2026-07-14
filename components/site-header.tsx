@@ -15,12 +15,14 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useChatUnread } from "@/hooks/use-chat-unread";
 import { useNotifications } from "@/hooks/use-notifications";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { unread } = useNotifications(user?.id);
+  const unreadChats = useChatUnread(user?.id);
   const initials = String(user?.user_metadata?.name ?? user?.email ?? "R")
     .split(/[\s@]/)
     .map((part) => part[0])
@@ -53,8 +55,17 @@ export function SiteHeader() {
           <Link href="/listings/new" className="transition hover:text-orange">
             Sell
           </Link>
-          <Link href="/messages" className="transition hover:text-orange">
+          <Link
+            href="/messages"
+            aria-label={`${unreadChats} unread messages`}
+            className="flex items-center gap-1.5 transition hover:text-orange"
+          >
             Messages
+            {unreadChats > 0 && (
+              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-orange px-1 text-[8px] text-white">
+                {unreadChats > 9 ? "9+" : unreadChats}
+              </span>
+            )}
           </Link>
           <Link href="/favorites" className="transition hover:text-orange">
             Favorites
@@ -132,6 +143,7 @@ export function SiteHeader() {
             </Link>
             <Link href="/messages" onClick={() => setOpen(false)}>
               <MessageCircle className="inline" size={14} /> Messages
+              {unreadChats ? ` (${unreadChats})` : ""}
             </Link>
             <Link href="/favorites" onClick={() => setOpen(false)}>
               <Heart className="inline" size={14} /> Favorites
