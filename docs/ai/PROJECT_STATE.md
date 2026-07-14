@@ -40,8 +40,8 @@ Known absent product areas include explicit exchange intention, title/edition id
 - Plan/cost at creation: authorized organization free plan; project cost reported as 0 monthly.
 - Status during audit: ACTIVE_HEALTHY, PostgreSQL 17.
 - No production project was modified. The unavailable legacy bookswap project was not restored or changed.
-- Repository migrations applied in order: init, marketplace_upgrade, production_hardening, security_marketplace_hardening, fix_chat_room_seller_authorization, add_chat_room_listing_seller_index.
-- Verified: 9 RLS-enabled public tables; 37 constraints; 30 indexes; 21 public-table policies plus 2 Storage policies; column grants protecting private profile/admin fields; non-exposed private active-user predicate; composite chat-room listing/seller ownership; listing-images bucket (public read, 5 MB, JPEG/PNG/WebP); messages and notifications Realtime publication; restricted security-definer functions; and schema-derived TypeScript generation.
+- Repository migrations applied in order: init, marketplace_upgrade, production_hardening, security_marketplace_hardening, fix_chat_room_seller_authorization, add_chat_room_listing_seller_index, secure_favorite_listing_visibility, restrict_banned_user_favorite_access.
+- Verified: 9 RLS-enabled public tables; 37 constraints; 30 indexes; 21 public-table policies plus 2 Storage policies; column grants protecting private profile/admin fields; non-exposed private user/favorite visibility predicates; composite chat-room listing/seller ownership; atomic favorite target trigger; listing-images bucket (public read, 5 MB, JPEG/PNG/WebP); messages and notifications Realtime publication; restricted security-definer functions; and schema-derived TypeScript generation.
 - Functional Auth test passed: a temporary Auth user created one safe profile and deletion cascaded; no test row remains.
 - Security advisor reports one external warning: leaked-password protection is disabled because that feature is available only on Supabase Pro and above. Enabling paid service requires explicit authorization; track it as a production decision rather than changing plan or cost autonomously.
 - Performance advisor reports only expected unused-index informational findings on an empty new database; the composite foreign-key missing-index notice was resolved. Do not remove protective indexes until representative query evidence exists.
@@ -50,15 +50,14 @@ Known absent product areas include explicit exchange intention, title/edition id
 
 The backend schema matches the repository migrations and generated type shape. Public catalog and detail compatibility and chat-room ownership are now fixed. Remaining critical compatibility/security work is:
 
-1. Favorite retrieval uses service role without restricting joined listings to requester-visible state.
-2. Chat message code emits an additional room broadcast without private-channel authorization.
-3. The connector provides public project configuration but not a service-role/secret key. Full protected-route browser verification therefore remains externally blocked until a development secret is configured locally outside Git.
-4. The free development project cannot enable the Pro-only leaked-password protection advisor recommendation without explicit cost authorization.
+1. Chat message code emits an additional room broadcast without private-channel authorization.
+2. The connector provides public project configuration but not a service-role/secret key. Full protected-route browser verification therefore remains externally blocked until a development secret is configured locally outside Git.
+3. The free development project cannot enable the Pro-only leaked-password protection advisor recommendation without explicit cost authorization.
 
 ## Baseline
 
-Passed after the P0 authorization slice: lint, TypeScript, 9/9 unit tests, production build (37 generated routes), and 4/4 existing Playwright tests. Real catalog and detail APIs return 200 with safe sellers; four-viewport production rendering has meaningful content, no horizontal overflow, and no console/page errors. `next dev` still logs a React Refresh `unsafe-eval` CSP incompatibility, while the production build remains clean. See QA_EVIDENCE.md.
+Passed after the current P0 slices: lint, TypeScript, 10/10 unit tests, production build (37 generated routes), and 4/4 existing Playwright tests. Real catalog and detail APIs return 200 with safe sellers; four-viewport production rendering has meaningful content, no horizontal overflow, and no console/page errors. Signed-out favorites render safely and the mobile save control reliably redirects to login without a protected request or browser error. `next dev` still logs a React Refresh `unsafe-eval` CSP incompatibility, while the production build remains clean. See QA_EVIDENCE.md.
 
 ## Readiness
 
-Goal mode is active. P0-001 and P0-002 are complete; P0-003 and P0-004 are the next independent security slices, while P0-005 remains externally blocked by the missing development secret. The product is not complete or launch-ready.
+Goal mode is active. P0-001, P0-002, and P0-003 are complete; P0-004 is the next independent security slice, while P0-005 remains externally blocked by the missing development secret. The product is not complete or launch-ready.

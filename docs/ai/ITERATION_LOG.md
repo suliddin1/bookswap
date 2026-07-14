@@ -2,6 +2,20 @@
 
 Use one entry per autonomous slice. Record facts, ownership, migrations, validation, evidence, and remaining failures. Do not use this log as a completion claim.
 
+## 2026-07-14 — P0 favorite visibility
+
+Goal / acceptance IDs: P0-003; FAV-01, SVC-01, DB-01, TEST-01.
+
+Ownership: root exclusively owned the favorites authorization slice: `app/api/favorites/route.ts`, the focused listing-visibility helper/tests, two additive favorites migrations, the related book-card interaction fix, and durable documentation. No other agent edited those files. Ownership is released by this completed local checkpoint.
+
+Starting state: clean branch `autonomous/bookswap-product` at `cd4ecef`. The service-role GET embeds every favorited listing without constraining listing/seller state; the saved-state probe ignores target visibility; POST can create a favorite for a known non-public listing; database favorite policies constrain only `user_id`. DELETE is correctly requester-scoped and must continue to remove stale favorites. The development service secret is still unavailable, so route behavior requires focused code-level tests plus direct authenticated RLS/Data API evidence.
+
+Implemented: added a shared active/sold plus active-seller response predicate; explicit foreign-key inner embeds and state/seller filters on privileged reads; pre-write target validation; race-safe 23514 mapping; correct 500 defaults for unexpected database faults; a private stable/strict visibility predicate; a private before-write trigger that also constrains service-role writes; RLS checks for requester, banned user, target state, and seller state; and preserved requester-scoped deletion/cascade behavior. Browser inspection found the mobile heart button covered by the cover title, so its stacking layer and dynamic accessible name were corrected.
+
+Backend evidence: active and sold favorites are the only rows visible to the buyer; the other user sees only its own row; a saved listing transitioned to draft is hidden. Draft, locked, banned-seller, banned-reader, spoofed-user, and anonymous inserts fail; the valid active target succeeds; a direct authenticated Data API join returns 200 with only active/sold rows and exactly safe seller keys; deleting a listing leaves zero orphan favorites. Both private functions have empty search paths and restricted ACLs, the trigger is enabled, all three deployed policies contain the intended predicates, generated public types remain stable, and advisors add no new actionable schema finding.
+
+Validation: lint, TypeScript, 10/10 unit tests, production build, and 4/4 Playwright tests pass. Agent Browser at 390x844 shows the signed-out favorites state with no overflow/errors; after the stacking fix the catalog heart is clickable, redirects to `/login`, emits no favorites request without a session, and records no console/page errors. All temporary Auth/profile/listing/favorite fixtures were deleted and zero rows remain. Protected Next-route live testing remains part of P0-005 because the development service secret is unavailable.
+
 ## 2026-07-14 — P0 public catalog and chat-room authorization
 
 Goal / acceptance IDs: P0-001 and P0-002; CAT-01, PROF-01, BROW-01, CHAT-01, DB-01, SVC-01.

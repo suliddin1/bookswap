@@ -42,9 +42,9 @@ export function BookCard({
       <Link href={`/listings/${listing.id}`} className="relative block">
         <BookCover listing={listing} />
         <button
-          aria-label="Save listing"
+          aria-label={isSaved ? "Remove from favorites" : "Save listing"}
           onClick={toggleFavorite}
-          className={`absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-[#fffaf0]/90 shadow-sm transition ${isSaved ? "text-orange" : "text-ink hover:text-orange"}`}
+          className={`absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-[#fffaf0]/90 shadow-sm transition ${isSaved ? "text-orange" : "text-ink hover:text-orange"}`}
         >
           <Heart size={16} fill={isSaved ? "currentColor" : "none"} />
         </button>

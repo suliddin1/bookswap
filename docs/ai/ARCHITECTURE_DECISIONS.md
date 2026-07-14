@@ -87,3 +87,9 @@ Status: Accepted.
 Keep `public.users` column grants limited to `id`, `name`, `city`, and `created_at`; never grant broad table reads to `anon` or `authenticated`. Policies that need ban state call the stable, strict, security-definer `private.user_is_active(uuid)` predicate. The `private` schema is not exposed through the Data API, the function has an empty search path, and execute is restricted to `anon` and `authenticated`. Public catalog/detail queries may therefore retain atomic PostgREST embeds that explicitly name only the four safe profile fields. Direct Data API tests must continue to prove safe reads succeed, private fields and `*` fail, and banned sellers/listings are absent.
 
 Chat-room seller ownership is independently enforced with qualified RLS and a composite `(listing_id, seller_id) -> listings(id, seller_id)` foreign key so privileged writes cannot create a mismatched room.
+
+## ADR-015 — Favorites never confer listing visibility
+
+Status: Accepted.
+
+A favorite is a user-owned pointer, not an authorization capability. Only active/sold listings from active sellers may be newly saved or returned. The service-role route applies explicit joined filters, validates the nested result again before serialization, and rejects unavailable writes. Database RLS repeats requester, ban, listing-state, and seller-state checks for direct clients. A private security-definer predicate and before-write trigger enforce the target invariant even for service-role writes and close state-transition races. Hidden stale rows may remain temporarily but are never readable; the requester-scoped server DELETE can remove them, and listing deletion cascades them.

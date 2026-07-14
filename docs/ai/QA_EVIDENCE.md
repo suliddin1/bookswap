@@ -45,6 +45,35 @@ The detail API returned 200 and rendered the safe seller name/city at 390x844. A
 
 Cleanup: all three temporary Auth users were deleted. Cascades were verified: temporary Auth users 0, public profiles 0, listings 0, and chat rooms 0.
 
+## P0 favorite visibility — current evidence
+
+Applied additive development migrations:
+
+1. `secure_favorite_listing_visibility`
+2. `restrict_banned_user_favorite_access`
+
+The route now filters privileged favorites through explicit inner relationships, active/sold state, and active seller status; revalidates every nested result before serialization; validates targets before upsert; maps an atomic trigger race to `LISTING_UNAVAILABLE`; and reports unexpected database faults as 500 instead of 401. The database adds a private visibility predicate, a service-role-resistant before-write trigger, and requester/ban/target-aware RLS. Book-card browser verification also raised the heart control above the cover title and made its accessible name reflect save/remove state.
+
+| Probe | Result |
+| --- | --- |
+| Buyer direct RLS SELECT | Exactly active and sold listing IDs; transitioned draft absent. |
+| Other-user SELECT | Exactly the other user's active favorite; buyer favorites absent. |
+| Valid active insert | Success. |
+| Draft / locked insert | 23514 from the atomic target trigger. |
+| Spoofed `user_id` insert | 42501 RLS denial. |
+| Anonymous insert | 42501 table permission denial. |
+| Banned seller | Buyer SELECT returns 0; new save fails 23514. |
+| Banned buyer | SELECT returns 0; new save fails 42501. |
+| Authenticated Data API safe join | 200; only active/sold; seller keys exactly city/created_at/id/name. |
+| Draft insert through Data API | 400 with code 23514. |
+| Listing deletion | Zero orphan favorite rows after cascade. |
+
+Catalog inspection confirms `favorite_listing_is_visible` is stable, strict, SECURITY DEFINER, `search_path=""`, and executable only by postgres/authenticated. The trigger function is SECURITY DEFINER with `search_path=""` and postgres-only execute ACL; its trigger is enabled. The three favorite policies compile with requester, active-user, and target-visibility predicates. Generated TypeScript remains compatible and exposes no private helper. Security advisor remains at the single previously documented Pro-only Auth warning; performance advisor has only expected unused-index informational entries.
+
+Current command/browser gate: lint pass; TypeScript pass; Vitest 10/10; production build 37 routes; Playwright 4/4. At 390x844 the signed-out favorites page has scroll width 390, renders its sign-in state, and logs no console/page error. The corrected catalog save control is clickable and redirects to `/login`; no `/api/favorites` request is sent without a session. The development service secret is still unavailable, so a live protected Next route call is explicitly deferred to P0-005; the database trigger ensures privileged writes cannot bypass the target invariant meanwhile.
+
+Cleanup: three temporary Auth users, their profiles, seven temporary listings, and all temporary favorite rows were removed; all verification counts are zero.
+
 ## Static and automated baseline
 
 | Command | Result | Exact summary |

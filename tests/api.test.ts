@@ -11,6 +11,7 @@ import {
   messageInput,
 } from "../lib/api";
 import { assertOwnedListingImages, escapeHtml } from "../lib/security";
+import { isFavoriteListingVisible } from "../lib/favorites";
 
 describe("marketplace input validation", () => {
   it("accepts a complete listing", () => {
@@ -96,5 +97,24 @@ describe("marketplace input validation", () => {
       ),
     ).toThrow();
     process.env.NEXT_PUBLIC_SUPABASE_URL = previous;
+  });
+
+  it("only exposes favorites for public states and active sellers", () => {
+    expect(
+      isFavoriteListingVisible({ status: "active", seller: { banned: false } }),
+    ).toBe(true);
+    expect(
+      isFavoriteListingVisible({ status: "sold", seller: { banned: false } }),
+    ).toBe(true);
+    expect(
+      isFavoriteListingVisible({ status: "draft", seller: { banned: false } }),
+    ).toBe(false);
+    expect(
+      isFavoriteListingVisible({ status: "locked", seller: { banned: false } }),
+    ).toBe(false);
+    expect(
+      isFavoriteListingVisible({ status: "active", seller: { banned: true } }),
+    ).toBe(false);
+    expect(isFavoriteListingVisible({ status: "active" })).toBe(false);
   });
 });
