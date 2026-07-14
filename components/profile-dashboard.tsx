@@ -37,14 +37,22 @@ export function ProfileDashboard() {
   } | null>(null);
   const [tab, setTab] = useState("listings");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [profileSaved, setProfileSaved] = useState(false);
 
   async function removeListing(id: string) {
     if (!window.confirm("Delete this listing permanently?")) return;
-    const response = await authFetch(`/api/listings/${id}`, {
-      method: "DELETE",
-    });
-    if (response.ok)
+    setError("");
+    setNotice("");
+    try {
+      const response = await authFetch(`/api/listings/${id}`, {
+        method: "DELETE",
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        setError(body.error ?? "Could not delete this listing.");
+        return;
+      }
       setData((current) =>
         current
           ? {
@@ -53,6 +61,17 @@ export function ProfileDashboard() {
             }
           : current,
       );
+      if (body.imageCleanupPending)
+        setNotice(
+          "Listing deleted. Its photos remain queued for safe cleanup.",
+        );
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Could not delete this listing.",
+      );
+    }
   }
 
   async function setListingStatus(id: string, status: "active" | "sold") {
@@ -208,6 +227,14 @@ export function ProfileDashboard() {
                   className="mb-4 rounded-lg bg-red-50 p-3 text-[10px] text-red-700"
                 >
                   {error}
+                </p>
+              )}
+              {notice && (
+                <p
+                  role="status"
+                  className="mb-4 rounded-lg bg-amber-50 p-3 text-[10px] text-amber-800"
+                >
+                  {notice}
                 </p>
               )}
               {data.listings.length ? (

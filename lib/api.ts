@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { AZERBAIJAN_CITIES, BOOK_CATEGORIES, BOOK_CONDITIONS } from "./marketplace";
+import {
+  AZERBAIJAN_CITIES,
+  BOOK_CATEGORIES,
+  BOOK_CONDITIONS,
+} from "./marketplace";
 
 export class ApiError extends Error {
   constructor(
@@ -13,6 +17,14 @@ export class ApiError extends Error {
 }
 
 const uuid = z.string().uuid();
+const listingImages = z
+  .array(z.string().url())
+  .min(1)
+  .max(5)
+  .refine(
+    (images) => new Set(images).size === images.length,
+    "Listing images must be unique.",
+  );
 
 export const listingInput = z
   .object({
@@ -24,7 +36,7 @@ export const listingInput = z
     category: z.enum(BOOK_CATEGORIES),
     city: z.enum(AZERBAIJAN_CITIES),
     condition: z.enum(BOOK_CONDITIONS),
-    images: z.array(z.string().url()).min(1).max(5),
+    images: listingImages,
   })
   .strict();
 
@@ -33,6 +45,10 @@ export const listingUpdateInput = listingInput
   .extend({
     status: z.enum(["active", "sold"]).optional(),
   })
+  .strict();
+
+export const listingImageCleanupInput = z
+  .object({ images: listingImages })
   .strict();
 
 export const messageInput = z

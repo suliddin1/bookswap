@@ -4,6 +4,10 @@ import { requireSupabaseAdmin, requireSupabaseClient } from "@/lib/supabase";
 import { assertOwnedListingImages } from "@/lib/security";
 import { requireUser } from "@/lib/auth";
 import { normalizeListing } from "@/lib/listings";
+import {
+  drainListingImageCleanupJobs,
+  queueListingImageCleanup,
+} from "@/lib/listing-images";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -46,14 +50,20 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  let ownerId = "";
+  let submittedImages: string[] = [];
+  let supabase: ReturnType<typeof requireSupabaseAdmin> | null = null;
   try {
     assertRateLimit(request, "create-listing", 10, 60_000);
     const user = await requireUser(request);
+    ownerId = user.id;
     const input = listingInput.parse(await request.json());
+    submittedImages = input.images;
     assertOwnedListingImages(input.images, user.id);
+    supabase = requireSupabaseAdmin();
     const check = await moderateText(`${input.title}\n${input.description}`);
     if (!check.safe) throw new ApiError(check.reason, 422, "CONTENT_REJECTED");
-    const supabase = requireSupabaseAdmin();
+    await drainListingImageCleanupJobs(supabase, user.id);
     const { data, error } = await supabase
       .from("listings")
       .insert({
@@ -76,6 +86,17 @@ export async function POST(request: Request) {
     if (error) throw error;
     return Response.json({ data: normalizeListing(data) }, { status: 201 });
   } catch (error) {
-    return apiError(error);
+    if (supabase && ownerId && submittedImages.length) {
+      try {
+        await queueListingImageCleanup(supabase, ownerId, submittedImages);
+        await drainListingImageCleanupJobs(supabase, ownerId);
+      } catch (cleanupError) {
+        console.error(
+          "Could not compensate failed listing creation",
+          cleanupError,
+        );
+      }
+    }
+    return apiError(error, 500);
   }
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import {
   favoriteInput,
+  listingImageCleanupInput,
   listingInput,
   listingUpdateInput,
   privacyRequestInput,
@@ -13,6 +14,10 @@ import {
 } from "../lib/api";
 import { assertOwnedListingImages, escapeHtml } from "../lib/security";
 import { isFavoriteListingVisible } from "../lib/favorites";
+import {
+  getOwnedListingImagePath,
+  partitionListingImageCleanupJobs,
+} from "../lib/listing-images";
 
 describe("marketplace input validation", () => {
   it("accepts a complete listing", () => {
@@ -24,7 +29,9 @@ describe("marketplace input validation", () => {
       category: "Fiction",
       city: "Baku",
       condition: "Very good",
-      images: ["https://project.supabase.co/storage/v1/object/public/listing-images/user-1/cover.jpg"],
+      images: [
+        "https://project.supabase.co/storage/v1/object/public/listing-images/user-1/cover.jpg",
+      ],
     });
     expect(listing.images).toHaveLength(1);
   });
@@ -97,7 +104,76 @@ describe("marketplace input validation", () => {
         "user-1",
       ),
     ).toThrow();
+    expect(
+      getOwnedListingImagePath(
+        "https://project.supabase.co/storage/v1/object/public/listing-images/user-1/cover.jpg",
+        "user-1",
+      ),
+    ).toBe("user-1/cover.jpg");
+    expect(() =>
+      assertOwnedListingImages(
+        [
+          "https://project.supabase.co/storage/v1/object/public/listing-images/user-1/cover.jpg?download=1",
+        ],
+        "user-1",
+      ),
+    ).toThrow();
+    expect(() =>
+      assertOwnedListingImages(
+        [
+          "https://project.supabase.co/storage/v1/object/public/listing-images/user-1/%2e%2e%2fuser-2%2fcover.jpg",
+        ],
+        "user-1",
+      ),
+    ).toThrow();
+    expect(() =>
+      assertOwnedListingImages(
+        [
+          "https://project.supabase.co/storage/v1/object/public/listing-images/user-1/nested/cover.jpg",
+        ],
+        "user-1",
+      ),
+    ).toThrow();
     process.env.NEXT_PUBLIC_SUPABASE_URL = previous;
+  });
+
+  it("bounds abandoned upload cleanup requests", () => {
+    expect(
+      listingImageCleanupInput.parse({
+        images: [
+          "https://project.supabase.co/storage/v1/object/public/listing-images/user-1/cover.jpg",
+        ],
+      }).images,
+    ).toHaveLength(1);
+    expect(() => listingImageCleanupInput.parse({ images: [] })).toThrow();
+    expect(() =>
+      listingImageCleanupInput.parse({
+        images: [
+          "https://project.supabase.co/image.jpg",
+          "https://project.supabase.co/image.jpg",
+        ],
+      }),
+    ).toThrow();
+    expect(() =>
+      listingImageCleanupInput.parse({
+        images: Array.from(
+          { length: 6 },
+          (_, index) => `https://project.supabase.co/image-${index}.jpg`,
+        ),
+      }),
+    ).toThrow();
+  });
+
+  it("never removes a cleanup job while another listing references its image", () => {
+    const shared = { id: 1, image_url: "https://project/shared.jpg" };
+    const obsolete = { id: 2, image_url: "https://project/obsolete.jpg" };
+    const result = partitionListingImageCleanupJobs(
+      [shared, obsolete],
+      [{ images: [shared.image_url] }],
+    );
+
+    expect(result.referencedJobs).toEqual([shared]);
+    expect(result.removableJobs).toEqual([obsolete]);
   });
 
   it("only exposes favorites for public states and active sellers", () => {
@@ -138,5 +214,69 @@ describe("marketplace input validation", () => {
     expect(chatHook).not.toContain("broadcast");
     expect(chatHook).toContain('"postgres_changes"');
     expect(chatPanel).toContain('"postgres_changes"');
+  });
+
+  it("keeps listing image cleanup owner-checked, durable, and revocable", () => {
+    const uploadRoute = readFileSync(
+      new URL("../app/api/upload/route.ts", import.meta.url),
+      "utf8",
+    );
+    const listingRoute = readFileSync(
+      new URL("../app/api/listings/[id]/route.ts", import.meta.url),
+      "utf8",
+    );
+    const wizard = readFileSync(
+      new URL("../components/listing-wizard.tsx", import.meta.url),
+      "utf8",
+    );
+    const editForm = readFileSync(
+      new URL("../components/edit-listing-form.tsx", import.meta.url),
+      "utf8",
+    );
+    const migration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260714052000_add_listing_image_cleanup_jobs.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+
+    expect(uploadRoute).toContain("assertOwnedListingImages");
+    expect(uploadRoute).toContain("queueListingImageCleanup");
+    expect(listingRoute).toContain("drainListingImageCleanupJobs");
+    expect(listingRoute).not.toContain("decodeURIComponent(");
+    expect(wizard).toContain("URL.revokeObjectURL");
+    expect(wizard).toContain("cleanupUploadedListingImages");
+    expect(editForm).toContain("URL.revokeObjectURL");
+    expect(editForm).toContain("Remove current photo");
+    expect(migration).toContain("after update of images or delete");
+    expect(migration).toContain("enable row level security");
+    expect(migration).toContain("from anon, authenticated");
+    const ownerSelectMigration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260714053500_allow_owner_listing_image_selection.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    expect(ownerSelectMigration).toContain("Users select own listing images");
+    expect(ownerSelectMigration).toContain("storage.foldername(name)");
+    const serviceOnlyMigration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260714054500_make_cleanup_jobs_service_only_explicit.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    expect(serviceOnlyMigration).toContain("using (false)");
+    expect(serviceOnlyMigration).toContain("with check (false)");
+    const deduplicationMigration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260714055500_deduplicate_listing_image_cleanup_jobs.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    expect(deduplicationMigration).toContain("select distinct");
   });
 });

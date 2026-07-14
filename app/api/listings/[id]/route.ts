@@ -9,6 +9,10 @@ import {
 import { normalizeListing } from "@/lib/listings";
 import { requireUser } from "@/lib/auth";
 import { moderateText } from "@/lib/moderation";
+import {
+  drainListingImageCleanupJobs,
+  queueListingImageCleanup,
+} from "@/lib/listing-images";
 
 export async function GET(
   _: Request,
@@ -39,12 +43,20 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  let ownerId = "";
+  let submittedImages: string[] = [];
+  let supabase: ReturnType<typeof requireSupabaseAdmin> | null = null;
   try {
     assertRateLimit(request, "update-listing", 20, 60_000);
     const user = await requireUser(request);
+    ownerId = user.id;
     const { id } = await params;
     const input = listingUpdateInput.parse(await request.json());
-    if (input.images) assertOwnedListingImages(input.images, user.id);
+    if (input.images) {
+      submittedImages = input.images;
+      assertOwnedListingImages(input.images, user.id);
+    }
+    supabase = requireSupabaseAdmin();
     if (input.title || input.description) {
       const check = await moderateText(
         `${input.title ?? ""}\n${input.description ?? ""}`,
@@ -52,7 +64,7 @@ export async function PATCH(
       if (!check.safe)
         throw new ApiError(check.reason, 422, "CONTENT_REJECTED");
     }
-    const supabase = requireSupabaseAdmin();
+    await drainListingImageCleanupJobs(supabase, user.id);
     const updates = {
       title: input.title,
       author: input.author,
@@ -81,9 +93,24 @@ export async function PATCH(
         404,
         "LISTING_NOT_FOUND",
       );
-    return Response.json({ data: normalizeListing(data) });
+    const cleanup = await drainListingImageCleanupJobs(supabase, user.id, id);
+    return Response.json({
+      data: normalizeListing(data),
+      imageCleanupPending: cleanup.pending > 0,
+    });
   } catch (error) {
-    return apiError(error, 400);
+    if (supabase && ownerId && submittedImages.length) {
+      try {
+        await queueListingImageCleanup(supabase, ownerId, submittedImages);
+        await drainListingImageCleanupJobs(supabase, ownerId);
+      } catch (cleanupError) {
+        console.error(
+          "Could not compensate failed listing update",
+          cleanupError,
+        );
+      }
+    }
+    return apiError(error, 500);
   }
 }
 
@@ -92,46 +119,31 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    assertRateLimit(request, "delete-listing", 10, 60_000);
     const user = await requireUser(request);
     const { id } = await params;
     const supabase = requireSupabaseAdmin();
-    const { data: listing } = await supabase
+    await drainListingImageCleanupJobs(supabase, user.id);
+    const { data: deleted, error } = await supabase
       .from("listings")
-      .select("images")
+      .delete()
       .eq("id", id)
       .eq("seller_id", user.id)
+      .select("id")
       .maybeSingle();
-    if (!listing)
+    if (error) throw error;
+    if (!deleted)
       throw new ApiError(
         "Listing not found or not owned by you",
         404,
         "LISTING_NOT_FOUND",
       );
-    const { error } = await supabase
-      .from("listings")
-      .delete()
-      .eq("id", id)
-      .eq("seller_id", user.id);
-    if (error) throw error;
-    const paths = (listing.images ?? []).flatMap((value: string) => {
-      try {
-        const marker = "/storage/v1/object/public/listing-images/";
-        const index = new URL(value).pathname.indexOf(marker);
-        return index >= 0
-          ? [
-              decodeURIComponent(
-                new URL(value).pathname.slice(index + marker.length),
-              ),
-            ]
-          : [];
-      } catch {
-        return [];
-      }
+    const cleanup = await drainListingImageCleanupJobs(supabase, user.id, id);
+    return Response.json({
+      deleted: true,
+      imageCleanupPending: cleanup.pending > 0,
     });
-    if (paths.length)
-      await supabase.storage.from("listing-images").remove(paths);
-    return Response.json({ deleted: true });
   } catch (error) {
-    return apiError(error, 400);
+    return apiError(error, 500);
   }
 }

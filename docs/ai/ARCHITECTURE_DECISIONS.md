@@ -93,3 +93,11 @@ Chat-room seller ownership is independently enforced with qualified RLS and a co
 Status: Accepted.
 
 A favorite is a user-owned pointer, not an authorization capability. Only active/sold listings from active sellers may be newly saved or returned. The service-role route applies explicit joined filters, validates the nested result again before serialization, and rejects unavailable writes. Database RLS repeats requester, ban, listing-state, and seller-state checks for direct clients. A private security-definer predicate and before-write trigger enforce the target invariant even for service-role writes and close state-transition races. Hidden stale rows may remain temporarily but are never readable; the requester-scoped server DELETE can remove them, and listing deletion cascades them.
+
+## ADR-016 — Listing images use reference-safe durable cleanup
+
+Status: Accepted.
+
+Uploaded listing images use the public `listing-images` bucket for intentional cover delivery and the exact `{user_id}/{safe filename}` object shape for ownership. Every privileged cleanup first converts a URL from the configured Supabase host into that exact owner path; foreign hosts/folders, nested paths, traversal encoding, queries, fragments, and unsupported extensions are rejected. Authenticated Storage metadata selection and deletion are limited to the caller's first path segment.
+
+Replacing images or deleting a listing enqueues obsolete URLs through a security-definer database trigger in the same transaction as the listing mutation. The queue is RLS-enabled, grant-revoked, explicitly false for anon/authenticated, and accessible only to trusted server code. The server drains through the Storage API, discards a job if any owner listing still references the URL, records failures for retry, and exposes pending cleanup without rolling back an already-successful listing mutation. Fresh uploads abandoned by validation, moderation, or database failure use the same reference check and durable queue. Direct edits to `storage.objects` remain prohibited.

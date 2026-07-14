@@ -296,6 +296,34 @@ export type Database = {
           },
         ]
       >;
+      listing_image_cleanup_jobs: Table<
+        Timestamps & {
+          id: number;
+          user_id: string;
+          listing_id: string | null;
+          image_url: string;
+          attempts: number;
+          last_error: string | null;
+          updated_at: string;
+        },
+        {
+          id?: number;
+          user_id: string;
+          listing_id?: string | null;
+          image_url: string;
+          attempts?: number;
+          last_error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        },
+        {
+          listing_id?: string | null;
+          attempts?: number;
+          last_error?: string | null;
+          updated_at?: string;
+        },
+        []
+      >;
       privacy_requests: Table<
         Timestamps & {
           id: string;

@@ -1,5 +1,23 @@
 # Iteration log
 
+## 2026-07-14 — P1 image lifecycle implementation
+
+Goal / acceptance IDs: P1-006; IMG-01, IMG-02, IMG-03, STOR-01, TEST-01.
+
+Ownership: root exclusively owns the image-lifecycle slice: listing upload/create/update/delete routes, owned-image parsing and cleanup helpers, the create/edit image UI, the additive cleanup migration and generated types, focused tests, and durable documentation. No other agent is editing these files.
+
+Starting state: clean branch `autonomous/bookswap-product` at `7078b00`. Upload validates one to five JPEG/PNG/WebP files at 5 MB and writes under the authenticated user folder, but browser preview URLs are never revoked. Create/edit failures do not compensate freshly uploaded objects, edit offers no image replacement/removal, successful replacement never removes obsolete objects, and listing deletion ignores Storage removal failures. Existing Storage policies are owner-folder scoped but have no functional cross-user evidence.
+
+Implemented: added exact project/bucket/owner URL parsing that rejects foreign hosts/folders, nested/traversal paths, query/fragment variants, and unsupported names. Upload failure now cleans partial batches or persists cleanup; an authenticated DELETE accepts only unreferenced owner URLs. Create/edit compensate fresh uploads after validation, moderation, or mutation failure. Edit supports removal and replacement with accessible controls; create/edit revoke every blob preview. Listing image update/delete transactionally queues obsolete URLs, server draining rechecks all owner listings before Storage removal, failures retain attempt/error state, and API/UI make pending cleanup observable.
+
+Database: applied `add_listing_image_cleanup_jobs`, `allow_owner_listing_image_selection`, `make_cleanup_jobs_service_only_explicit`, and `deduplicate_listing_image_cleanup_jobs` to bookswap-development. The queue is RLS-enabled, has revoked anon/authenticated grants plus an explicit false policy, service-role CRUD, one trigger, and a SECURITY DEFINER trigger function with `search_path=""`. The owner SELECT migration corrected a live discovery: public bucket delivery does not need RLS SELECT, but the Storage remove API does, so authenticated SELECT is limited to the caller's first folder segment. The final hardening migration makes repeated direct-input URLs queue exactly once. Generated types match. Current catalog counts are 12 migrations, 10/10 RLS public tables, 40 constraints, 33 indexes, and three Storage policies. The final database security advisor is empty; performance notices remain unused-index INFO only.
+
+Live evidence: two temporary authenticated users proved own-folder upload, cross-folder upload denial, cross-user delete denial with object preservation, owner single/batch deletion, MIME denial, 5 MB + 1 byte denial, spoofed seller denial, and client denial on the cleanup queue. Replacing one of two images created an unreferenced job; deleting that listing created a second job for a URL shared by another listing. The shared reference and object remained. All temporary Auth users, profiles, listings, jobs, and objects were removed; final counts are zero.
+
+Validation: lint, TypeScript, 14/14 unit tests, production build, and 4/4 Playwright tests pass. Agent Browser selected/removed a real PNG preview at 390x844, exposed an accessible remove name, observed blob count return to zero, and confirmed the captured URL was revoked. Create/profile widths match 1440, 1024, 390, and 360 viewports with zero console/page errors and no signed-out upload mutation. Protected Next route failure injection remains tied to P0-005's missing development service secret, so IMG-02/IMG-03 remain Partial and P1-006 is implemented but not launch-verified. Ownership is released by this local checkpoint.
+
+Next slice: deterministic opaque catalog pagination and public seller inventory can proceed independently of the secret blocker.
+
 Use one entry per autonomous slice. Record facts, ownership, migrations, validation, evidence, and remaining failures. Do not use this log as a completion claim.
 
 ## 2026-07-14 — P0 protected message delivery

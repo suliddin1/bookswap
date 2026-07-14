@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -18,6 +18,11 @@ import {
   BOOK_CATEGORIES,
   BOOK_CONDITIONS,
 } from "@/lib/marketplace";
+import {
+  cleanupUploadedListingImages,
+  uploadListingImages,
+  validateListingImageFiles,
+} from "@/lib/client-listing-images";
 
 const steps = ["Book details", "Condition", "Photos & price", "Review"];
 const initial = {
@@ -35,29 +40,37 @@ export function ListingWizard() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(initial);
   const [files, setFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [complete, setComplete] = useState(false);
+
+  useEffect(() => {
+    const urls = files.map((file) => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, [files]);
 
   function update(key: string, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
   }
   function chooseImages(event: ChangeEvent<HTMLInputElement>) {
-    const selected = Array.from(event.target.files ?? []).slice(0, 5);
-    const invalid = selected.find(
-      (file) =>
-        file.size > 5 * 1024 * 1024 ||
-        !["image/jpeg", "image/png", "image/webp"].includes(file.type),
-    );
-    if (invalid) {
+    const selected = Array.from(event.target.files ?? []);
+    const validationError = validateListingImageFiles(selected);
+    if (validationError) {
       setFiles([]);
-      setError(
-        "Each photo must be JPEG, PNG, or WebP and no larger than 5 MB.",
-      );
+      setError(validationError);
+      event.target.value = "";
       return;
     }
     setError("");
     setFiles(selected);
+    event.target.value = "";
+  }
+  function removeImage(index: number) {
+    setFiles((current) =>
+      current.filter((_, itemIndex) => itemIndex !== index),
+    );
   }
   function canContinue() {
     if (step === 0)
@@ -73,31 +86,33 @@ export function ListingWizard() {
   async function publish() {
     setBusy(true);
     setError("");
+    let uploadedImages: string[] = [];
     try {
-      const upload = new FormData();
-      files.forEach((file) => upload.append("images", file));
-      const uploadResponse = await authFetch("/api/upload", {
-        method: "POST",
-        body: upload,
-      });
-      const uploadBody = await uploadResponse.json();
-      if (!uploadResponse.ok) throw new Error(uploadBody.error);
+      uploadedImages = await uploadListingImages(files);
       const response = await authFetch("/api/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
           price: Number(form.price),
-          images: uploadBody.data,
+          images: uploadedImages,
         }),
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error);
       setComplete(true);
+      setFiles([]);
     } catch (reason) {
-      setError(
-        reason instanceof Error ? reason.message : "Could not publish listing.",
-      );
+      let message =
+        reason instanceof Error ? reason.message : "Could not publish listing.";
+      if (uploadedImages.length) {
+        try {
+          await cleanupUploadedListingImages(uploadedImages);
+        } catch {
+          message += " Uploaded photos are queued for cleanup.";
+        }
+      }
+      setError(message);
     } finally {
       setBusy(false);
     }
@@ -116,7 +131,7 @@ export function ListingWizard() {
     seller: { id: "", name: "" },
     color: "#243a31",
     accent: "#d7b764",
-    images: files[0] ? [URL.createObjectURL(files[0])] : [],
+    images: previewUrls.slice(0, 1),
   };
 
   if (complete)
@@ -285,6 +300,34 @@ export function ListingWizard() {
                   </span>
                 </span>
               </label>
+              {previewUrls.length > 0 && (
+                <div
+                  className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5"
+                  aria-label="Selected book photos"
+                >
+                  {previewUrls.map((url, index) => (
+                    <div
+                      key={url}
+                      className="relative aspect-[4/5] overflow-hidden rounded-lg border border-[#ded4c1] bg-[#fffaf0]"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={url}
+                        alt={`Selected book photo ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-full bg-ink text-white shadow"
+                        aria-label={`Remove selected photo ${index + 1}`}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="mt-6">
                 <Field
                   label="Price (AZN)"

@@ -1,31 +1,55 @@
-import { apiError, assertRateLimit } from "@/lib/api";
+import {
+  ApiError,
+  apiError,
+  assertRateLimit,
+  listingImageCleanupInput,
+} from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { requireSupabaseAdmin } from "@/lib/supabase";
+import {
+  assertOwnedListingImages,
+  drainListingImageCleanupJobs,
+  queueListingImageCleanup,
+} from "@/lib/listing-images";
 
 export async function POST(request: Request) {
+  let uploadedPaths: string[] = [];
+  let uploadedUrls: string[] = [];
+  let ownerId = "";
+  let supabase: ReturnType<typeof requireSupabaseAdmin> | null = null;
   try {
     assertRateLimit(request, "upload", 10, 60_000);
     const user = await requireUser(request);
+    ownerId = user.id;
     const form = await request.formData();
     const files = form
       .getAll("images")
       .filter((item): item is File => item instanceof File);
     if (!files.length || files.length > 5)
-      throw new Error("Upload between one and five images.");
-    const supabase = requireSupabaseAdmin();
-    const urls: string[] = [];
-    const uploadedPaths: string[] = [];
+      throw new ApiError(
+        "Upload between one and five images.",
+        422,
+        "INVALID_IMAGE_COUNT",
+      );
+    supabase = requireSupabaseAdmin();
+    await drainListingImageCleanupJobs(supabase, user.id);
     for (const file of files) {
       if (
         file.size > 5 * 1024 * 1024 ||
         !["image/jpeg", "image/png", "image/webp"].includes(file.type)
       ) {
-        throw new Error(
+        throw new ApiError(
           "Images must be JPEG, PNG, or WebP and no larger than 5 MB.",
+          422,
+          "INVALID_IMAGE_FILE",
         );
       }
       if (!(await hasValidImageSignature(file)))
-        throw new Error("One of the files is not a valid image.");
+        throw new ApiError(
+          "One of the files is not a valid image.",
+          422,
+          "INVALID_IMAGE_CONTENT",
+        );
       const extension =
         file.type === "image/jpeg"
           ? "jpg"
@@ -36,20 +60,61 @@ export async function POST(request: Request) {
       const { error } = await supabase.storage
         .from("listing-images")
         .upload(path, file, { contentType: file.type, upsert: false });
-      if (error) {
-        if (uploadedPaths.length)
-          await supabase.storage.from("listing-images").remove(uploadedPaths);
-        throw error;
-      }
+      if (error) throw error;
       uploadedPaths.push(path);
-      urls.push(
+      uploadedUrls.push(
         supabase.storage.from("listing-images").getPublicUrl(path).data
           .publicUrl,
       );
     }
-    return Response.json({ data: urls }, { status: 201 });
+    return Response.json({ data: uploadedUrls }, { status: 201 });
   } catch (error) {
-    return apiError(error, 400);
+    if (supabase && ownerId && uploadedPaths.length) {
+      const { error: cleanupError } = await supabase.storage
+        .from("listing-images")
+        .remove(uploadedPaths);
+      if (cleanupError) {
+        try {
+          await queueListingImageCleanup(supabase, ownerId, uploadedUrls);
+        } catch (queueError) {
+          console.error("Could not preserve failed upload cleanup", queueError);
+        }
+      }
+    }
+    return apiError(error, 500);
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    assertRateLimit(request, "cleanup-upload", 20, 60_000);
+    const user = await requireUser(request);
+    const input = listingImageCleanupInput.parse(await request.json());
+    assertOwnedListingImages(input.images, user.id);
+    const supabase = requireSupabaseAdmin();
+    const { data: referencedListings, error: referenceError } = await supabase
+      .from("listings")
+      .select("images")
+      .eq("seller_id", user.id)
+      .overlaps("images", input.images);
+    if (referenceError) throw referenceError;
+
+    const referencedUrls = new Set(
+      (referencedListings ?? []).flatMap((listing) => listing.images ?? []),
+    );
+    const abandonedUrls = input.images.filter(
+      (imageUrl) => !referencedUrls.has(imageUrl),
+    );
+    await queueListingImageCleanup(supabase, user.id, abandonedUrls);
+    const cleanup = await drainListingImageCleanupJobs(supabase, user.id);
+
+    return Response.json({
+      accepted: abandonedUrls.length,
+      referenced: input.images.length - abandonedUrls.length,
+      cleanupPending: cleanup.pending > 0,
+    });
+  } catch (error) {
+    return apiError(error, 500);
   }
 }
 

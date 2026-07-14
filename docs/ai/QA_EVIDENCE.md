@@ -4,6 +4,38 @@ Evidence date: 2026-07-14 (Asia/Baku). Repository: D:\Codex Projects\2HandedBook
 
 No production database, deployment, remote branch, or protected secondary checkout was touched. Public development configuration was supplied only to validation processes; no credential was written to tracked files. Transient server logs and Playwright output are under ignored test-results.
 
+## P1 image lifecycle — current evidence
+
+Applied additive development migrations:
+
+1. `add_listing_image_cleanup_jobs`
+2. `allow_owner_listing_image_selection`
+3. `make_cleanup_jobs_service_only_explicit`
+4. `deduplicate_listing_image_cleanup_jobs`
+
+The client now revokes every local preview URL, lets sellers remove staged and existing photos, uploads replacements before mutation, and calls an authenticated compensation endpoint after failed create/edit. The server accepts cleanup only for URLs on the configured Supabase host in the authenticated user's exact first-level folder, refuses traversal/nested/query/fragment paths, rechecks live listing references, and drains through the Storage API. A listing image update/delete trigger persists obsolete URLs transactionally in `listing_image_cleanup_jobs`; the queue records failed attempts and is service-only through grants, RLS, and an explicit false client policy. API responses expose `imageCleanupPending` rather than silently hiding a Storage failure.
+
+Live Storage/RLS evidence used two temporary confirmed Auth users, three valid PNG objects, one oversized payload, and shared/obsolete listing references:
+
+| Probe                                             | Result                                                                            |
+| ------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Owner uploads into own folder                     | Success.                                                                          |
+| Other user uploads into owner folder              | Denied.                                                                           |
+| Other user deletes owner object                   | Denied/zero rows; public object still fetched successfully.                       |
+| Owner deletes own object/batch                    | Success: exactly 1 and 2 deleted entries.                                         |
+| `text/plain` upload                               | Denied by bucket MIME restriction.                                                |
+| 5 MB + 1 byte PNG upload                          | Denied by bucket size restriction.                                                |
+| Other user inserts listing with spoofed seller    | Denied by listing RLS.                                                            |
+| Authenticated cleanup-queue SELECT                | Denied; queue is not client-readable.                                             |
+| Replace removes one obsolete URL                  | One durable unreferenced job created.                                             |
+| Delete listing while another listing shares a URL | Shared URL job created but detected as still referenced; object remained present. |
+
+The first owner-delete probe exposed that the earlier hardening migration had removed Storage SELECT because public asset delivery bypasses RLS; current Supabase removal still requires SELECT plus DELETE. The additive fix grants authenticated SELECT only for the caller's own folder. The corrected full matrix passed. All temporary Auth users, profiles, listings, cleanup jobs, and Storage objects were removed; every final count is zero.
+
+Schema evidence: twelve migrations; 10/10 public tables with RLS; 40 public constraints; 33 public indexes; three owner-scoped Storage policies. The queue trigger exists once, its function is SECURITY DEFINER with `search_path=""`, anon/authenticated have no table privilege, service role has CRUD, duplicate direct-input URLs queue once, and generated TypeScript matches the new table. The final database security advisor returns no findings; performance output remains only expected empty-project unused-index INFO.
+
+Current local/browser gate: lint pass; TypeScript pass; Vitest 14/14; Next.js production build 37 routes; Playwright 4/4. Agent Browser exercised create-photo selection and removal at 390x844: the preview appeared as one blob image, exposed `Remove selected photo 1`, disappeared after removal, and the captured blob URL was revoked. Create/profile surfaces had matching viewport and scroll widths at 1440x900, 1024x768, 390x844, and 360x800, zero console/page errors, and no upload mutation without a session. Live protected Next route calls remain deferred to P0-005 because the development service secret is unavailable; IMG-02/IMG-03 therefore remain Partial rather than Pass despite the implemented backstop and direct Storage evidence.
+
 ## P0 public catalog and chat authorization — current evidence
 
 Applied additive development migrations:
@@ -15,18 +47,18 @@ The first adds the non-exposed `private.user_is_active(uuid)` predicate, rewrite
 
 Current validation:
 
-| Command / probe | Result |
-| --- | --- |
-| `npm run lint` | Pass, exit 0, no warnings. |
-| `npx tsc --noEmit` | Pass, exit 0, no diagnostics. |
-| `npm test -- --run` | Pass: 1 file, 9/9 tests. |
-| `npm run build` | Pass: Next.js 15.5.19, 37 generated routes. |
-| `npm run test:e2e` | Pass: Chromium 4/4. |
-| Direct safe profile read | 200; only id/name/city/created_at. |
-| Direct profile email and `*` reads | 401 with PostgreSQL 42501. |
-| Safe listing/seller embed | 200; seller keys are exactly city/created_at/id/name. |
-| Attempted private RPC through Data API | 404/PGRST202. |
-| Banned-seller probe | Profile rows 0 and public listing rows 0; ban reset afterward. |
+| Command / probe                        | Result                                                         |
+| -------------------------------------- | -------------------------------------------------------------- |
+| `npm run lint`                         | Pass, exit 0, no warnings.                                     |
+| `npx tsc --noEmit`                     | Pass, exit 0, no diagnostics.                                  |
+| `npm test -- --run`                    | Pass: 1 file, 9/9 tests.                                       |
+| `npm run build`                        | Pass: Next.js 15.5.19, 37 generated routes.                    |
+| `npm run test:e2e`                     | Pass: Chromium 4/4.                                            |
+| Direct safe profile read               | 200; only id/name/city/created_at.                             |
+| Direct profile email and `*` reads     | 401 with PostgreSQL 42501.                                     |
+| Safe listing/seller embed              | 200; seller keys are exactly city/created_at/id/name.          |
+| Attempted private RPC through Data API | 404/PGRST202.                                                  |
+| Banned-seller probe                    | Profile rows 0 and public listing rows 0; ban reset afterward. |
 
 Direct authenticated role-level chat probes used three temporary users and one active listing. The valid buyer/listing-owner pair inserted successfully. Wrong seller, spoofed buyer ID, self-room, inactive listing, banned buyer, banned seller, missing listing, anonymous insert, and third-party room read all failed. The actual buyer could read its room. A privileged mismatched insert failed the composite foreign key with 23503. Catalog inspection then confirmed zero mismatched rooms, zero compiled tautologies, one composite chat/listing relationship, and the covering index.
 
@@ -34,12 +66,12 @@ Function catalog evidence: `private.user_is_active` is SECURITY DEFINER, stable,
 
 Production browser evidence with Agent Browser:
 
-| Viewport | Catalog/detail | Seller fixture | Horizontal overflow | Console/page errors |
-| --- | --- | --- | --- | --- |
-| 1440x900 | 200 | Rendered | None (scroll width 1440) | None |
-| 1024x768 | 200 | Rendered | None (scroll width 1024) | None |
-| 390x844 | 200 | Rendered | None (scroll width 390) | None |
-| 360x800 | 200 | Rendered | None (scroll width 360) | None |
+| Viewport | Catalog/detail | Seller fixture | Horizontal overflow      | Console/page errors |
+| -------- | -------------- | -------------- | ------------------------ | ------------------- |
+| 1440x900 | 200            | Rendered       | None (scroll width 1440) | None                |
+| 1024x768 | 200            | Rendered       | None (scroll width 1024) | None                |
+| 390x844  | 200            | Rendered       | None (scroll width 390)  | None                |
+| 360x800  | 200            | Rendered       | None (scroll width 360)  | None                |
 
 The detail API returned 200 and rendered the safe seller name/city at 390x844. Accessibility-tree inspection also found empty accessible names on the catalog search, location, and condition controls; this remains P1-011. A `next dev` run records a React Refresh `unsafe-eval` CSP violation, but a fresh production browser session has zero errors; this remains in P2-005 rather than weakening the production CSP.
 
@@ -54,19 +86,19 @@ Applied additive development migrations:
 
 The route now filters privileged favorites through explicit inner relationships, active/sold state, and active seller status; revalidates every nested result before serialization; validates targets before upsert; maps an atomic trigger race to `LISTING_UNAVAILABLE`; and reports unexpected database faults as 500 instead of 401. The database adds a private visibility predicate, a service-role-resistant before-write trigger, and requester/ban/target-aware RLS. Book-card browser verification also raised the heart control above the cover title and made its accessible name reflect save/remove state.
 
-| Probe | Result |
-| --- | --- |
-| Buyer direct RLS SELECT | Exactly active and sold listing IDs; transitioned draft absent. |
-| Other-user SELECT | Exactly the other user's active favorite; buyer favorites absent. |
-| Valid active insert | Success. |
-| Draft / locked insert | 23514 from the atomic target trigger. |
-| Spoofed `user_id` insert | 42501 RLS denial. |
-| Anonymous insert | 42501 table permission denial. |
-| Banned seller | Buyer SELECT returns 0; new save fails 23514. |
-| Banned buyer | SELECT returns 0; new save fails 42501. |
+| Probe                            | Result                                                              |
+| -------------------------------- | ------------------------------------------------------------------- |
+| Buyer direct RLS SELECT          | Exactly active and sold listing IDs; transitioned draft absent.     |
+| Other-user SELECT                | Exactly the other user's active favorite; buyer favorites absent.   |
+| Valid active insert              | Success.                                                            |
+| Draft / locked insert            | 23514 from the atomic target trigger.                               |
+| Spoofed `user_id` insert         | 42501 RLS denial.                                                   |
+| Anonymous insert                 | 42501 table permission denial.                                      |
+| Banned seller                    | Buyer SELECT returns 0; new save fails 23514.                       |
+| Banned buyer                     | SELECT returns 0; new save fails 42501.                             |
 | Authenticated Data API safe join | 200; only active/sold; seller keys exactly city/created_at/id/name. |
-| Draft insert through Data API | 400 with code 23514. |
-| Listing deletion | Zero orphan favorite rows after cascade. |
+| Draft insert through Data API    | 400 with code 23514.                                                |
+| Listing deletion                 | Zero orphan favorite rows after cascade.                            |
 
 Catalog inspection confirms `favorite_listing_is_visible` is stable, strict, SECURITY DEFINER, `search_path=""`, and executable only by postgres/authenticated. The trigger function is SECURITY DEFINER with `search_path=""` and postgres-only execute ACL; its trigger is enabled. The three favorite policies compile with requester, active-user, and target-visibility predicates. Generated TypeScript remains compatible and exposes no private helper. Security advisor remains at the single previously documented Pro-only Auth warning; performance advisor has only expected unused-index informational entries.
 
@@ -80,15 +112,15 @@ No migration was required. The active client already used `postgres_changes` on 
 
 Direct role-level matrix:
 
-| Probe | Result |
-| --- | --- |
-| Buyer INSERT as own sender in own room | Success. |
-| Seller SELECT in the room | 1 visible message. |
-| Third-user SELECT | 0 visible messages. |
-| Third-user INSERT | 42501 RLS denial. |
-| Buyer spoofing seller sender ID | 42501 RLS denial. |
-| Banned buyer INSERT | 42501 RLS denial. |
-| Anonymous SELECT | 42501 table permission denial. |
+| Probe                                  | Result                         |
+| -------------------------------------- | ------------------------------ |
+| Buyer INSERT as own sender in own room | Success.                       |
+| Seller SELECT in the room              | 1 visible message.             |
+| Third-user SELECT                      | 0 visible messages.            |
+| Third-user INSERT                      | 42501 RLS denial.              |
+| Buyer spoofing seller sender ID        | 42501 RLS denial.              |
+| Banned buyer INSERT                    | 42501 RLS denial.              |
+| Anonymous SELECT                       | 42501 table permission denial. |
 
 Live Realtime evidence used independent authenticated Supabase clients with explicit Realtime access tokens. A buyer insert produced the matching Postgres Changes event for the buyer and seller subscriptions; an already-subscribed third user received zero events. Catalog inspection confirms `public.messages` appears exactly once in `supabase_realtime`, RLS is enabled, and the member SELECT plus active-member INSERT policies are deployed. A source-contract unit test rejects `.channel()`/Broadcast in the send route and requires `postgres_changes` in both chat clients.
 
@@ -98,13 +130,13 @@ Cleanup: the three temporary Auth users and cascaded profiles, listing, room, an
 
 ## Static and automated baseline
 
-| Command | Result | Exact summary |
-| --- | --- | --- |
-| npm run lint | Pass, exit 0, about 4 s | ESLint over .js/.ts/.tsx with max-warnings=0; no warnings/output. |
-| npx tsc --noEmit --incremental false | Pass, exit 0, about 5.7 s | No TypeScript diagnostics. |
-| npm test | Pass, exit 0, about 2.3 s | Vitest: 1 file passed, 9 tests passed; test duration 811 ms. |
-| npm run build | Pass, exit 0, 21.5 s | Next.js 15.5.19 compiled in 3.3 s; lint/type/page data passed; 37/37 static pages generated. |
-| npm run test:e2e | Pass, exit 0, 4.1 s | Playwright Chromium: 4 tests passed in 2.0 s (browse home/catalog, mobile navigation, safety/user-rights, security headers). |
+| Command                              | Result                    | Exact summary                                                                                                                |
+| ------------------------------------ | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| npm run lint                         | Pass, exit 0, about 4 s   | ESLint over .js/.ts/.tsx with max-warnings=0; no warnings/output.                                                            |
+| npx tsc --noEmit --incremental false | Pass, exit 0, about 5.7 s | No TypeScript diagnostics.                                                                                                   |
+| npm test                             | Pass, exit 0, about 2.3 s | Vitest: 1 file passed, 9 tests passed; test duration 811 ms.                                                                 |
+| npm run build                        | Pass, exit 0, 21.5 s      | Next.js 15.5.19 compiled in 3.3 s; lint/type/page data passed; 37/37 static pages generated.                                 |
+| npm run test:e2e                     | Pass, exit 0, 4.1 s       | Playwright Chromium: 4 tests passed in 2.0 s (browse home/catalog, mobile navigation, safety/user-rights, security headers). |
 
 Production build route evidence:
 
@@ -122,12 +154,12 @@ This section preserves the preparation baseline that motivated P0-001. It is sup
 
 The production server was started with the new development project's public URL/publishable key in process environment. At each viewport the script loaded home and catalog to network idle, checked document text/navigation/overflow, captured console/request/HTTP failures, and called /api/listings directly.
 
-| Viewport | Home | Catalog page | Meaningful content/nav | Horizontal overflow | /api/listings | Console/network |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1440x900 | 200 | 200 | Pass | None | 500 | Two 500 resource errors; catalog navigation RSC request aborted during scripted transition. |
-| 1024x768 | 200 | 200 | Pass | None | 500 | Same. |
-| 390x844 | 200 | 200 | Pass | None | 500 | Same. |
-| 360x800 | 200 | 200 | Pass | None | 500 | Same. |
+| Viewport | Home | Catalog page | Meaningful content/nav | Horizontal overflow | /api/listings | Console/network                                                                             |
+| -------- | ---- | ------------ | ---------------------- | ------------------- | ------------- | ------------------------------------------------------------------------------------------- |
+| 1440x900 | 200  | 200          | Pass                   | None                | 500           | Two 500 resource errors; catalog navigation RSC request aborted during scripted transition. |
+| 1024x768 | 200  | 200          | Pass                   | None                | 500           | Same.                                                                                       |
+| 390x844  | 200  | 200          | Pass                   | None                | 500           | Same.                                                                                       |
+| 360x800  | 200  | 200          | Pass                   | None                | 500           | Same.                                                                                       |
 
 Rendered title: “BookSwap | Give books a second life”. The existing Playwright mobile navigation test passes. The catalog surface renders its error/empty vocabulary and therefore still contains meaningful text, but the core listing flow fails and is not accepted.
 
