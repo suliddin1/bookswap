@@ -16,7 +16,8 @@ export class ApiError extends Error {
   }
 }
 
-const uuid = z.string().uuid();
+export const resourceId = z.string().uuid();
+const uuid = resourceId;
 const listingImages = z
   .array(z.string().url())
   .min(1)

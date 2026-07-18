@@ -1,6 +1,6 @@
 # Project state
 
-Snapshot date: 2026-07-14.
+Snapshot date: 2026-07-19.
 
 ## Repository protection
 
@@ -10,7 +10,7 @@ Snapshot date: 2026-07-14.
 - Checkpoint: d644ad2b5775ae98386ae96636f23d5f530b0ef1, chore: checkpoint existing BookSwap development state.
 - Checkpoint captured 86 legitimate files (5,497 insertions, 452 deletions) after ignored/untracked/secret/whitespace review.
 - Remote: origin points to https://github.com/suliddin1/bookswap.git. Nothing was pushed.
-- Preparation and subsequent implementation/authorization checkpoints are local; the current uncommitted slice extends Azerbaijani coverage through the profile dashboard, reader privacy requests, and user-rights route without touching the protected checkout or remote.
+- Preparation and subsequent implementation/authorization checkpoints are local; the current uncommitted slice extends Azerbaijani coverage through messages, room chat, and notifications without touching the protected checkout or remote.
 
 Top-level tracked product/config includes .github, app, components, docs, hooks, lib, public, scripts, supabase, tests, package.json, package-lock.json, Next/Tailwind/TypeScript/ESLint/Playwright configuration, examples, and README. The .git directory, package.json, and application source are present. Local .env.local, node_modules, .next, caches, Playwright artifacts, test-results, .vercel, and tsbuildinfo are ignored.
 
@@ -30,7 +30,7 @@ Public/user routes exist for home, catalog, listing detail/new/edit, login/recov
 
 The database contains users, listings, chat_rooms, per-participant chat_room_reads, messages, reviews, notifications, favorites, reports, privacy_requests, the service-only listing image cleanup queue, a content-minimized moderation decision ledger, and an immutable administrator action ledger; listing_status and notification_type enums; a public listing-images bucket; and Realtime publication for messages, notifications, and read state. Existing features are foundation work, not a request to rebuild them.
 
-Known absent product areas include explicit exchange intention, title/edition identity, reader shelves/wanted titles, exchange matching, and complete Azerbaijani-first coverage. The root document/metadata/manifest, shell/global states, discovery, listing detail/create/edit, public seller, favorites, login/signup/recovery, profile dashboard, reader privacy requests, user-rights route, marketplace labels, AZN, and current date formatting are now Azerbaijani; chat/notifications, admin, broader API/email, and reviewed legal surfaces remain inventoried work. Public seller pages, stable catalog/seller pagination, cross-device message unread state, fail-closed moderation, and transactional administrator history exist. Image lifecycle implementation exists, but protected route failure injection still awaits the development service secret.
+Known absent product areas include explicit exchange intention, title/edition identity, reader shelves/wanted titles, exchange matching, and complete Azerbaijani-first coverage. The root document/metadata/manifest, shell/global states, discovery, listing detail/create/edit, public seller, favorites, login/signup/recovery, profile dashboard, reader privacy requests, user-rights route, messages, room chat, notifications, marketplace labels, AZN, and deterministic Baku date/time formatting are now Azerbaijani; admin, broader API/email, and reviewed legal surfaces remain inventoried work. Public seller pages, stable catalog/seller pagination, cross-device message unread state, fail-closed moderation, and transactional administrator history exist. Image lifecycle implementation exists, but protected route failure injection still awaits the development service secret.
 
 ## Development backend
 
@@ -53,11 +53,12 @@ The backend schema matches the repository migrations and generated type shape. P
 
 1. The connector provides public project configuration but not a service-role/secret key. Full protected-route browser verification therefore remains externally blocked until a development secret is configured locally outside Git.
 2. The free development project cannot enable the Pro-only leaked-password protection advisor recommendation without explicit cost authorization.
+3. The ignored local `.env.local` currently points its public Supabase URL at project ref `lnhublqrtkdrrafghvki`, not the authorized development ref `uibatsbzjswmtdvdrlxj`. It was preserved rather than silently repointed; authenticated localization evidence therefore used browser-local representative responses and a mocked Realtime socket. Correct development public configuration plus the missing server secret remain required for truthful protected-route runtime evidence.
 
 ## Baseline
 
-Passed for the current uncommitted Azerbaijani profile/privacy slice: lint, strict TypeScript, 31/31 unit tests, production build (37 generated routes), and 8/8 Playwright tests. Profile and user-rights UI passed at 1440x900, 1024x768, 390x844, and 360x800 with `lang=az`, one semantic heading, exact viewport width, localized values/dates/statuses, and private profile robots. Representative authenticated data was browser-only because protected Next routes remain blocked by the missing service secret; no mutation was submitted. A fresh-token `PGRST303` timing anomaly on direct unread/notification requests remains unresolved and those unrelated counters were stubbed for the final clean UI-only matrix. Every checked Auth/public fixture count is zero after session-first cleanup; server/browser artifacts are cleaned. See QA_EVIDENCE.md.
+Passed for the current uncommitted Azerbaijani messaging/notification slice: lint, strict TypeScript, 33/33 unit tests, production build (37 generated routes), and 9/9 Playwright tests. Messages, notifications, and room chat passed a 12-case production browser matrix at 1440x900, 1024x768, 390x844, and 360x800 with `lang=az`, one semantic heading, private robots, exact viewport width, deterministic `14 iyl 2026, 22:05` / `22:05` presentation, localized notification actions, and a safe localized simulated moderation failure. Representative authenticated Auth/API/Realtime state was browser-local because protected Next routes remain blocked by the missing service secret and the ignored public local configuration points at a different project; no backend mutation was submitted and this is not protected-route evidence. Signed-out Playwright coverage proves the three private routes start no protected read. Temporary screenshots, matrix script, and test output are removed after evidence capture. See QA_EVIDENCE.md.
 
 ## Readiness
 
-Goal mode is stopped at the user's checkpoint boundary. P0-001 through P0-004, P0-006, and P1-003/P1-004/P1-007/P1-008/P1-009 are complete; P0-005 is the only remaining P0 and is externally blocked by the missing development secret. P1-006 is implemented and directly tested but its protected route gate shares that blocker. P1-010 remains in progress: discovery, listing/seller/favorites, authoring/editing, authentication/recovery, profile dashboard, reader privacy requests, and the user-rights route are completed slices; chat/notifications, admin, broader API/email, and reviewed legal content remain. The current slice is coherent but uncommitted, and no next iteration has started. The product is not complete or launch-ready.
+Goal mode is stopped at the user's checkpoint boundary. P0-001 through P0-004, P0-006, and P1-003/P1-004/P1-007/P1-008/P1-009 are complete; P0-005 is the only remaining P0 and is externally blocked by the missing development secret. P1-006 is implemented and directly tested but its protected route gate shares that blocker. P1-010 remains in progress: discovery, listing/seller/favorites, authoring/editing, authentication/recovery, profile dashboard, reader privacy requests, user-rights, messaging, room chat, and notification UI are completed slices; admin, broader API/email, and reviewed legal content remain. The current messaging/notification slice is coherent and awaiting its local checkpoint, and no next iteration has started. The product is not complete or launch-ready.

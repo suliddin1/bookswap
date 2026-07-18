@@ -10,19 +10,18 @@ export async function GET(request: Request) {
     const { data, error } = await supabase
       .from("chat_rooms")
       .select(
-        "*, read_states:chat_room_reads(user_id,unread_count,last_read_at), listing:listings(*, seller:users!listings_seller_id_fkey(id,name,city,created_at)), buyer:users!chat_rooms_buyer_id_fkey(id,name,city,created_at), seller:users!chat_rooms_seller_id_fkey(id,name,city,created_at)",
+        "id,listing_id,buyer_id,seller_id,created_at,last_message_at, read_states:chat_room_reads(user_id,unread_count,last_read_at), listing:listings(id,seller_id,title,author,description,isbn,price,original_price,images,category,condition,city,status,created_at,seller:users!listings_seller_id_fkey(id,name,city,created_at)), buyer:users!chat_rooms_buyer_id_fkey(id,name,city,created_at), seller:users!chat_rooms_seller_id_fkey(id,name,city,created_at)",
       )
       .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
       .eq("read_states.user_id", user.id)
       .order("last_message_at", { ascending: false });
     if (error) throw error;
     return Response.json({
-      data: (data ?? []).map((room: any) => {
+      data: (data ?? []).map((room) => {
         const readState = room.read_states?.find(
           (state: { user_id: string }) => state.user_id === user.id,
         );
-        const safeRoom = { ...room };
-        delete safeRoom.read_states;
+        const { read_states: _readStates, ...safeRoom } = room;
         return {
           ...safeRoom,
           listing: normalizeListing(room.listing),
@@ -57,14 +56,10 @@ export async function POST(request: Request) {
       !listing.seller ||
       listing.seller.banned
     )
-      throw new ApiError(
-        "This listing is not available",
-        404,
-        "LISTING_UNAVAILABLE",
-      );
+      throw new ApiError("Bu elan əlçatan deyil.", 404, "LISTING_UNAVAILABLE");
     if (listing.seller_id === user.id)
       throw new ApiError(
-        "You cannot message yourself about your own listing",
+        "Öz elanın barədə özünə mesaj yaza bilməzsən.",
         409,
         "OWN_LISTING",
       );

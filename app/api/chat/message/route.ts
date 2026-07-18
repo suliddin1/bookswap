@@ -13,14 +13,15 @@ export async function POST(request: Request) {
     const input = messageInput.parse(await request.json());
     const user = await requireUser(request);
     const supabase = requireSupabaseAdmin();
-    const { data: room } = await supabase
+    const { data: room, error: roomError } = await supabase
       .from("chat_rooms")
       .select("buyer_id,seller_id")
       .eq("id", input.roomId)
-      .single();
+      .maybeSingle();
+    if (roomError) throw roomError;
     if (!room || ![room.buyer_id, room.seller_id].includes(user.id))
       throw new ApiError(
-        "You are not a member of this conversation",
+        "Bu söhbətə baxmaq icazən yoxdur.",
         403,
         "ROOM_FORBIDDEN",
       );

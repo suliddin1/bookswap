@@ -17,7 +17,7 @@ export async function markChatRoomRead(
   if (error) throw error;
   if (!data)
     throw new ApiError(
-      "Conversation read state is unavailable.",
+      "Söhbətin oxunma vəziyyəti əlçatan deyil.",
       404,
       "ROOM_NOT_FOUND",
     );

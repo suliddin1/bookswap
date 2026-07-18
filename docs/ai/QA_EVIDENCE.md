@@ -1,8 +1,20 @@
 # QA evidence
 
-Evidence date: 2026-07-14 (Asia/Baku). Repository: D:\Codex Projects\2HandedBook, branch autonomous/bookswap-product, checkpoint base d644ad2b5775ae98386ae96636f23d5f530b0ef1.
+Evidence date: 2026-07-19 (Asia/Baku). Repository: D:\Codex Projects\2HandedBook, branch autonomous/bookswap-product, checkpoint base d644ad2b5775ae98386ae96636f23d5f530b0ef1.
 
 No production database, deployment, remote branch, or protected secondary checkout was touched. Public development configuration was supplied only to validation processes; no credential was written to tracked files. Transient server logs and Playwright output are under ignored test-results.
+
+## P1 Azerbaijani messaging and notification journeys - current evidence
+
+The unfinished recovery slice was the top declared iteration-log owner at `84fd1b9`: messages, room chat, unread presentation, notifications, their private metadata, safe client parsing/error mapping, and deterministic timestamps. The existing uncommitted changes were coherent with that scope; no unrelated tracked or untracked source work was present. Three stale ignored `audit-*.png` screenshots contradicted earlier cleanup notes and were removed without touching the repository-local Playwright browser runtime. The failed-launch `.last-run.json`, temporary matrix script, and four review screenshots were removed after verification.
+
+The interrupted rendering defect was runtime-default timestamp presentation in the affected components: `toLocaleTimeString([])` and `toLocaleString()` select environment-dependent locale/ICU behavior, which is not a stable Azerbaijani contract across Next's Node render and Chromium. The repair routes all message, room, and notification timestamps through explicit `Asia/Baku` helpers that render `22:05` and `14 iyl 2026, 22:05`. Focused tests assert those exact values and reject reintroduction of either runtime-default locale call. The client boundary now parses unknown room/message payloads rather than trusting broad `any`, and notification presentation maps known message/listing-moderation payloads to reviewed Azerbaijani while preserving user-authored previews and using a safe fallback for unknown system data.
+
+The optimized production runtime passed 12 representative authenticated UI cases: `/messages`, `/notifications`, and `/chat/[roomId]` at 1440x900, 1024x768, 390x844, and 360x800. Every case had `lang=az`, `dir=ltr`, exactly one `h1`, private robots, viewport width equal to scroll width, deterministic Baku time, no mojibake, no framework overlay, and zero unexpected console/page/request/HTTP failures. Visual review covered all four chat sizes; the desktop/tablet sidebar and mobile conversation/composer/footer remained readable and unclipped. The 390px interaction probe mapped one expected browser-local moderation 503 to safe Azerbaijani copy and confirmed the notification read-all success status. Signed-out Playwright coverage proves messages, notifications, and room chat send no protected reads.
+
+Authenticated data, Auth, route responses, and Realtime were browser-local representatives only. No backend mutation was submitted and this is not protected-route success evidence. The ignored `.env.local` public URL points at ref `lnhublqrtkdrrafghvki`, while durable state names `uibatsbzjswmtdvdrlxj` as the authorized development project; it was preserved rather than silently repointed. Together with the absent development service secret and the earlier fresh-token `PGRST303` anomaly, this keeps real authenticated browser/network cleanliness blocked under P0-005/P1-012.
+
+Current repository gate: lint pass; strict TypeScript pass; Vitest 33/33; Next.js production build 37 routes; Playwright 9/9. The UTF-8/mojibake scan and `git diff --check` pass. No database/schema/package change was made.
 
 ## P1 Azerbaijani profile and privacy-request journeys - current evidence
 

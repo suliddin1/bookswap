@@ -1,5 +1,23 @@
 # Iteration log
 
+## 2026-07-14 / recovered 2026-07-19 - P1 Azerbaijani messaging and notification journeys
+
+Goal / acceptance IDs: P1-010; L10N-01, CHAT-03, NOTIF-01, MOD-01, SEO-01, RESP-01, A11Y-01, BROW-01, TEST-01.
+
+Ownership: root exclusively owns the Azerbaijani copy/formatting contract, messages/chat/notification route metadata and components, their hooks and safe client error mapping, notification delivery copy and any required additive migration, focused tests, browser evidence, and affected durable documentation. Delegated specialists are read-only and may not edit repository files.
+
+Starting state: clean branch `autonomous/bookswap-product` at `84fd1b9`. Public discovery, listing, authoring, authentication, profile, and reader privacy journeys are localized, but messages, room chat, unread states, and notifications still expose English headings, actions, empty/loading/error text, timestamps, accessible labels, trust guidance, and database-created notification prose. Protected Next-route mutation evidence remains blocked by P0-005, so this slice must preserve wire values and distinguish real public/direct-backend evidence from representative UI-only states.
+
+Planned contract: inventory every owned user-visible string and notification writer; centralize natural Azerbaijani copy and deterministic date/time presentation; preserve route IDs, notification types, and database/API wire values; map recognized machine failures to safe localized messages without leaking provider/database prose; add honest private-route metadata; verify unread/read/send/moderation/loading/empty/error semantics, keyboard names, live-region behavior, touch/reflow, source contracts, full repository gates, four viewports, console/network output, and cleanup without claiming blocked protected mutations.
+
+Implemented: centralized message-list, room-chat, notification, private metadata, trust, action, loading/empty/error, unread, and accessible-label copy in the Azerbaijani contract. Added deterministic Baku clock/date-time helpers, known notification payload presentation with safe fallbacks, strict room/message response parsing, narrow chat-room selects, UUID route validation, observable database-query failures, signed-out request suppression, reconnect reload/read acknowledgement, semantic lists/times/statuses, a labelled multiline composer, and responsive notification/chat controls. Stable room IDs, notification types/payload identifiers, marketplace wire values, and user-authored message text remain unchanged.
+
+Hydration/runtime recovery: the interrupted components used locale-default `toLocaleTimeString([])` and `toLocaleString()`, leaving time text dependent on Node/Chromium locale and ICU behavior. All affected timestamp rendering now uses the explicit `Asia/Baku` contract. Regression tests assert `22:05` and `14 iyl 2026, 22:05` and reject reintroduction of runtime-default locale calls. Production Chromium rendered those exact values with no hydration error or framework overlay in all 12 route/viewport cases.
+
+Validation: lint and strict TypeScript pass; 33/33 unit tests pass; the 37-route optimized production build passes; 9/9 Playwright tests pass. Browser-local representative Auth/API/Realtime states exercised messages, notifications, and chat at 1440x900, 1024x768, 390x844, and 360x800 with one `h1`, private robots, exact viewport width, no mojibake/overlay/unexpected console-page-request-HTTP failures, and clean visual reflow. The expected simulated moderation 503 mapped to safe Azerbaijani copy; read-all exposed a success status. Signed-out E2E proves all three routes start no protected request.
+
+Evidence boundary and cleanup: no protected route or backend mutation was claimed. The service secret remains absent, and ignored `.env.local` public configuration points at ref `lnhublqrtkdrrafghvki` rather than the authorized development ref `uibatsbzjswmtdvdrlxj`; it was preserved and the representative runtime was fully stubbed in-browser. Three stale audit screenshots plus the temporary matrix script/screenshots/test output were removed, while the repository-local Playwright runtime was preserved. Ownership is released by this coherent local checkpoint. No next major slice was started.
+
 ## 2026-07-14 - P1 Azerbaijani profile and privacy-request journeys
 
 Goal / acceptance IDs: P1-010; L10N-01, PROF-01, LIST-01, FAV-01, REP-01, SEO-01, RESP-01, A11Y-01, BROW-01, TEST-01.

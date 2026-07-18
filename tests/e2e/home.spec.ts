@@ -84,6 +84,49 @@ test("profile exposes a localized private sign-in state", async ({ page }) => {
   expect(profileRequests).toHaveLength(0);
 });
 
+test("messages, chat, and notifications keep protected reads signed out", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const protectedRequests: string[] = [];
+  page.on("request", (request) => {
+    if (
+      request.url().includes("/api/chat/") ||
+      request.url().includes("/api/notifications")
+    )
+      protectedRequests.push(request.url());
+  });
+
+  await page.goto("/messages");
+  await expect(page.locator("h1")).toHaveText(
+    "Mesajlara baxmaq üçün daxil ol.",
+  );
+  await expect(page).toHaveTitle(/Mesajlar/i);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    /noindex/i,
+  );
+
+  await page.goto("/notifications");
+  await expect(page.locator("h1")).toHaveText(
+    "Bildirişlərə baxmaq üçün daxil ol.",
+  );
+  await expect(page).toHaveTitle(/Bildirişlər/i);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    /noindex/i,
+  );
+
+  await page.goto("/chat/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  await expect(page.locator("h1")).toHaveText("Söhbətə baxmaq üçün daxil ol.");
+  await expect(page).toHaveTitle(/Məxfi söhbət/i);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    /noindex/i,
+  );
+  expect(protectedRequests).toHaveLength(0);
+});
+
 test("favorites exposes a localized private sign-in state", async ({
   page,
 }) => {

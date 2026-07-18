@@ -422,6 +422,78 @@ export const AZ_COPY = {
     profileSaved: "Profil yadda saxlanıldı.",
     profileSaveFailed: "Profili yadda saxlamaq mümkün olmadı.",
   },
+  messages: {
+    metadataTitle: "Mesajlar",
+    metadataDescription:
+      "BookSwap-da alıcı və satıcı söhbətlərini təhlükəsiz idarə et.",
+    authTitle: "Mesajlara baxmaq üçün daxil ol.",
+    authBody:
+      "Kitablar barədə söhbətlərini hesabına daxil olduqdan sonra görə bilərsən.",
+    signIn: "Daxil ol",
+    unavailableTitle: "Mesajları yükləmək mümkün olmadı.",
+    unavailableBody: "Bir az sonra yenidən cəhd et.",
+    loading: "Mesajlar yüklənir",
+    eyebrow: "Oxucudan oxucuya",
+    title: "Mesajlar.",
+    unread: (count: number) => `${count} oxunmamış mesaj`,
+    emptyTitle: "Hələ söhbət yoxdur.",
+    emptyBody: "Kitab elanı səhifəsindən satıcıya yaza bilərsən.",
+    browseBooks: "Kitablara bax",
+  },
+  chat: {
+    metadataTitle: "Məxfi söhbət",
+    metadataDescription: "BookSwap-da kitab barədə alıcı və satıcı söhbəti.",
+    authTitle: "Söhbətə baxmaq üçün daxil ol.",
+    authBody:
+      "Bu məxfi söhbətə yalnız hesabına daxil olduqdan sonra baxa bilərsən.",
+    signIn: "Daxil ol",
+    unavailableTitle: "Söhbət əlçatan deyil.",
+    unavailableBody: "Söhbət tapılmadı və ya ona baxmaq icazən yoxdur.",
+    openMessages: "Mesajlara qayıt",
+    conversation: "BookSwap söhbəti",
+    private: "Məxfi",
+    trustNote:
+      "Kitabın vəziyyətini və təhvil detallarını müzakirə et. BookSwap ödəniş qəbul etmir və razılaşmaya zəmanət vermir.",
+    empty: "Hələ mesaj yoxdur. Kitab barədə sualını yaz.",
+    messageLabel: "Mesaj",
+    messagePlaceholder: "Mesaj yaz...",
+    messageHelp: "Ən çoxu 2000 simvol. Yeni sətir üçün Shift + Enter bas.",
+    send: "Mesaj göndər",
+    sending: "Göndərilir...",
+    sendFailed: "Mesajı göndərmək mümkün olmadı.",
+    readFailed: "Mesajların oxunma vəziyyətini yeniləmək mümkün olmadı.",
+    startFailed: "Söhbəti açmaq mümkün olmadı.",
+    aboutBook: "Bu kitab haqqında",
+    viewListing: "Elana bax",
+  },
+  notifications: {
+    metadataTitle: "Bildirişlər",
+    metadataDescription:
+      "BookSwap hesabının mesaj və vacib yenilik bildirişləri.",
+    authTitle: "Bildirişlərə baxmaq üçün daxil ol.",
+    authBody:
+      "Mesaj və hesab yeniliklərini hesabına daxil olduqdan sonra görə bilərsən.",
+    signIn: "Daxil ol",
+    unavailableTitle: "Bildirişləri yükləmək mümkün olmadı.",
+    unavailableBody: "Bir az sonra yenidən cəhd et.",
+    loading: "Bildirişlər yüklənir",
+    badge: "Hesab yenilikləri",
+    title: "Bildirişlər.",
+    markAllRead: "Hamısını oxunmuş et",
+    markingAllRead: "Yenilənir...",
+    markFailed: "Bildirişləri oxunmuş etmək mümkün olmadı.",
+    markedAllRead: "Bütün bildirişlər oxunmuş kimi qeyd edildi.",
+    messageTitle: "Yeni mesaj",
+    systemTitle: "BookSwap yeniliyi",
+    messageFallback: "Yeni mesajın var.",
+    systemFallback: "Hesabında yeni yenilik var.",
+    listingApproved: "Elanın təsdiqləndi və yenidən aktivdir.",
+    listingRejected: "Elanın təsdiqlənmədi və qaralama vəziyyətinə qaytarıldı.",
+    unread: "Oxunmayıb",
+    emptyTitle: "Bütün yeniliklərə baxmısan.",
+    emptyBody:
+      "Mesajlar, moderasiya qərarları və vacib hesab yenilikləri burada görünəcək.",
+  },
   privacyRequests: {
     authTitle: "Məxfilik sorğusu üçün daxil ol.",
     authBody:
@@ -540,6 +612,8 @@ const apiErrorLabels: Record<string, string> = {
   LISTING_NOT_FOUND: AZ_COPY.listingDetail.unavailableBody,
   LISTING_UNAVAILABLE: AZ_COPY.listingDetail.unavailableBody,
   OWN_LISTING: "Öz elanını şikayət edə bilməzsən.",
+  ROOM_NOT_FOUND: AZ_COPY.chat.unavailableBody,
+  ROOM_FORBIDDEN: AZ_COPY.chat.unavailableBody,
   REPORT_EXISTS: "Bu elan üçün artıq açıq şikayətin var.",
   REVIEW_NOT_ALLOWED: "Yalnız tamamlanmış alışın alıcısı rəy yaza bilər.",
   INVALID_IMAGE_COUNT: AZ_COPY.listingForm.invalidImageCount,
@@ -548,6 +622,8 @@ const apiErrorLabels: Record<string, string> = {
   LISTING_LOCKED: "Kilidlənmiş elanı redaktə etmək mümkün deyil.",
   MODERATION_UNAVAILABLE:
     "Məzmun yoxlaması hazırda əlçatan deyil. Bir az sonra yenidən cəhd et.",
+  MODERATION_AUDIT_UNAVAILABLE:
+    "Məzmun yoxlamasını qeyd etmək mümkün olmadı. Bir az sonra yenidən cəhd et.",
   CONTENT_REJECTED:
     "Elanın məzmunu BookSwap qaydalarına uyğun olmadığı üçün qəbul edilmədi.",
 };
@@ -637,6 +713,56 @@ export function formatAzDate(
     return `${azMonthNames[monthIndex]} ${year}`;
 
   return `${parts.day} ${azMonthAbbreviations[monthIndex]} ${year}`;
+}
+
+export function formatAzTime(value: string | number | Date) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+      timeZone: "Asia/Baku",
+    })
+      .formatToParts(new Date(value))
+      .map((part) => [part.type, part.value]),
+  );
+  return `${parts.hour}:${parts.minute}`;
+}
+
+export function formatAzDateTime(value: string | number | Date) {
+  return `${formatAzDate(value)}, ${formatAzTime(value)}`;
+}
+
+function notificationPayloadString(
+  payload: unknown,
+  key: string,
+): string | undefined {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload))
+    return undefined;
+  const value = (payload as Record<string, unknown>)[key];
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+export function formatNotificationPresentation(type: string, payload: unknown) {
+  if (type === "MESSAGE")
+    return {
+      title: AZ_COPY.notifications.messageTitle,
+      body:
+        notificationPayloadString(payload, "preview") ??
+        AZ_COPY.notifications.messageFallback,
+    };
+
+  const event = notificationPayloadString(payload, "event");
+  const legacyMessage = notificationPayloadString(payload, "message");
+  const body =
+    event === "listing.approved" ||
+    legacyMessage === "Your listing was approved."
+      ? AZ_COPY.notifications.listingApproved
+      : event === "listing.rejected" ||
+          legacyMessage === "Your listing was rejected."
+        ? AZ_COPY.notifications.listingRejected
+        : AZ_COPY.notifications.systemFallback;
+  return { title: AZ_COPY.notifications.systemTitle, body };
 }
 
 export function formatCategory(value: string) {

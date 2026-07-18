@@ -8,7 +8,9 @@ Status: External blocker for full authenticated E2E.
 
 The connected Supabase tools expose the development project and publishable keys but not a service-role/secret key. The current Next.js server mutation architecture requires SUPABASE_SERVICE_ROLE_KEY.
 
-Decision/action required: the repository owner should configure the bookswap-development server secret in local .env.local or the approved secret manager, never in chat, Git, browser variables, screenshots, logs, or documentation. Confirm which environment Goal mode may use. Once available, run the P0-005 authorization matrix.
+Recovery note (2026-07-19): the ignored local `.env.local` public URL points at project ref `lnhublqrtkdrrafghvki`, while the authorized disposable development target is `uibatsbzjswmtdvdrlxj`. Goal mode preserved the ignored user configuration and used browser-local representative responses for localization evidence; it did not silently repoint projects or treat that UI matrix as backend evidence.
+
+Decision/action required: the repository owner should configure the bookswap-development public URL/publishable key and server secret together in local `.env.local` or the approved secret manager, never placing the secret in chat, Git, browser variables, screenshots, logs, or documentation. Confirm that Goal mode may replace the current ignored local project configuration. Once the development environment is aligned, run the P0-005 authorization matrix.
 
 This does not block documentation or public-schema work; it blocks credible verification of protected route handlers and therefore launch readiness.
 

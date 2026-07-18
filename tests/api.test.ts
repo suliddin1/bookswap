@@ -44,11 +44,14 @@ import {
   DOCUMENT_LANGUAGE,
   formatAzn,
   formatAzDate,
+  formatAzDateTime,
+  formatAzTime,
   formatCategory,
   formatCity,
   formatCondition,
   formatLoadedBooks,
   formatListingStatus,
+  formatNotificationPresentation,
   formatPrivacyRequestStatus,
   formatPrivacyRequestType,
   formatReviewSummary,
@@ -56,6 +59,11 @@ import {
   localizeApiError,
   localizeAuthError,
 } from "../lib/i18n";
+import {
+  parseChatMessage,
+  parseChatRoomDetail,
+  parseChatRoomSummaries,
+} from "../lib/chat-client";
 
 const originalOpenAIKey = process.env.OPENAI_API_KEY;
 
@@ -135,6 +143,17 @@ describe("marketplace input validation", () => {
       "../components/privacy-request-form.tsx",
       "../app/api/profile/route.ts",
       "../app/api/privacy-requests/route.ts",
+      "../app/messages/page.tsx",
+      "../app/chat/[roomId]/page.tsx",
+      "../app/notifications/page.tsx",
+      "../components/messages-list.tsx",
+      "../components/chat-panel.tsx",
+      "../components/notifications-page.tsx",
+      "../app/api/chat/rooms/route.ts",
+      "../app/api/chat/rooms/[id]/route.ts",
+      "../app/api/chat/message/route.ts",
+      "../lib/chat.ts",
+      "../lib/chat-client.ts",
       "../lib/client-listing-images.ts",
       "../lib/client-api.ts",
     ]
@@ -187,9 +206,109 @@ describe("marketplace input validation", () => {
       "Account & data",
       "Dashboard → Profile",
       "Profile saved",
+      "Reader to reader",
+      "Messages.",
+      "unread messages",
+      "No conversations yet",
+      "BookSwap conversation",
+      "Discuss the book and arrange a safe exchange",
+      "Write a message",
+      "Send message",
+      "About this book",
+      "View listing",
+      "Account updates",
+      "Notifications.",
+      "Mark all read",
+      "BookSwap update",
+      "There is an update on your account",
+      "You are all caught up",
     ]) {
       expect(sources).not.toContain(oldCopy);
     }
+  });
+
+  it("renders messaging dates and notification copy deterministically", () => {
+    const timestamp = "2026-07-14T18:05:00.000Z";
+    expect(formatAzTime(timestamp)).toBe("22:05");
+    expect(formatAzDateTime(timestamp)).toBe("14 iyl 2026, 22:05");
+    expect(
+      formatNotificationPresentation("SYSTEM", {
+        message: "Your listing was approved.",
+      }),
+    ).toEqual({
+      title: AZ_COPY.notifications.systemTitle,
+      body: AZ_COPY.notifications.listingApproved,
+    });
+    expect(
+      formatNotificationPresentation("MESSAGE", {
+        preview: "İstifadəçinin yazdığı mətn",
+      }),
+    ).toEqual({
+      title: AZ_COPY.notifications.messageTitle,
+      body: "İstifadəçinin yazdığı mətn",
+    });
+
+    const timestampSources = [
+      "../components/messages-list.tsx",
+      "../components/chat-panel.tsx",
+      "../components/notifications-page.tsx",
+    ]
+      .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
+      .join("\n");
+    expect(timestampSources).not.toMatch(/\.toLocale(?:Time)?String\(/);
+    expect(timestampSources).toContain("formatAzTime");
+    expect(timestampSources).toContain("formatAzDateTime");
+  });
+
+  it("accepts only complete chat response shapes at the client boundary", () => {
+    const timestamp = "2026-07-14T18:05:00.000Z";
+    const seller = {
+      id: "33333333-3333-4333-8333-333333333333",
+      name: "Murad Əliyev",
+      city: "Baku",
+    };
+    const room = {
+      id: "22222222-2222-4222-8222-222222222222",
+      currentUserId: "11111111-1111-4111-8111-111111111111",
+      buyer: {
+        id: "11111111-1111-4111-8111-111111111111",
+        name: "Aysel Məmmədli",
+      },
+      seller,
+      listing: {
+        id: "44444444-4444-4444-8444-444444444444",
+        title: "Səfillər",
+        author: "Viktor Hüqo",
+        description: "Yaxşı saxlanmış nüsxə.",
+        price: 17.5,
+        category: "Fiction",
+        condition: "Very good",
+        city: "Baku",
+        status: "active",
+        seller,
+      },
+      unreadCount: 2,
+      last_message_at: timestamp,
+    };
+    const message = {
+      id: "55555555-5555-4555-8555-555555555555",
+      sender_id: seller.id,
+      text: "Kitab hələ satışdadır.",
+      created_at: timestamp,
+    };
+
+    expect(parseChatRoomSummaries([room])).toHaveLength(1);
+    expect(parseChatRoomDetail({ ...room, messages: [message] })).toMatchObject(
+      {
+        unreadCount: 2,
+        messages: [message],
+      },
+    );
+    expect(parseChatMessage(message)).toEqual(message);
+    expect(parseChatRoomSummaries([{ ...room, unreadCount: "2" }])).toBeNull();
+    expect(
+      parseChatRoomDetail({ ...room, messages: [{ text: "missing" }] }),
+    ).toBeNull();
   });
 
   it("keeps profile and privacy aggregates narrow and fail-closed", () => {
