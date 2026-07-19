@@ -65,7 +65,7 @@ export function SiteHeader() {
 
   return (
     <header className="bg-[#f8f3e9]/92 sticky top-0 z-50 border-b border-[#d8cbb5] backdrop-blur-xl">
-      <div className="container-shell flex h-[74px] items-center justify-between gap-5">
+      <div className="container-shell flex min-h-[74px] flex-wrap items-center justify-between gap-5">
         <Link
           href="/"
           aria-label={`BookSwap — ${AZ_COPY.navigation.home}`}
@@ -267,7 +267,19 @@ export function SiteHeader() {
               <LayoutDashboard className="inline" size={14} />{" "}
               {AZ_COPY.navigation.dashboard}
             </Link>
-            {!user && (
+            {user ? (
+              <button
+                type="button"
+                className="flex min-h-11 items-center gap-2 text-left"
+                onClick={() => {
+                  setOpen(false);
+                  void signOut();
+                }}
+              >
+                <LogOut className="inline" size={14} />
+                {AZ_COPY.navigation.signOut}
+              </button>
+            ) : (
               <Link
                 href="/login"
                 aria-current={currentPage("/login")}

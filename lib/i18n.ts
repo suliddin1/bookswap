@@ -514,6 +514,7 @@ export const AZ_COPY = {
       "Elan silindi. Şəkillər təhlükəsiz təmizləmə növbəsindədir.",
     statusFailed: "Elanın vəziyyətini dəyişmək mümkün olmadı.",
     statusUpdated: "Elanın vəziyyəti yeniləndi.",
+    listingUpdating: (title: string) => `${title} elanı yenilənir.`,
     emptyListingsTitle: "Hələ elan yoxdur.",
     emptyListingsBody:
       "Oxuyub bitirdiyin kitabı elan et və onu növbəti oxucuya çatdır.",
@@ -540,6 +541,8 @@ export const AZ_COPY = {
     savingProfile: "Yadda saxlanılır...",
     profileSaved: "Profil yadda saxlanıldı.",
     profileSaveFailed: "Profili yadda saxlamaq mümkün olmadı.",
+    nameInvalid: "Ad ən azı 2 simvoldan ibarət olmalıdır.",
+    cityInvalid: "Şəhər və ya rayon ən azı 2 simvoldan ibarət olmalıdır.",
   },
   messages: {
     metadataTitle: "Mesajlar",
@@ -715,6 +718,7 @@ export const AZ_COPY = {
     type: "Sorğunun növü",
     details: "Ətraflı məlumat",
     detailsHelp: "Sorğunu ən azı 10, ən çoxu 2000 simvolla izah et.",
+    detailsInvalid: "Sorğunu ən azı 10 simvolla izah et.",
     detailsPlaceholder:
       "Nəyi nəzərdən keçirməyimizi və ya təqdim etməyimizi istədiyini izah et.",
     sending: "Göndərilir...",

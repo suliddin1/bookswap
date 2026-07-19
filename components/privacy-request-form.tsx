@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { useAuth } from "@/hooks/use-auth";
 import { authFetch } from "@/lib/client-api";
@@ -31,15 +31,20 @@ type RequestItem = {
 
 export function PrivacyRequestForm() {
   const { user, loading } = useAuth();
+  const userId = user?.id;
   const [items, setItems] = useState<RequestItem[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [status, setStatus] = useState("");
   const [statusIsError, setStatusIsError] = useState(false);
+  const [detailsInvalid, setDetailsInvalid] = useState(false);
   const [busy, setBusy] = useState(false);
+  const detailsRef = useRef<HTMLTextAreaElement>(null);
+  const statusRef = useRef<HTMLParagraphElement>(null);
+  const loadErrorRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       setItems([]);
       setLoaded(false);
       setLoadError("");
@@ -73,16 +78,34 @@ export function PrivacyRequestForm() {
       active = false;
       controller.abort();
     };
-  }, [user]);
+  }, [userId]);
+
+  useEffect(() => {
+    if (loadError) loadErrorRef.current?.focus();
+  }, [loadError]);
+
+  useEffect(() => {
+    if (status && !busy && !detailsInvalid) statusRef.current?.focus();
+  }, [busy, detailsInvalid, status]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
     const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const details = String(form.get("details") ?? "").trim();
+    if (details.length < 10) {
+      setDetailsInvalid(true);
+      setStatusIsError(true);
+      setStatus(AZ_COPY.privacyRequests.detailsInvalid);
+      requestAnimationFrame(() => detailsRef.current?.focus());
+      return;
+    }
+
     setBusy(true);
+    setDetailsInvalid(false);
     setStatusIsError(false);
     setStatus(AZ_COPY.privacyRequests.sending);
-    const form = new FormData(formElement);
     try {
       const response = await authFetch("/api/privacy-requests", {
         method: "POST",
@@ -99,6 +122,7 @@ export function PrivacyRequestForm() {
         );
       setItems((current) => [body.data, ...current]);
       formElement.reset();
+      setDetailsInvalid(false);
       setStatus(AZ_COPY.privacyRequests.submitted);
     } catch {
       setStatusIsError(true);
@@ -110,7 +134,12 @@ export function PrivacyRequestForm() {
 
   if (loading)
     return (
-      <p className="card mt-5 p-6 text-xs text-gray-600" role="status">
+      <p
+        className="card mt-5 p-4 text-xs leading-5 text-gray-600 sm:p-6"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {AZ_COPY.privacyRequests.loading}
       </p>
     );
@@ -129,9 +158,14 @@ export function PrivacyRequestForm() {
 
   return (
     <div className="mt-5">
-      <form onSubmit={submit} className="card grid gap-4 p-6" aria-busy={busy}>
+      <form
+        onSubmit={submit}
+        noValidate
+        className="card grid min-w-0 gap-4 p-4 sm:p-6"
+        aria-busy={busy}
+      >
         <label>
-          <span className="mb-2 block text-[9px] font-bold uppercase">
+          <span className="mb-2 block text-xs font-bold uppercase">
             {AZ_COPY.privacyRequests.type}
           </span>
           <select name="type" className="input" required>
@@ -143,34 +177,52 @@ export function PrivacyRequestForm() {
           </select>
         </label>
         <label>
-          <span className="mb-2 block text-[9px] font-bold uppercase">
+          <span className="mb-2 block text-xs font-bold uppercase">
             {AZ_COPY.privacyRequests.details}
           </span>
           <textarea
+            ref={detailsRef}
             required
             minLength={10}
             maxLength={2000}
             name="details"
             className="input min-h-[120px] py-3"
             placeholder={AZ_COPY.privacyRequests.detailsPlaceholder}
-            aria-describedby="privacy-request-details-help"
+            aria-invalid={detailsInvalid}
+            aria-describedby={`privacy-request-details-help${detailsInvalid ? " privacy-request-status" : ""}`}
+            onChange={() => {
+              if (detailsInvalid) {
+                setDetailsInvalid(false);
+                setStatusIsError(false);
+                setStatus("");
+              }
+            }}
           />
         </label>
         <p
           id="privacy-request-details-help"
-          className="text-[9px] leading-5 text-gray-500"
+          className="break-words text-xs leading-5 text-[#6b6254]"
         >
           {AZ_COPY.privacyRequests.detailsHelp}
         </p>
         {status && (
           <p
+            ref={statusRef}
+            id="privacy-request-status"
             role={statusIsError ? "alert" : "status"}
-            className={`text-[10px] ${statusIsError ? "text-red-700" : "text-gray-600"}`}
+            aria-live={statusIsError ? "assertive" : "polite"}
+            aria-atomic="true"
+            tabIndex={-1}
+            className={`break-words text-xs leading-5 ${statusIsError ? "text-red-700" : "text-gray-600"}`}
           >
             {status}
           </p>
         )}
-        <button disabled={busy} className="btn-primary disabled:opacity-50">
+        <button
+          type="submit"
+          disabled={busy}
+          className="btn-primary disabled:opacity-50"
+        >
           {busy
             ? AZ_COPY.privacyRequests.sending
             : AZ_COPY.privacyRequests.submit}
@@ -178,36 +230,52 @@ export function PrivacyRequestForm() {
       </form>
 
       <div className="mt-5">
-        <h3 className="text-xs font-bold">{AZ_COPY.privacyRequests.recent}</h3>
+        <h3 id="privacy-request-history-heading" className="text-xs font-bold">
+          {AZ_COPY.privacyRequests.recent}
+        </h3>
         {!loaded ? (
-          <p className="mt-2 text-[10px] text-gray-600" role="status">
+          <p
+            className="mt-2 text-xs leading-5 text-gray-600"
+            role="status"
+            aria-live="polite"
+          >
             {AZ_COPY.privacyRequests.loading}
           </p>
         ) : loadError ? (
-          <p role="alert" className="mt-2 text-[10px] text-red-700">
+          <p
+            ref={loadErrorRef}
+            role="alert"
+            tabIndex={-1}
+            className="mt-2 text-xs leading-5 text-red-700"
+          >
             {loadError}
           </p>
         ) : items.length === 0 ? (
-          <p className="mt-2 text-[10px] text-gray-600">
+          <p className="mt-2 text-xs leading-5 text-gray-600">
             {AZ_COPY.privacyRequests.empty}
           </p>
         ) : (
-          <ul className="mt-2 divide-y divide-[#d8cbb5] rounded-xl border border-[#d8cbb5]">
+          <ul
+            className="mt-2 min-w-0 divide-y divide-[#d8cbb5] rounded-xl border border-[#95866f]"
+            aria-labelledby="privacy-request-history-heading"
+          >
             {items.map((item) => (
               <li
                 key={item.id}
-                className="flex flex-col gap-2 p-3 text-[10px] sm:flex-row sm:items-center sm:justify-between"
+                className="flex min-w-0 flex-col gap-2 p-3 text-xs leading-5 sm:flex-row sm:items-center sm:justify-between"
               >
-                <span>
-                  <b className="block">{formatPrivacyRequestType(item.type)}</b>
+                <span className="min-w-0">
+                  <b className="block break-words">
+                    {formatPrivacyRequestType(item.type)}
+                  </b>
                   <time
                     dateTime={item.created_at}
-                    className="mt-1 block text-gray-500"
+                    className="mt-1 block break-words text-[#6b6254]"
                   >
                     {formatAzDate(item.created_at)}
                   </time>
                 </span>
-                <span className="pill w-fit">
+                <span className="pill max-w-full whitespace-normal text-center !text-xs">
                   {formatPrivacyRequestStatus(item.status)}
                 </span>
               </li>

@@ -39,6 +39,125 @@ function contrastRatio(foreground: string, background: string) {
   );
 }
 
+async function installAuthenticatedUiFixture(page: Page) {
+  const now = Math.floor(Date.now() / 1000);
+  const user = {
+    id: "11111111-1111-4111-8111-111111111111",
+    aud: "authenticated",
+    role: "authenticated",
+    email: "reader@example.invalid",
+    email_confirmed_at: "2026-07-19T10:00:00.000Z",
+    confirmed_at: "2026-07-19T10:00:00.000Z",
+    last_sign_in_at: "2026-07-19T10:00:00.000Z",
+    app_metadata: { provider: "email", providers: ["email"] },
+    user_metadata: { name: "Sınaq oxucusu" },
+    identities: [],
+    created_at: "2026-07-19T10:00:00.000Z",
+    updated_at: "2026-07-19T10:00:00.000Z",
+  };
+  const encode = (value: object) =>
+    Buffer.from(JSON.stringify(value)).toString("base64url");
+  const session = {
+    access_token: `${encode({ alg: "HS256", typ: "JWT" })}.${encode({
+      aud: "authenticated",
+      exp: now + 3600,
+      iat: now,
+      iss: "fixture",
+      role: "authenticated",
+      sub: user.id,
+      email: user.email,
+    })}.fixture`,
+    token_type: "bearer",
+    expires_in: 3600,
+    expires_at: now + 3600,
+    refresh_token: "fixture-refresh-token",
+    user,
+  };
+
+  await page.addInitScript((fixtureSession) => {
+    const originalGetItem = Storage.prototype.getItem;
+    Storage.prototype.getItem = function getFixtureSession(key: string) {
+      if (key.startsWith("sb-") && key.endsWith("-auth-token"))
+        return JSON.stringify(fixtureSession);
+      return originalGetItem.call(this, key);
+    };
+
+    class FixtureWebSocket {
+      static readonly CONNECTING = 0;
+      static readonly OPEN = 1;
+      static readonly CLOSING = 2;
+      static readonly CLOSED = 3;
+      readonly CONNECTING = 0;
+      readonly OPEN = 1;
+      readonly CLOSING = 2;
+      readonly CLOSED = 3;
+      readyState = FixtureWebSocket.OPEN;
+      bufferedAmount = 0;
+      extensions = "";
+      protocol = "";
+      binaryType: BinaryType = "blob";
+      url: string;
+      onopen: ((event: Event) => void) | null = null;
+      onclose: ((event: Event) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      onmessage: ((event: Event) => void) | null = null;
+      private listeners = new Map<string, Set<(event: Event) => void>>();
+
+      constructor(url: string | URL) {
+        this.url = String(url);
+        setTimeout(() => this.emit("open", new Event("open")), 0);
+      }
+
+      addEventListener(type: string, listener: (event: Event) => void) {
+        const listeners = this.listeners.get(type) ?? new Set();
+        listeners.add(listener);
+        this.listeners.set(type, listeners);
+      }
+
+      removeEventListener(type: string, listener: (event: Event) => void) {
+        this.listeners.get(type)?.delete(listener);
+      }
+
+      dispatchEvent(event: Event) {
+        this.emit(event.type, event);
+        return true;
+      }
+
+      send() {}
+
+      close() {
+        this.readyState = FixtureWebSocket.CLOSED;
+        this.emit("close", new Event("close"));
+      }
+
+      private emit(type: string, event: Event) {
+        const handler = this[`on${type}` as "onopen" | "onclose"];
+        handler?.(event);
+        this.listeners.get(type)?.forEach((listener) => listener(event));
+      }
+    }
+
+    Object.defineProperty(window, "WebSocket", {
+      configurable: true,
+      value: FixtureWebSocket,
+    });
+  }, session);
+
+  await page.route("**/auth/v1/user", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify(user),
+    });
+  });
+  await page.route("**/rest/v1/**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      headers: { "content-range": "0-0/0" },
+      body: "[]",
+    });
+  });
+}
+
 test("reader can browse from home to catalog", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("lang", "az");
@@ -355,6 +474,171 @@ test("profile exposes a localized private sign-in state", async ({ page }) => {
     page.getByRole("link", { name: "Daxil ol", exact: true }).last(),
   ).toBeVisible();
   expect(profileRequests).toHaveLength(0);
+});
+
+test("profile and privacy controls expose keyboard focus and 200% reflow", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await installAuthenticatedUiFixture(page);
+  const listingId = "22222222-2222-4222-8222-222222222222";
+  const longName = "ÇoxUzunFasiləsizOxucuAdıÇoxUzunFasiləsizOxucuAdı";
+  let profileGetCount = 0;
+  let privacyGetCount = 0;
+  await page.route("**/api/profile", async (route) => {
+    if (route.request().method() === "PATCH") {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: { name: "Yenilənmiş oxucu", city: "Baku", phone: null },
+        }),
+      });
+      return;
+    }
+    profileGetCount += 1;
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: {
+          profile: { name: longName, city: "Baku", phone: null },
+          favoriteCount: 2,
+          listings: [
+            {
+              id: listingId,
+              title: "Dar görünüş üçün uzun Azərbaycan kitab başlığı",
+              author: "Sınaq müəllifi",
+              description: "Sınaq təsviri",
+              price: 17.5,
+              images: ["/icon.svg"],
+              category: "Fiction",
+              condition: "Very good",
+              city: "Baku",
+              status: "active",
+              sellerId: "11111111-1111-4111-8111-111111111111",
+              seller: {
+                id: "11111111-1111-4111-8111-111111111111",
+                name: longName,
+              },
+            },
+          ],
+        },
+      }),
+    });
+  });
+  await page.route("**/api/privacy-requests", async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            id: "44444444-4444-4444-8444-444444444444",
+            type: "access",
+            status: "open",
+            created_at: "2026-07-19T18:05:00.000Z",
+          },
+        }),
+      });
+      return;
+    }
+    privacyGetCount += 1;
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: [
+          {
+            id: "33333333-3333-4333-8333-333333333333",
+            type: "correction",
+            status: "in_progress",
+            created_at: "2026-07-19T18:05:00.000Z",
+          },
+        ],
+      }),
+    });
+  });
+
+  await page.goto("/profile");
+  await expect(
+    page.getByRole("heading", { name: /Xoş gəldin/i }),
+  ).toBeVisible();
+  expect(profileGetCount).toBe(1);
+  await expect(page.locator("main")).toHaveCount(1);
+  const menuButton = page.getByRole("button", { name: "Menyu" });
+  await menuButton.click();
+  await expect(page.getByRole("button", { name: "Çıxış et" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(menuButton).toBeFocused();
+  const tablist = page.getByRole("tablist", { name: "Kabinet bölmələri" });
+  await expect(tablist).toBeVisible();
+  const listingsTab = page.getByRole("tab", { name: "Elanlarım" });
+  await expect(listingsTab).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tabpanel")).toHaveAttribute(
+    "aria-labelledby",
+    "profile-tab-listings",
+  );
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
+
+  await listingsTab.focus();
+  await page.keyboard.press("End");
+  const profileTab = page.getByRole("tab", { name: "Profil" });
+  await expect(profileTab).toBeFocused();
+  await expect(profileTab).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tabpanel")).toHaveAttribute(
+    "aria-labelledby",
+    "profile-tab-profile",
+  );
+  const nameInput = page.getByLabel("Ad", { exact: true });
+  await nameInput.fill("A");
+  await page.getByRole("button", { name: "Profili yadda saxla" }).click();
+  await expect(nameInput).toBeFocused();
+  await expect(nameInput).toHaveAttribute("aria-invalid", "true");
+  await expect(nameInput).toHaveAttribute(
+    "aria-describedby",
+    "profile-dashboard-feedback",
+  );
+  await nameInput.fill("Yenilənmiş oxucu");
+  await page.getByRole("button", { name: "Profili yadda saxla" }).click();
+  await expect(
+    page
+      .locator('p[role="status"]')
+      .filter({ hasText: "Profil yadda saxlanıldı." }),
+  ).toBeFocused();
+  expect(await horizontalOverflow(page)).toEqual([]);
+
+  await page.goto("/user-rights");
+  await expect(page.locator("main")).toHaveCount(1);
+  await expect(
+    page.getByRole("list", { name: "Son sorğuların" }),
+  ).toBeVisible();
+  expect(privacyGetCount).toBe(1);
+  const details = page.getByLabel("Ətraflı məlumat");
+  await details.fill("qısa");
+  await page.getByRole("button", { name: "Təhlükəsiz sorğu göndər" }).click();
+  await expect(details).toBeFocused();
+  await expect(details).toHaveAttribute("aria-invalid", "true");
+  await expect(details).toHaveAttribute(
+    "aria-describedby",
+    "privacy-request-details-help privacy-request-status",
+  );
+  await details.fill("Məlumatlarımın surətini təqdim etməyinizi xahiş edirəm.");
+  const submitRequest = page.getByRole("button", {
+    name: "Təhlükəsiz sorğu göndər",
+  });
+  const submitBounds = await submitRequest.boundingBox();
+  expect(submitBounds?.height).toBeGreaterThanOrEqual(44);
+  await submitRequest.click();
+  await expect(
+    page
+      .locator('p[role="status"]')
+      .filter({ hasText: "Sorğun qeydə alındı." }),
+  ).toBeFocused();
+  await expect(
+    page.getByRole("list", { name: "Son sorğuların" }),
+  ).toContainText("Məlumatlarıma çıxış");
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
 });
 
 test("messages, chat, and notifications keep protected reads signed out", async ({
