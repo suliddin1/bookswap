@@ -238,6 +238,7 @@ export const AZ_COPY = {
     browseBooks: "Kitablara bax",
     back: "Kitab rəflərinə qayıt",
     communityListing: "İcma elanı",
+    gallery: "Kitab şəkilləri",
     photo: "Şəkil",
     soldByReader: "Oxucu tərəfindən satılıb",
     availableFromReader: "Oxucudan satışda",
@@ -267,6 +268,7 @@ export const AZ_COPY = {
       "İctimai yerdə görüş, elandakı nüsxəni yoxla, parol və birdəfəlik kodları heç vaxt paylaşma.",
     safetyAction: "Təhlükəsizlik tövsiyələrini oxu",
     report: "Bu elanı şikayət et",
+    reportReason: "Şikayətin səbəbi",
     reportPlaceholder:
       "Təhlükəli, yanıltıcı və ya qadağan görünən məqamı izah et.",
     reportAction: "Şikayəti göndər",

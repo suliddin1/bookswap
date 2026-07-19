@@ -172,6 +172,128 @@ test("public discovery honors reduced motion", async ({ page }) => {
   expect(longAnimations).toHaveLength(0);
 });
 
+test("listing detail exposes accessible seller actions and constrained reflow", async ({
+  page,
+}) => {
+  const listingId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const sellerId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.route("**/api/listings**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === `/api/listings/${listingId}`) {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            id: listingId,
+            title: "UzunbaşlıqlarlaMəhdudEnSınağı Azərbaycan dilində kitab",
+            author: "Sınaq müəllifi",
+            description:
+              "Oxucunun yazdığı təsvir dar görünüşdə və böyüdülmüş mətndə də itmir.",
+            isbn: "978-99999-1234567890",
+            price: 17.5,
+            originalPrice: 22,
+            images: ["/icon.svg", "/icon-maskable.svg"],
+            category: "Fiction",
+            condition: "Very good",
+            city: "Baku",
+            status: "active",
+            sellerId,
+            seller: {
+              id: sellerId,
+              name: "Uzun adlı BookSwap oxucusu",
+              initials: "BO",
+              city: "Baku",
+            },
+            reviews: [],
+          },
+        }),
+      });
+      return;
+    }
+    if (url.pathname === "/api/listings") {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ data: { items: [], nextCursor: null } }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto(`/listings/${listingId}`);
+  await expect(
+    page.getByRole("heading", {
+      name: /UzunbaşlıqlarlaMəhdudEnSınağı Azərbaycan dilində kitab/,
+    }),
+  ).toBeVisible();
+
+  const gallery = page.getByRole("region", { name: "Kitab şəkilləri" });
+  const firstPhoto = gallery.getByRole("button", { name: "Şəkil 1" });
+  const secondPhoto = gallery.getByRole("button", { name: "Şəkil 2" });
+  await expect(firstPhoto).toHaveAttribute("aria-pressed", "true");
+  await secondPhoto.click();
+  await expect(firstPhoto).toHaveAttribute("aria-pressed", "false");
+  await expect(secondPhoto).toHaveAttribute("aria-pressed", "true");
+
+  const favorite = page.getByRole("button", {
+    name: "Kitabı seçilmişlərə əlavə et",
+  });
+  await expect(favorite).toHaveAttribute("aria-pressed", "false");
+
+  const summary = page.locator("summary");
+  const summaryBounds = await summary.boundingBox();
+  expect(summaryBounds?.height).toBeGreaterThanOrEqual(44);
+  await summary.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("details")).toHaveAttribute("open", "");
+  await expect(page.getByLabel("Şikayətin səbəbi")).toBeVisible();
+
+  const primaryTargets = [
+    page.getByRole("link", { name: "Kitab rəflərinə qayıt" }),
+    favorite,
+    page.getByRole("button", { name: "Satıcıya yaz" }),
+    page.getByRole("link", { name: "Təhlükəsizlik tövsiyələrini oxu" }),
+  ];
+  for (const target of primaryTargets) {
+    const bounds = await target.boundingBox();
+    expect(bounds?.height).toBeGreaterThanOrEqual(44);
+  }
+
+  const undersizedControls = await page
+    .locator(
+      "main a, main button, main input, main select, main textarea, main summary",
+    )
+    .evaluateAll((elements) =>
+      elements
+        .filter((element) => {
+          const bounds = element.getBoundingClientRect();
+          const style = getComputedStyle(element);
+          return (
+            bounds.width > 0 &&
+            bounds.height > 0 &&
+            style.visibility !== "hidden" &&
+            style.display !== "none"
+          );
+        })
+        .map((element) => {
+          const bounds = element.getBoundingClientRect();
+          return {
+            name: element.getAttribute("aria-label") ?? element.textContent,
+            width: bounds.width,
+            height: bounds.height,
+          };
+        })
+        .filter(({ width, height }) => width < 24 || height < 24),
+    );
+  expect(undersizedControls).toEqual([]);
+  await expect(page.locator("a button, button a")).toHaveCount(0);
+  expect(await horizontalOverflow(page)).toEqual([]);
+
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
+});
+
 test("safety and user rights guidance is publicly reachable", async ({
   page,
 }) => {

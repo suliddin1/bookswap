@@ -199,7 +199,12 @@ export function ListingDetail({ id }: { id: string }) {
     );
   if (!listing || !displayedListing)
     return (
-      <div className="container-shell min-h-[650px] animate-pulse py-16">
+      <div
+        className="container-shell min-h-[650px] animate-pulse py-16"
+        role="status"
+      >
+        <h1 className="sr-only">{AZ_COPY.listingDetail.metadataTitle}</h1>
+        <span className="sr-only">{AZ_COPY.global.loading}</span>
         <div className="grid gap-12 lg:grid-cols-2">
           <div className="min-h-[520px] rounded-2xl bg-[#e5dece]" />
           <div className="space-y-5">
@@ -212,34 +217,42 @@ export function ListingDetail({ id }: { id: string }) {
     );
 
   const ownListing = user?.id === listing.sellerId;
+  const reviewBusy = reviewStatus === AZ_COPY.listingDetail.sending;
+  const reportBusy = reportStatus === AZ_COPY.listingDetail.sending;
 
   return (
     <div className="container-shell py-10 md:py-14">
       <Link
         href="/listings"
-        className="inline-flex items-center gap-2 text-[10px] font-bold text-gray-500 hover:text-orange"
+        className="inline-flex min-h-11 items-center gap-2 text-xs font-bold text-muted hover:text-orange"
       >
         <ArrowLeft size={14} /> {AZ_COPY.listingDetail.back}
       </Link>
       <div className="mt-8 grid gap-12 lg:grid-cols-[1fr_1.02fr]">
-        <section>
-          <div className="relative grid min-h-[560px] place-items-center rounded-[22px] border border-[#d8cbb5] bg-[#e8dfcf] p-14 shadow-[inset_0_0_70px_rgba(80,56,25,.08)]">
+        <section aria-label={AZ_COPY.listingDetail.gallery}>
+          <div className="relative grid min-h-[420px] place-items-center rounded-[22px] border border-line bg-[#e8dfcf] p-8 shadow-[inset_0_0_70px_rgba(80,56,25,.08)] sm:min-h-[560px] sm:p-14">
             <BookCover
               listing={displayedListing}
               className="w-full max-w-[310px]"
             />
-            <span className="pill absolute bottom-5 left-5">
+            <span className="pill absolute bottom-5 left-5 !text-xs">
               <ShieldCheck size={12} className="text-orange" />{" "}
               {AZ_COPY.listingDetail.communityListing}
             </span>
           </div>
           {listing.images && listing.images.length > 1 && (
-            <div className="mt-3 grid grid-cols-5 gap-2">
+            <div
+              className="mt-3 grid grid-cols-5 gap-2"
+              role="group"
+              aria-label={AZ_COPY.listingDetail.gallery}
+            >
               {listing.images.map((image, index) => (
                 <button
+                  type="button"
                   key={image}
                   onClick={() => setSelectedImage(index)}
                   aria-label={`${AZ_COPY.listingDetail.photo} ${index + 1}`}
+                  aria-pressed={selectedImage === index}
                   className={`relative aspect-square overflow-hidden rounded-lg border-2 ${selectedImage === index ? "border-orange" : "border-transparent"}`}
                 >
                   <Image
@@ -255,44 +268,49 @@ export function ListingDetail({ id }: { id: string }) {
             </div>
           )}
         </section>
-        <section>
+        <section aria-labelledby="listing-title" className="min-w-0">
           <span className="eyebrow">
             {listing.status === "sold"
               ? AZ_COPY.listingDetail.soldByReader
               : AZ_COPY.listingDetail.availableFromReader}
           </span>
           <div className="mt-5 flex justify-between gap-5">
-            <div>
-              <h1 className="display text-5xl font-semibold leading-none md:text-7xl">
+            <div className="min-w-0">
+              <h1
+                id="listing-title"
+                className="display break-words text-5xl font-semibold leading-none [overflow-wrap:anywhere] md:text-7xl"
+              >
                 {listing.title}
               </h1>
-              <p className="mt-3 text-sm text-gray-500">
+              <p className="mt-3 break-words text-sm text-muted">
                 {AZ_COPY.listingDetail.author} {listing.author}
               </p>
             </div>
             <button
+              type="button"
               aria-label={
                 saved
                   ? AZ_COPY.listingDetail.remove
                   : AZ_COPY.listingDetail.save
               }
+              aria-pressed={saved}
               onClick={toggleFavorite}
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[#d8cbb5] bg-[#fffaf0] text-orange"
+              className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-line bg-[#fffaf0] text-orange"
             >
               <Heart size={17} fill={saved ? "currentColor" : "none"} />
             </button>
           </div>
-          <div className="mt-8 flex items-end gap-3 border-b border-[#d8cbb5] pb-8">
-            <strong className="display text-5xl text-orange">
+          <div className="mt-8 flex min-w-0 flex-wrap items-end gap-3 border-b border-line pb-8">
+            <strong className="display max-w-full text-5xl text-orange">
               {formatAzn(listing.price)}
             </strong>
             {listing.originalPrice && (
-              <span className="mb-1 text-sm text-gray-400 line-through">
+              <span className="mb-1 text-sm text-muted line-through">
                 {formatAzn(listing.originalPrice)}
               </span>
             )}
           </div>
-          <div className="grid grid-cols-3 gap-3 border-b border-[#d8cbb5] py-7">
+          <div className="grid grid-cols-1 gap-5 border-b border-line py-7 sm:grid-cols-3 sm:gap-3">
             {[
               [
                 AZ_COPY.listingDetail.condition,
@@ -304,11 +322,11 @@ export function ListingDetail({ id }: { id: string }) {
               ],
               [AZ_COPY.listingDetail.location, formatCity(listing.city)],
             ].map(([label, value]) => (
-              <div key={label}>
-                <span className="text-[8px] font-bold uppercase tracking-[.13em] text-gray-400">
+              <div key={label} className="min-w-0">
+                <span className="text-xs font-bold uppercase tracking-[.13em] text-muted">
                   {label}
                 </span>
-                <b className="mt-2 block text-xs">{value}</b>
+                <b className="mt-2 block break-words text-sm">{value}</b>
               </div>
             ))}
           </div>
@@ -316,40 +334,40 @@ export function ListingDetail({ id }: { id: string }) {
             <h2 className="display text-2xl font-semibold">
               {AZ_COPY.listingDetail.about}
             </h2>
-            <p className="mt-3 text-sm leading-7 text-gray-600">
+            <p className="mt-3 break-words text-sm leading-7 text-muted">
               {listing.description}
             </p>
             {listing.isbn && (
-              <p className="mt-3 text-[9px] text-gray-400">
+              <p className="mt-3 break-all text-xs text-muted">
                 ISBN {listing.isbn}
               </p>
             )}
           </div>
-          <div className="card flex items-center justify-between gap-4 p-4">
-            <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 place-items-center rounded-full bg-ink text-xs font-bold text-orange">
+          <div className="card flex flex-col items-stretch justify-between gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ink text-xs font-bold text-[#fffaf0]">
                 {listing.seller.initials}
               </span>
-              <div>
+              <div className="min-w-0">
                 <Link
                   href={`/sellers/${listing.seller.id}`}
-                  className="block text-xs font-bold hover:text-orange"
+                  className="inline-flex min-h-11 max-w-full items-center break-words text-sm font-bold hover:text-orange"
                 >
                   {listing.seller.name}
                 </Link>
-                <span className="mt-1 block text-[9px] text-gray-500">
+                <span className="block text-xs text-muted">
                   {AZ_COPY.listingDetail.reader}
                 </span>
               </div>
             </div>
-            <div className="text-right">
-              <span className="flex items-center gap-1 text-[9px] text-gray-500">
+            <div className="min-w-0 sm:text-right">
+              <span className="flex items-center gap-1 text-xs text-muted sm:justify-end">
                 <MapPin size={11} />{" "}
                 {formatCity(listing.seller.city ?? listing.city)}
               </span>
               <Link
                 href={`/sellers/${listing.seller.id}`}
-                className="mt-1 block text-[9px] font-bold text-orange"
+                className="inline-flex min-h-11 max-w-full items-center break-words text-xs font-bold text-orange"
               >
                 {AZ_COPY.listingDetail.viewSeller}
               </Link>
@@ -364,7 +382,9 @@ export function ListingDetail({ id }: { id: string }) {
             </Link>
           ) : listing.status === "active" ? (
             <button
+              type="button"
               disabled={busy}
+              aria-busy={busy}
               onClick={messageSeller}
               className="btn-primary mt-5 w-full"
             >
@@ -374,24 +394,24 @@ export function ListingDetail({ id }: { id: string }) {
                 : AZ_COPY.listingDetail.messageSeller}
             </button>
           ) : (
-            <p className="mt-5 rounded-xl bg-[#eee3c8] p-4 text-center text-xs font-bold">
+            <p className="mt-5 rounded-xl bg-[#eee3c8] p-4 text-center text-sm font-bold">
               {AZ_COPY.listingDetail.soldNotice}
             </p>
           )}
         </section>
       </div>
 
-      <section className="mt-20 grid gap-8 border-t border-[#d8cbb5] pt-12 lg:grid-cols-2">
-        <div>
-          <h2 className="display text-3xl font-semibold">
+      <section className="mt-20 grid min-w-0 gap-8 border-t border-line pt-12 lg:grid-cols-2">
+        <div className="min-w-0">
+          <h2 className="display break-words text-3xl font-semibold">
             {AZ_COPY.listingDetail.reviews}
           </h2>
           {listing.reviews?.length ? (
             <div className="mt-5 space-y-3">
               {listing.reviews.map((review) => (
-                <article key={review.id} className="card p-5">
-                  <div className="flex items-center justify-between">
-                    <b className="text-xs">
+                <article key={review.id} className="card min-w-0 p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <b className="min-w-0 break-words text-sm">
                       {review.author?.name ?? AZ_COPY.listingDetail.reader}
                     </b>
                     <span
@@ -403,25 +423,29 @@ export function ListingDetail({ id }: { id: string }) {
                       ))}
                     </span>
                   </div>
-                  <p className="mt-3 text-xs leading-6 text-gray-600">
+                  <p className="mt-3 break-words text-sm leading-6 text-muted">
                     {review.comment}
                   </p>
                 </article>
               ))}
             </div>
           ) : (
-            <p className="mt-4 text-xs text-gray-500">
+            <p className="mt-4 text-sm text-muted">
               {AZ_COPY.listingDetail.noReviews}
             </p>
           )}
         </div>
         {listing.status === "sold" && !ownListing ? (
-          <form onSubmit={submitReview} className="card p-6">
-            <h3 className="display text-2xl font-semibold">
+          <form
+            onSubmit={submitReview}
+            className="card min-w-0 p-6"
+            aria-describedby={reviewStatus ? "review-status" : undefined}
+          >
+            <h3 className="display break-words text-2xl font-semibold">
               {AZ_COPY.listingDetail.reviewTitle}
             </h3>
             <label className="mt-5 block">
-              <span className="mb-2 block text-[9px] font-bold uppercase">
+              <span className="mb-2 block text-xs font-bold uppercase">
                 {AZ_COPY.listingDetail.rating}
               </span>
               <select
@@ -437,7 +461,7 @@ export function ListingDetail({ id }: { id: string }) {
               </select>
             </label>
             <label className="mt-4 block">
-              <span className="mb-2 block text-[9px] font-bold uppercase">
+              <span className="mb-2 block text-xs font-bold uppercase">
                 {AZ_COPY.listingDetail.comment}
               </span>
               <textarea
@@ -450,23 +474,36 @@ export function ListingDetail({ id }: { id: string }) {
               />
             </label>
             {reviewStatus && (
-              <p role="status" className="mt-3 text-[10px] text-gray-600">
+              <p
+                id="review-status"
+                role="status"
+                aria-atomic="true"
+                className="mt-3 text-xs text-muted"
+              >
                 {reviewStatus}
               </p>
             )}
-            <button className="btn-primary mt-4">
+            <button
+              type="submit"
+              disabled={reviewBusy}
+              aria-busy={reviewBusy}
+              className="btn-primary mt-4"
+            >
               {AZ_COPY.listingDetail.publishReview}
             </button>
           </form>
         ) : (
-          <div className="card p-6">
-            <h3 className="display text-2xl font-semibold">
+          <div className="card min-w-0 p-6">
+            <h3 className="display break-words text-2xl font-semibold">
               {AZ_COPY.listingDetail.safetyTitle}
             </h3>
-            <p className="mt-3 text-xs leading-6 text-gray-600">
+            <p className="mt-3 text-sm leading-6 text-muted">
               {AZ_COPY.listingDetail.safetyBody}
             </p>
-            <Link href="/safety" className="btn-secondary mt-5">
+            <Link
+              href="/safety"
+              className="btn-secondary mt-5 max-w-full whitespace-normal text-center [overflow-wrap:anywhere]"
+            >
               {AZ_COPY.listingDetail.safetyAction}
             </Link>
           </div>
@@ -474,28 +511,46 @@ export function ListingDetail({ id }: { id: string }) {
       </section>
 
       {!ownListing && (
-        <details className="mt-10 rounded-xl border border-[#d8cbb5] bg-[#fffaf0]/60 p-5">
-          <summary className="cursor-pointer text-xs font-bold">
+        <details className="mt-10 rounded-xl border border-line bg-[#fffaf0]/60 p-5">
+          <summary className="min-h-11 cursor-pointer py-3 text-sm font-bold">
             <AlertTriangle size={14} className="mr-2 inline text-orange" />
             {AZ_COPY.listingDetail.report}
           </summary>
-          <form onSubmit={submitReport} className="mt-4 max-w-xl">
-            <textarea
-              required
-              minLength={10}
-              maxLength={500}
-              className="input min-h-[100px] py-3"
-              placeholder={AZ_COPY.listingDetail.reportPlaceholder}
-              aria-label={AZ_COPY.listingDetail.report}
-              value={reportReason}
-              onChange={(event) => setReportReason(event.target.value)}
-            />
+          <form
+            onSubmit={submitReport}
+            className="mt-4 max-w-xl"
+            aria-describedby={reportStatus ? "report-status" : undefined}
+          >
+            <label className="block">
+              <span className="mb-2 block text-xs font-bold uppercase">
+                {AZ_COPY.listingDetail.reportReason}
+              </span>
+              <textarea
+                required
+                minLength={10}
+                maxLength={500}
+                className="input min-h-[100px] py-3 placeholder:text-muted"
+                placeholder={AZ_COPY.listingDetail.reportPlaceholder}
+                value={reportReason}
+                onChange={(event) => setReportReason(event.target.value)}
+              />
+            </label>
             {reportStatus && (
-              <p role="status" className="mt-2 text-[10px] text-gray-600">
+              <p
+                id="report-status"
+                role="status"
+                aria-atomic="true"
+                className="mt-2 text-xs text-muted"
+              >
                 {reportStatus}
               </p>
             )}
-            <button className="btn-secondary mt-3">
+            <button
+              type="submit"
+              disabled={reportBusy}
+              aria-busy={reportBusy}
+              className="btn-secondary mt-3"
+            >
               {AZ_COPY.listingDetail.reportAction}
             </button>
           </form>
@@ -503,7 +558,7 @@ export function ListingDetail({ id }: { id: string }) {
       )}
 
       <section className="mt-24 border-t border-[#d8cbb5] pt-14">
-        <h2 className="display text-4xl font-semibold">
+        <h2 className="display break-words text-4xl font-semibold">
           {AZ_COPY.listingDetail.similar}
         </h2>
         <div className="mt-9 grid grid-cols-2 gap-5 md:grid-cols-4">
