@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Check, ImagePlus, X } from "lucide-react";
 import { authFetch } from "@/lib/client-api";
@@ -34,6 +34,12 @@ export function EditListingForm({ id }: { id: string }) {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [cleanupPending, setCleanupPending] = useState(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  const hasLoadedListing = listing !== null;
+
+  useEffect(() => {
+    if (error && hasLoadedListing) errorRef.current?.focus();
+  }, [error, hasLoadedListing]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -150,15 +156,22 @@ export function EditListingForm({ id }: { id: string }) {
     );
   if (!listing)
     return (
-      <div className="container-shell min-h-[600px] animate-pulse py-16">
-        <div className="mx-auto h-[500px] max-w-2xl rounded-2xl bg-[#e5dece]" />
+      <div className="container-shell min-h-[600px] py-16">
+        <h1 className="sr-only">{AZ_COPY.listingForm.editLoading}</h1>
+        <div role="status">
+          <span className="sr-only">{AZ_COPY.listingForm.editLoading}</span>
+          <div
+            aria-hidden="true"
+            className="mx-auto h-[500px] max-w-2xl animate-pulse rounded-2xl bg-[#e5dece]"
+          />
+        </div>
       </div>
     );
 
   const existingImages = listing.images ?? [];
   const field = (key: keyof Listing, label: string, type = "text") => (
     <label>
-      <span className="mb-2 block text-[9px] font-bold uppercase tracking-[.13em] text-gray-500">
+      <span className="mb-2 block break-words text-xs font-extrabold uppercase tracking-[.13em] text-muted">
         {label}
       </span>
       <input
@@ -188,7 +201,7 @@ export function EditListingForm({ id }: { id: string }) {
     formatOption: (value: string) => string,
   ) => (
     <label>
-      <span className="mb-2 block text-[9px] font-bold uppercase tracking-[.13em] text-gray-500">
+      <span className="mb-2 block break-words text-xs font-extrabold uppercase tracking-[.13em] text-muted">
         {label}
       </span>
       <select
@@ -213,22 +226,28 @@ export function EditListingForm({ id }: { id: string }) {
       <div className="mx-auto max-w-2xl">
         <Link
           href="/profile"
-          className="inline-flex items-center gap-2 text-[10px] font-bold text-gray-500"
+          className="inline-flex min-h-11 items-center gap-2 text-xs font-bold text-muted hover:text-orange"
         >
           <ArrowLeft size={13} /> {AZ_COPY.listingForm.myShelf}
         </Link>
         <span className="eyebrow mt-8">{AZ_COPY.listingForm.manageBadge}</span>
-        <h1 className="display mt-4 text-5xl font-semibold">
+        <h1 className="display mt-4 break-words text-4xl font-semibold sm:text-5xl">
           {AZ_COPY.listingForm.editTitle}
         </h1>
-        <form onSubmit={submit} className="card mt-8 grid gap-5 p-6 md:p-8">
+        <form
+          onSubmit={submit}
+          aria-busy={busy}
+          className="card mt-8 grid min-w-0 gap-5 p-5 sm:p-6 md:p-8"
+        >
           {field("title", AZ_COPY.listingForm.bookTitle)}
           {field("author", AZ_COPY.listingForm.author)}
           <label>
-            <span className="mb-2 block text-[9px] font-bold uppercase tracking-[.13em] text-gray-500">
+            <span className="mb-2 block break-words text-xs font-extrabold uppercase tracking-[.13em] text-muted">
               {AZ_COPY.listingForm.description}
             </span>
             <textarea
+              required
+              minLength={10}
               className="input min-h-[130px] py-3"
               value={listing.description}
               onChange={(event) => {
@@ -260,14 +279,18 @@ export function EditListingForm({ id }: { id: string }) {
           </div>
 
           <fieldset className="border-t border-[#ded4c1] pt-5">
-            <legend className="text-[9px] font-bold uppercase tracking-[.13em] text-gray-500">
+            <legend className="text-xs font-extrabold uppercase tracking-[.13em] text-muted">
               {AZ_COPY.listingForm.photos}
             </legend>
-            <p className="mt-2 text-[10px] leading-5 text-gray-500">
+            <p
+              id="edit-photo-hint"
+              className="mt-2 text-sm leading-6 text-muted"
+            >
               {AZ_COPY.listingForm.photosEditBody}
             </p>
             <div
               className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5"
+              role="group"
               aria-label={AZ_COPY.listingForm.listingPhotos}
             >
               {existingImages.map((url, index) => (
@@ -299,7 +322,7 @@ export function EditListingForm({ id }: { id: string }) {
                 />
               ))}
             </div>
-            <label className="mt-4 flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-[#bfae8d] bg-[#fffaf0]/55 px-4 text-[10px] font-bold">
+            <label className="file-input-control mt-4 flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-line bg-[#fffaf0]/55 px-4 py-2 text-center text-xs font-bold">
               <ImagePlus size={15} className="text-orange" />
               {AZ_COPY.listingForm.addReplacementPhotos}
               <input
@@ -307,30 +330,46 @@ export function EditListingForm({ id }: { id: string }) {
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 multiple
+                aria-describedby="edit-photo-hint"
                 onChange={chooseImages}
               />
             </label>
           </fieldset>
 
           {error && (
-            <p role="alert" className="text-[10px] text-red-700">
+            <p
+              ref={errorRef}
+              id="edit-listing-error"
+              role="alert"
+              tabIndex={-1}
+              className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-700"
+            >
               {error}
             </p>
           )}
           {saved && (
             <p
               role="status"
-              className="flex items-center gap-2 text-[10px] text-emerald-700"
+              aria-atomic="true"
+              className="flex items-center gap-2 text-sm text-emerald-700"
             >
               <Check size={12} /> {AZ_COPY.listingForm.saved}
             </p>
           )}
           {cleanupPending && (
-            <p role="status" className="text-[10px] text-amber-700">
+            <p
+              role="status"
+              aria-atomic="true"
+              className="text-sm text-amber-700"
+            >
               {AZ_COPY.listingForm.cleanupPending}
             </p>
           )}
-          <button disabled={busy} className="btn-primary disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={busy}
+            className="btn-primary disabled:opacity-50"
+          >
             {busy ? AZ_COPY.listingForm.saving : AZ_COPY.listingForm.save}
           </button>
         </form>
@@ -357,7 +396,7 @@ function ImagePreview({
       <button
         type="button"
         onClick={onRemove}
-        className="absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-full bg-ink text-white shadow"
+        className="absolute right-2 top-2 grid h-11 w-11 place-items-center rounded-full bg-ink text-white shadow"
         aria-label={removeLabel}
       >
         <X size={14} />

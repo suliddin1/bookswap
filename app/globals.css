@@ -67,6 +67,12 @@ summary:focus-visible,
   scroll-margin-block: 96px 24px;
 }
 
+.file-input-control:focus-within {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 2px #fffaf0;
+}
+
 .skip-link {
   position: fixed;
   top: 10px;
@@ -209,6 +215,11 @@ main:focus {
 .input:focus {
   border-color: var(--gold);
   box-shadow: 0 0 0 3px rgba(184, 137, 40, 0.12);
+}
+
+.input::placeholder {
+  color: var(--muted);
+  opacity: 1;
 }
 
 .card {

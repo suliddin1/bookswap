@@ -424,7 +424,7 @@ test("favorites exposes a localized private sign-in state", async ({
 test("listing authoring keeps localized labels and stable wire values", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 320, height: 800 });
   await page.goto("/listings/new");
   await expect(
     page.getByRole("heading", { name: "Kitab elanı yarat." }),
@@ -439,27 +439,133 @@ test("listing authoring keeps localized labels and stable wire values", async ({
     page.getByLabel("Kateqoriya").locator("option:checked"),
   ).toHaveText("Bədii ədəbiyyat");
   await expect(page.getByLabel("Məkan")).toHaveValue("Baku");
-  await page.getByLabel("Kitabın adı").fill("Sınaq kitabı");
+  const progress = page.getByRole("list", {
+    name: "Elan yaratma addımları",
+  });
+  await expect(progress).toBeVisible();
+  await expect(progress.getByLabel("1/4: Kitab məlumatları")).toHaveAttribute(
+    "aria-current",
+    "step",
+  );
+  const titleInput = page.getByLabel("Kitabın adı");
+  await page.getByRole("button", { name: "Davam et" }).click();
+  await expect(titleInput).toBeFocused();
+  await expect(titleInput).toHaveAttribute("aria-invalid", "true");
+  await expect(page.locator("#listing-form-error")).toContainText(
+    "Kitabın adını ən azı 2 simvolla yaz.",
+  );
+  await titleInput.fill("Sınaq kitabı");
   await page.getByLabel("Müəllif / mövzu").fill("Sınaq müəllifi");
   await page
     .getByLabel("Təsvir")
     .fill("Kitabın vəziyyəti haqqında kifayət qədər ətraflı qeyd.");
   await page.getByRole("button", { name: "Davam et" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Kitabın vəziyyəti necədir?" }),
+  ).toBeFocused();
   await expect(page.getByRole("button", { name: "Çox yaxşı" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
+  const conditionBounds = await page
+    .getByRole("button", { name: "Çox yaxşı" })
+    .boundingBox();
+  expect(conditionBounds?.height).toBeGreaterThanOrEqual(44);
   await page.getByRole("button", { name: "Davam et" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Kitabın real nüsxəsini göstər." }),
-  ).toBeVisible();
+  const photosHeading = page.getByRole("heading", {
+    name: "Kitabın real nüsxəsini göstər.",
+  });
+  await expect(photosHeading).toBeFocused();
   await expect(page.getByLabel("Qiymət (AZN)")).toBeVisible();
+
+  const fileInput = page.locator('input[type="file"]');
+  await fileInput.focus();
+  const pickerOutline = await fileInput
+    .locator("..")
+    .evaluate((element) => getComputedStyle(element).outlineStyle);
+  expect(pickerOutline).not.toBe("none");
+  await fileInput.setInputFiles({
+    name: "kitab.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("not an image"),
+  });
+  const imageError = page.locator("#listing-form-error");
+  await expect(imageError).toBeVisible();
+  await expect(fileInput).toBeFocused();
+  await expect(fileInput).toHaveAttribute("aria-invalid", "true");
+
+  const authoringTargets = [
+    page.getByRole("link", { name: "Ləğv et" }),
+    page.getByRole("button", { name: "Geri" }),
+    page.getByRole("button", { name: "Davam et" }),
+  ];
+  for (const target of authoringTargets) {
+    const bounds = await target.boundingBox();
+    expect(bounds?.height).toBeGreaterThanOrEqual(44);
+  }
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
+});
+
+test("listing editing exposes named loading, photos, targets, and reflow", async ({
+  page,
+}) => {
+  const listingId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const sellerId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.route(`**/api/listings/${listingId}`, async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: {
+          id: listingId,
+          title: "Dar görünüş üçün uzun Azərbaycan kitab başlığı",
+          author: "Sınaq müəllifi",
+          description:
+            "Kitabın vəziyyətini və nəşr məlumatını aydın izah edən təsvir.",
+          price: 17.5,
+          images: ["/icon.svg"],
+          category: "Fiction",
+          condition: "Very good",
+          city: "Baku",
+          status: "active",
+          sellerId,
+          seller: { id: sellerId, name: "Sınaq oxucusu" },
+        },
+      }),
+    });
+  });
+
+  await page.goto(`/listings/${listingId}/edit`);
+  await expect(
+    page.getByRole("heading", {
+      name: "Kitab məlumatlarını redaktə et.",
+    }),
+  ).toBeVisible();
+  await expect(page.locator("form")).toHaveAttribute("aria-busy", "false");
+  await expect(
+    page.getByRole("group", { name: "Elanın şəkilləri" }),
+  ).toBeVisible();
+
+  const editTargets = [
+    page.getByRole("link", { name: "Kitab rəfim" }),
+    page.getByRole("button", { name: "Cari şəkli sil 1" }),
+    page.getByRole("button", { name: "Dəyişiklikləri yadda saxla" }),
+  ];
+  for (const target of editTargets) {
+    const bounds = await target.boundingBox();
+    expect(bounds?.height).toBeGreaterThanOrEqual(44);
+  }
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
 });
 
 test("authentication modes and password validation are Azerbaijani", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 360, height: 800 });
+  await page.setViewportSize({ width: 320, height: 800 });
   await page.goto("/login");
   await expect(
     page.getByRole("heading", { name: "Kitab rəfinə daxil ol." }),
@@ -470,16 +576,39 @@ test("authentication modes and password validation are Azerbaijani", async ({
     /noindex/i,
   );
   await page.getByRole("button", { name: "Yeni hesab yarat" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Yeni hekayələrə yer aç." }),
-  ).toBeVisible();
-  await expect(page.getByLabel("Ad")).toBeVisible();
+  const signupHeading = page.getByRole("heading", {
+    name: "Yeni hekayələrə yer aç.",
+  });
+  await expect(signupHeading).toBeFocused();
+  await expect(page.getByLabel("Ad", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Ad", { exact: true })).toHaveAttribute(
+    "autocomplete",
+    "name",
+  );
+  await expect(page.getByLabel("E-poçt ünvanı")).toHaveAttribute(
+    "autocomplete",
+    "email",
+  );
+  await expect(page.getByLabel("Parol", { exact: true })).toHaveAttribute(
+    "autocomplete",
+    "new-password",
+  );
   await page.getByRole("button", { name: "Hesabın var? Daxil ol" }).click();
-  await page.getByRole("button", { name: "Parolu unutmusunuz?" }).click();
   await expect(
-    page.getByRole("heading", { name: "Parolunu yenilə." }),
-  ).toBeVisible();
-  await expect(page.getByLabel("Parol")).toHaveCount(0);
+    page.getByRole("heading", { name: "Kitab rəfinə daxil ol." }),
+  ).toBeFocused();
+  await page.getByRole("button", { name: "Parolu unutmusunuz?" }).click();
+  const recoveryHeading = page.getByRole("heading", {
+    name: "Parolunu yenilə.",
+  });
+  await expect(recoveryHeading).toBeFocused();
+  await expect(page.getByLabel("Parol", { exact: true })).toHaveCount(0);
+  const recoveryAction = page.getByRole("button", {
+    name: "Bərpa keçidini göndər",
+  });
+  const recoveryBounds = await recoveryAction.boundingBox();
+  expect(recoveryBounds?.height).toBeGreaterThanOrEqual(44);
+  expect(await horizontalOverflow(page)).toEqual([]);
 
   await page.goto("/reset-password");
   await page.getByLabel("Yeni parol").fill("abcdefgh");
@@ -488,6 +617,16 @@ test("authentication modes and password validation are Azerbaijani", async ({
   await expect(
     page.getByText("Parollar eyni deyil.", { exact: true }),
   ).toBeVisible();
+  const confirmation = page.getByLabel("Parolu təkrar et");
+  await expect(confirmation).toBeFocused();
+  await expect(confirmation).toHaveAttribute("aria-invalid", "true");
+  await expect(confirmation).toHaveAttribute(
+    "aria-describedby",
+    "reset-password-status",
+  );
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
 });
 
 test("responses include baseline security headers", async ({ request }) => {
