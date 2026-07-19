@@ -225,3 +225,38 @@ test("responses include baseline security headers", async ({ request }) => {
     "frame-ancestors 'none'",
   );
 });
+
+test("direct API validation errors are Azerbaijani and keep machine codes", async ({
+  request,
+}) => {
+  const invalidFilter = await request.get(
+    "/api/listings?category=UnsupportedCategory",
+  );
+  expect(invalidFilter.status()).toBe(400);
+  expect(await invalidFilter.json()).toEqual({
+    error: "Filtr dəyəri etibarlı deyil.",
+    code: "INVALID_FILTER",
+  });
+
+  const invalidSeller = await request.get("/api/sellers/not-a-uuid");
+  expect(invalidSeller.status()).toBe(400);
+  expect(await invalidSeller.json()).toEqual({
+    error: "İdentifikator etibarlı deyil.",
+    code: "INVALID_ID",
+  });
+
+  const invalidReview = await request.post("/api/review", {
+    data: { listingId: "provider detail" },
+  });
+  expect(invalidReview.status()).toBe(422);
+  const invalidReviewBody = (await invalidReview.json()) as {
+    error: string;
+    code: string;
+    details: Record<string, string[]>;
+  };
+  expect(invalidReviewBody.error).toBe("Sorğudakı məlumatlar etibarlı deyil.");
+  expect(invalidReviewBody.code).toBe("VALIDATION_ERROR");
+  expect(new Set(Object.values(invalidReviewBody.details).flat())).toEqual(
+    new Set(["Bu sahədəki məlumatı yoxla."]),
+  );
+});

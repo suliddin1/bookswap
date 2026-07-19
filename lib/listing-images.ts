@@ -47,7 +47,7 @@ export function getOwnedListingImagePath(value: string, userId: string) {
 
 function invalidImagePath() {
   return new ApiError(
-    "Listing images must be uploaded through BookSwap.",
+    "Elan şəkilləri BookSwap üzərindən yüklənməlidir.",
     422,
     "INVALID_IMAGE_PATH",
   );

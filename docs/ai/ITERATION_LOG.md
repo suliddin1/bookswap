@@ -1,5 +1,25 @@
 # Iteration log
 
+## 2026-07-19 - P1 Azerbaijani API and optional-email copy
+
+Goal / acceptance IDs: P1-010; L10N-01, NOTIF-01, AUTH-01, SVC-01, BROW-01, TEST-01.
+
+Ownership: root exclusively owns the code-authored API error presentation contract, optional notification-email presentation, focused tests, four-viewport production/API evidence, and affected durable documentation for this slice. Stable HTTP statuses, machine codes, route identifiers, authentication/authorization, database schema, notification types/events, and user-authored message previews remain unchanged. Existing migration-authored legacy notification prose is explicitly outside this code-only slice.
+
+Starting state: clean branch `autonomous/bookswap-product` at `3cd1b34`. Azerbaijani UI clients already map recognized machine codes and notification events, but the shared API serializer still emits English validation, rate-limit, generic, and route/provider/database messages on several direct-response paths. Optional notification email still uses English subjects and fallback prose and trusts raw payload message text instead of the reviewed notification presentation contract. The ignored local public configuration still targets a different project ref and no development service secret is available, so protected-route and real email-provider delivery remain blocked and must not be claimed.
+
+Planned contract: serialize all API failures through safe Azerbaijani code mappings; preserve stable codes/statuses while replacing raw unexpected details and schema messages; localize remaining code-authored route errors; render optional-email subject/body from the same event-aware presentation used in-app with escaped user-authored previews and a safe system fallback; verify exact response shapes, no provider/database leakage, HTML escaping, unchanged wire identifiers, direct public API failures, and representative notification UI at 1440x900, 1024x768, 390x844, and 360x800; then run the complete repository gate and update durable evidence.
+
+Implemented: added centralized API response copy and complete current machine-code mappings, sanitized Zod field details, removed arbitrary `Error.message` serialization, localized remaining route/auth errors, and preserved provider Auth code/status identifiers behind the safe Auth presentation map. Optional email now uses Azerbaijani message/system subjects and the shared event-aware notification body inside escaped `lang=az` HTML. Stable route names, HTTP statuses, API/notification codes, notification types/events, user preview text, authorization, and database schema are unchanged.
+
+Adversarial review: a 503 `ApiError` carrying private provider detail serialized only the mapped Azerbaijani moderation failure; an unexpected 400 carrying a private table name serialized only generic `BAD_REQUEST`; malformed listing input exposed generic field guidance instead of Zod `Required`; an HTML-like message preview was escaped; and unknown system payload prose fell back safely. Direct production probes confirmed exact localized invalid-filter/invalid-ID/validation bodies and no submitted/schema detail. Browser-local Auth/API/Realtime representatives rendered notification events at all four viewports; they are UI evidence only. One exact Next RSC `ERR_ABORTED` prefetch cancellation per context was separated from unexpected failures.
+
+Validation: lint and strict TypeScript pass; 37/37 unit tests pass; the 37-route optimized production build passes; 10/10 Playwright tests pass. Production Chromium passed `/notifications` at 1440x900, 1024x768, 390x844, and 360x800 with `lang=az`, one `h1`, private robots, deterministic Baku timestamps, exact width, clean desktop/mobile visual hierarchy, and no unexpected overlay, hydration, console, page, request, or HTTP failure. `git diff --check` and the UTF-8/mojibake scan pass.
+
+Evidence boundary and cleanup: no database/schema/package change or external mutation was made. No protected route or real email provider was exercised because the service secret remains absent and ignored local public configuration points at a different ref. The production server is stopped, port 3000 is free, and the temporary browser harness, screenshots, and result directory are removed. Ownership is released by the coherent local checkpoint.
+
+Next slice: continue P1-010 with the unblocked FAQ/safety guidance centralization and native-language consistency review. Legacy SQL-authored notification prose remains migration-bound; legal operator/contact/retention/domain facts remain externally blocked. Do not begin that next slice inside this checkpoint.
+
 ## 2026-07-19 - P1 Azerbaijani administrator dashboard and actions
 
 Goal / acceptance IDs: P1-010; L10N-01, ADMIN-01, ADMIN-02, MOD-01, REP-01, SEO-01, RESP-01, A11Y-01, BROW-01, TEST-01.

@@ -18,21 +18,21 @@ const UUID =
 
 export function parsePublicUuid(value: string) {
   if (!UUID.test(value))
-    throw new ApiError("Invalid public identifier.", 400, "INVALID_ID");
+    throw new ApiError("İdentifikator etibarlı deyil.", 400, "INVALID_ID");
   return value;
 }
 
 export function parseListingSort(value: string | null): ListingSort {
   const sort = value ?? "newest";
   if (!LISTING_SORTS.includes(sort as ListingSort))
-    throw new ApiError("Unsupported listing sort.", 400, "INVALID_SORT");
+    throw new ApiError("Sıralama seçimi etibarlı deyil.", 400, "INVALID_SORT");
   return sort as ListingSort;
 }
 
 export function parseListingLimit(value: string | null, fallback = 24) {
   if (value === null) return fallback;
   if (!/^\d{1,2}$/.test(value))
-    throw new ApiError("Invalid page size.", 400, "INVALID_LIMIT");
+    throw new ApiError("Səhifə ölçüsü etibarlı deyil.", 400, "INVALID_LIMIT");
   return Math.max(1, Math.min(Number(value), 50));
 }
 
@@ -113,7 +113,7 @@ export function decodeListingCursor(
     };
   } catch {
     throw new ApiError(
-      "Invalid or expired listing cursor.",
+      "Davam göstəricisi etibarsızdır və ya vaxtı keçib.",
       400,
       "INVALID_CURSOR",
     );

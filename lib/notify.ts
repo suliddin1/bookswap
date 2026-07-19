@@ -1,10 +1,27 @@
-import { requireSupabaseAdmin } from "@/lib/supabase";
-import type { Json } from "@/lib/database.types";
-import { escapeHtml } from "@/lib/security";
+import { requireSupabaseAdmin } from "./supabase";
+import type { Json } from "./database.types";
+import { escapeHtml } from "./security";
+import { AZ_COPY, formatNotificationPresentation } from "./i18n";
+
+type NotificationType = "MESSAGE" | "SYSTEM";
+
+export function formatNotificationEmail(
+  type: NotificationType,
+  payload: Record<string, unknown>,
+) {
+  const presentation = formatNotificationPresentation(type, payload);
+  return {
+    subject:
+      type === "MESSAGE"
+        ? AZ_COPY.notifications.emailMessageSubject
+        : AZ_COPY.notifications.emailSystemSubject,
+    html: `<div lang="az"><p>${escapeHtml(presentation.body)}</p></div>`,
+  };
+}
 
 export async function notifyUser(
   userId: string,
-  type: "MESSAGE" | "SYSTEM",
+  type: NotificationType,
   payload: Record<string, unknown>,
 ) {
   const supabase = requireSupabaseAdmin();
@@ -23,7 +40,7 @@ export async function notifyUser(
 
 export async function sendOptionalNotificationEmail(
   userId: string,
-  type: "MESSAGE" | "SYSTEM",
+  type: NotificationType,
   payload: Record<string, unknown>,
 ) {
   const supabase = requireSupabaseAdmin();
@@ -40,21 +57,11 @@ export async function sendOptionalNotificationEmail(
     };
   }
   if (user?.email) {
-    const message = escapeHtml(
-      String(
-        payload.preview ??
-          payload.message ??
-          "There is an update on your BookSwap account.",
-      ),
-    );
+    const email = formatNotificationEmail(type, payload);
     const { error } = await supabase.functions.invoke("notify", {
       body: {
         recipient: user.email,
-        subject:
-          type === "MESSAGE"
-            ? "New BookSwap message"
-            : "Your BookSwap listing was updated",
-        html: `<p>${message}</p>`,
+        ...email,
       },
     });
     if (error) console.error("Notification email delivery failed", error);

@@ -135,3 +135,11 @@ Status: Accepted.
 All listing INSERT, UPDATE, and DELETE operations pass through authenticated Next route handlers. Anon and authenticated database roles may SELECT listings under RLS but have no direct table mutation grants; service role receives explicit CRUD for the server boundary. Existing ownership and active-user RLS policies remain defense in depth rather than the primary publication path. Browser Storage upload remains separately owner-folder-scoped and does not grant listing-row mutation.
 
 Any transition from a non-active state into public `active` status is a publication event. It must moderate the final title/description and every final image before the state change, even when the request changes only status. An already-active edit moderates changed text and new images, avoiding redundant checks without creating a bypass. Locked listings cannot be edited through the seller route. Missing, failed, or malformed required moderation remains unavailable and prevents publication.
+
+## ADR-021 - User-facing API and optional-email copy is code-driven and fail-safe
+
+Status: Accepted.
+
+HTTP status and machine `code` values remain the stable API contract; natural-language `error` text is presentation. The shared serializer maps every recognized code to reviewed Azerbaijani, replaces Zod/schema detail with generic per-field Azerbaijani guidance, and returns generic Azerbaijani copy for unexpected 4xx/5xx failures. Provider, database, configuration, and arbitrary `Error.message` text may be logged internally when appropriate but must never be serialized to users. Auth-provider error responses preserve safe code/status identifiers while replacing provider prose with the existing Azerbaijani Auth mapping.
+
+Optional notification email is derived from the same stable type/event and reviewed presentation function used in-app. Subjects and fallback bodies are Azerbaijani, HTML declares `lang=az`, and user-authored message previews are preserved only after HTML escaping. Unknown system payload prose is not trusted and falls back safely. Required durable in-app notification semantics from ADR-017/ADR-019 are unchanged; email remains optional, and changing already applied SQL-authored legacy notification prose requires a separate additive migration with authorized development verification.

@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       .filter((item): item is File => item instanceof File);
     if (!files.length || files.length > 5)
       throw new ApiError(
-        "Upload between one and five images.",
+        "Birdən beşə qədər şəkil yüklə.",
         422,
         "INVALID_IMAGE_COUNT",
       );
@@ -39,14 +39,14 @@ export async function POST(request: Request) {
         !["image/jpeg", "image/png", "image/webp"].includes(file.type)
       ) {
         throw new ApiError(
-          "Images must be JPEG, PNG, or WebP and no larger than 5 MB.",
+          "Şəkillər JPEG, PNG və ya WebP olmalı və 5 MB-dan böyük olmamalıdır.",
           422,
           "INVALID_IMAGE_FILE",
         );
       }
       if (!(await hasValidImageSignature(file)))
         throw new ApiError(
-          "One of the files is not a valid image.",
+          "Fayllardan biri etibarlı şəkil deyil.",
           422,
           "INVALID_IMAGE_CONTENT",
         );

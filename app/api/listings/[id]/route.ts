@@ -35,8 +35,7 @@ export async function GET(
       .eq("id", id)
       .maybeSingle();
     if (error) throw error;
-    if (!data)
-      throw new ApiError("Listing not found", 404, "LISTING_NOT_FOUND");
+    if (!data) throw new ApiError("Elan tapılmadı.", 404, "LISTING_NOT_FOUND");
     return Response.json({
       data: { ...normalizeListing(data), reviews: data.reviews ?? [] },
     });
@@ -72,13 +71,13 @@ export async function PATCH(
     if (existingError) throw existingError;
     if (!existing)
       throw new ApiError(
-        "Listing not found or not owned by you",
+        "Elan tapılmadı və ya sənə aid deyil.",
         404,
         "LISTING_NOT_FOUND",
       );
     if (existing.status === "locked")
       throw new ApiError(
-        "This listing is locked and cannot be changed.",
+        "Kilidlənmiş elanı dəyişmək mümkün deyil.",
         409,
         "LISTING_LOCKED",
       );
@@ -88,8 +87,7 @@ export async function PATCH(
     const moderationPlan = planListingUpdateModeration({
       currentStatus: existing.status,
       requestedStatus: input.status,
-      textChanged:
-        input.title !== undefined || input.description !== undefined,
+      textChanged: input.title !== undefined || input.description !== undefined,
       currentImages: existing.images,
       requestedImages: input.images,
     });
@@ -143,7 +141,7 @@ export async function PATCH(
     if (error) throw error;
     if (!data)
       throw new ApiError(
-        "Listing not found or not owned by you",
+        "Elan tapılmadı və ya sənə aid deyil.",
         404,
         "LISTING_NOT_FOUND",
       );
@@ -188,7 +186,7 @@ export async function DELETE(
     if (error) throw error;
     if (!deleted)
       throw new ApiError(
-        "Listing not found or not owned by you",
+        "Elan tapılmadı və ya sənə aid deyil.",
         404,
         "LISTING_NOT_FOUND",
       );

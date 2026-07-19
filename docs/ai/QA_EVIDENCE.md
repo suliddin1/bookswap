@@ -2,7 +2,17 @@
 
 Evidence date: 2026-07-19 (Asia/Baku). Repository: D:\Codex Projects\2HandedBook, branch autonomous/bookswap-product, checkpoint base d644ad2b5775ae98386ae96636f23d5f530b0ef1.
 
-No production database, deployment, remote branch, or protected secondary checkout was touched. Public development configuration was supplied only to validation processes; no credential was written to tracked files. Transient server logs and Playwright output are under ignored test-results.
+No production database, deployment, remote branch, or protected secondary checkout was touched. Public development configuration was supplied only to validation processes; no credential was written to tracked files. Transient server logs and Playwright output are created only under ignored test-results and removed before checkpointing.
+
+## P1 Azerbaijani API and optional notification email - current evidence
+
+The shared API serializer now treats HTTP status and machine `code` as the stable contract and Azerbaijani prose as presentation. Every code currently produced by `ApiError` has a reviewed mapping. Known errors no longer serialize constructor/provider detail, unexpected 4xx/5xx responses use generic Azerbaijani copy, and Zod field details keep field keys while replacing schema prose with one generic Azerbaijani instruction. The dormant Auth action route preserves safe provider code/status fields while replacing provider messages through the existing Azerbaijani Auth map. Remaining code-authored English route messages were replaced; internal logs and identifiers remain unchanged.
+
+Optional notification email now derives from the same type/event-aware presentation used in-app. Message and system subjects are Azerbaijani, HTML declares `lang=az`, user-authored previews are escaped, unknown system `message` prose is ignored in favor of the safe fallback, and known `listing.approved`/`listing.rejected` events render the reviewed body. Unit evidence includes an attempted HTML injection preview and a private-provider-detail system payload. No email provider invocation occurred. Already applied SQL-authored legacy notification prose was not changed because that requires an additive migration plus authorized development apply/advisor/type verification.
+
+The optimized production API returned exact localized 400 `INVALID_FILTER`, 400 `INVALID_ID`, and 422 `VALIDATION_ERROR` responses; the validation body contained neither submitted `provider detail` nor Zod `Required` prose. The representative notification page passed at 1440x900, 1024x768, 390x844, and 360x800 with `lang=az`, one `h1`, private robots, exact page width, deterministic `14 iyl 2026, 22:05`, known-system and user-message presentation, no mojibake/framework overlay, and zero unexpected console/page/request/HTTP failures. Visual review of 1440px and 360px captures preserved the bookstore hierarchy and readable mobile cards/footer. Each isolated context produced one exact `/listings?_rsc=...` `ERR_ABORTED` link-prefetch cancellation; these had no failed response or console effect and were classified separately.
+
+Auth, page API data, header counters, and Realtime were browser-local representatives only because the ignored local public project ref differs from the authorized development backend and no service secret is available. No database, Auth, Storage, protected-route, or email mutation occurred. Current repository gate: lint pass; strict TypeScript pass; Vitest 37/37; Next.js production build 37 routes; Playwright 10/10. `git diff --check` and the UTF-8/mojibake scan pass. The production server is stopped, port 3000 is free, and the temporary browser harness/screenshots/result directory are removed.
 
 ## P1 Azerbaijani administrator dashboard and actions - current evidence
 

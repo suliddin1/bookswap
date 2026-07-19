@@ -37,13 +37,13 @@ export async function GET(request: Request) {
 
   try {
     if (query.length > 200)
-      throw new ApiError("Search query is too long.", 400, "INVALID_QUERY");
+      throw new ApiError("Axtarış sorğusu çox uzundur.", 400, "INVALID_QUERY");
     if (category && !BOOK_CATEGORIES.includes(category as never))
-      throw new ApiError("Unsupported category.", 400, "INVALID_FILTER");
+      throw new ApiError("Kateqoriya etibarlı deyil.", 400, "INVALID_FILTER");
     if (city && !AZERBAIJAN_CITIES.includes(city as never))
-      throw new ApiError("Unsupported city.", 400, "INVALID_FILTER");
+      throw new ApiError("Məkan etibarlı deyil.", 400, "INVALID_FILTER");
     if (condition && !BOOK_CONDITIONS.includes(condition as never))
-      throw new ApiError("Unsupported condition.", 400, "INVALID_FILTER");
+      throw new ApiError("Vəziyyət etibarlı deyil.", 400, "INVALID_FILTER");
     let maxPrice: number | null = null;
     if (maxPriceValue !== null) {
       const parsedMaxPrice = Number(maxPriceValue);
@@ -53,7 +53,11 @@ export async function GET(request: Request) {
         parsedMaxPrice <= 0 ||
         parsedMaxPrice > 10_000
       )
-        throw new ApiError("Invalid maximum price.", 400, "INVALID_FILTER");
+        throw new ApiError(
+          "Maksimum qiymət etibarlı deyil.",
+          400,
+          "INVALID_FILTER",
+        );
       maxPrice = parsedMaxPrice;
     }
     const sort = parseListingSort(searchParams.get("sort"));

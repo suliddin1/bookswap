@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import {
+  ApiError,
+  apiError,
   favoriteInput,
   adminBanInput,
   adminModerationInput,
@@ -16,6 +18,7 @@ import {
   roomInput,
   messageInput,
 } from "../lib/api";
+import { formatNotificationEmail } from "../lib/notify";
 import { assertOwnedListingImages, escapeHtml } from "../lib/security";
 import { isFavoriteListingVisible } from "../lib/favorites";
 import {
@@ -134,6 +137,55 @@ describe("marketplace input validation", () => {
     expect(localizeApiError("ADMIN_ACTION_CONFLICT", "fallback")).toContain(
       "mümkün deyil",
     );
+    expect(localizeApiError("INVALID_CURSOR", "fallback")).toContain(
+      "göstəricisi",
+    );
+    expect(localizeApiError("SELLER_NOT_FOUND", "fallback")).toBe(
+      AZ_COPY.api.sellerNotFound,
+    );
+    for (const code of [
+      "AUTH_REQUIRED",
+      "INVALID_SESSION",
+      "PROFILE_UNAVAILABLE",
+      "ACCOUNT_SUSPENDED",
+      "RATE_LIMITED",
+      "VALIDATION_ERROR",
+      "BAD_REQUEST",
+      "INTERNAL_ERROR",
+      "AUTH_ACTION_NOT_FOUND",
+      "INVALID_QUERY",
+      "INVALID_FILTER",
+      "INVALID_ID",
+      "INVALID_SORT",
+      "INVALID_LIMIT",
+      "INVALID_CURSOR",
+      "LISTING_NOT_FOUND",
+      "LISTING_UNAVAILABLE",
+      "SELLER_NOT_FOUND",
+      "OWN_LISTING",
+      "ROOM_NOT_FOUND",
+      "ROOM_FORBIDDEN",
+      "REPORT_EXISTS",
+      "REVIEW_NOT_ALLOWED",
+      "INVALID_IMAGE_COUNT",
+      "INVALID_IMAGE_FILE",
+      "INVALID_IMAGE_CONTENT",
+      "INVALID_IMAGE_PATH",
+      "LISTING_LOCKED",
+      "MODERATION_UNAVAILABLE",
+      "MODERATION_AUDIT_UNAVAILABLE",
+      "CONTENT_REJECTED",
+      "ADMIN_REQUIRED",
+      "SELF_BAN_FORBIDDEN",
+      "TARGET_NOT_FOUND",
+      "ADMIN_ACTION_FORBIDDEN",
+      "ADMIN_ACTION_CONFLICT",
+      "INVALID_ADMIN_ACTION",
+    ]) {
+      expect(localizeApiError(code, "unmapped-api-code")).not.toBe(
+        "unmapped-api-code",
+      );
+    }
     expect(localizeAuthError({ code: "invalid_credentials" })).toBe(
       AZ_COPY.auth.invalidCredentials,
     );
@@ -141,6 +193,132 @@ describe("marketplace input validation", () => {
       AZ_COPY.auth.failed,
     );
     expect(formatCategory("User supplied value")).toBe("User supplied value");
+  });
+
+  it("serializes API failures with safe Azerbaijani copy and stable codes", async () => {
+    const invalidListing = listingInput.safeParse({
+      title: "x",
+      unexpected: "provider detail",
+    });
+    expect(invalidListing.success).toBe(false);
+    if (invalidListing.success) throw new Error("Expected validation failure");
+
+    const validationResponse = apiError(invalidListing.error);
+    const validationBody = (await validationResponse.json()) as {
+      error: string;
+      code: string;
+      details: Record<string, string[]>;
+    };
+    expect(validationResponse.status).toBe(422);
+    expect(validationBody.error).toBe(AZ_COPY.api.invalidData);
+    expect(validationBody.code).toBe("VALIDATION_ERROR");
+    expect(Object.values(validationBody.details).flat()).not.toContain(
+      "Required",
+    );
+    expect(new Set(Object.values(validationBody.details).flat())).toEqual(
+      new Set([AZ_COPY.api.invalidField]),
+    );
+
+    const knownResponse = apiError(
+      new ApiError("provider moderation detail", 503, "MODERATION_UNAVAILABLE"),
+    );
+    const knownBody = (await knownResponse.json()) as {
+      error: string;
+      code: string;
+    };
+    expect(knownResponse.status).toBe(503);
+    expect(knownBody.code).toBe("MODERATION_UNAVAILABLE");
+    expect(knownBody.error).toBe(
+      localizeApiError("MODERATION_UNAVAILABLE", "fallback"),
+    );
+    expect(JSON.stringify(knownBody)).not.toContain(
+      "provider moderation detail",
+    );
+
+    const unexpectedResponse = apiError(
+      new Error("database relation private_table failed"),
+      400,
+    );
+    expect(await unexpectedResponse.json()).toEqual({
+      error: AZ_COPY.api.badRequest,
+      code: "BAD_REQUEST",
+    });
+  });
+
+  it("renders optional notification email from reviewed Azerbaijani presentation", () => {
+    const messageEmail = formatNotificationEmail("MESSAGE", {
+      preview: '<img src=x onerror="alert(1)"> & salam',
+    });
+    expect(messageEmail.subject).toBe(
+      AZ_COPY.notifications.emailMessageSubject,
+    );
+    expect(messageEmail.html).toContain('lang="az"');
+    expect(messageEmail.html).toContain(
+      "&lt;img src=x onerror=&quot;alert(1)&quot;&gt; &amp; salam",
+    );
+    expect(messageEmail.html).not.toContain("<img");
+
+    const systemEmail = formatNotificationEmail("SYSTEM", {
+      message: "private provider detail",
+    });
+    expect(systemEmail.subject).toBe(AZ_COPY.notifications.emailSystemSubject);
+    expect(systemEmail.html).toContain(AZ_COPY.notifications.systemFallback);
+    expect(systemEmail.html).not.toContain("private provider detail");
+
+    const approvedEmail = formatNotificationEmail("SYSTEM", {
+      event: "listing.approved",
+    });
+    expect(approvedEmail.html).toContain(AZ_COPY.notifications.listingApproved);
+  });
+
+  it("keeps direct API and optional-email boundaries free of replaced raw copy", () => {
+    const sources = [
+      "../lib/api.ts",
+      "../lib/auth.ts",
+      "../lib/notify.ts",
+      "../lib/listing-images.ts",
+      "../lib/listing-pagination.ts",
+      "../app/api/auth/[action]/route.ts",
+      "../app/api/listings/route.ts",
+      "../app/api/listings/[id]/route.ts",
+      "../app/api/sellers/[id]/route.ts",
+      "../app/api/favorites/route.ts",
+      "../app/api/reports/route.ts",
+      "../app/api/review/route.ts",
+      "../app/api/upload/route.ts",
+    ]
+      .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
+      .join("\n");
+
+    for (const oldCopy of [
+      "Invalid request data",
+      "Something went wrong",
+      "Too many requests",
+      "Authentication required",
+      "Invalid or expired session",
+      "Unknown auth action",
+      "Search query is too long",
+      "Unsupported category",
+      "Unsupported city",
+      "Unsupported condition",
+      "Invalid maximum price",
+      "Listing not found",
+      "Seller not found",
+      "New BookSwap message",
+      "Your BookSwap listing was updated",
+      "There is an update on your BookSwap account",
+    ]) {
+      expect(sources).not.toContain(oldCopy);
+    }
+    expect(
+      readFileSync(new URL("../lib/api.ts", import.meta.url), "utf8"),
+    ).not.toContain("error.message");
+    expect(
+      readFileSync(
+        new URL("../app/api/auth/[action]/route.ts", import.meta.url),
+        "utf8",
+      ),
+    ).toContain("localizeAuthError");
   });
 
   it("accepts only complete administrator dashboard response shapes", () => {

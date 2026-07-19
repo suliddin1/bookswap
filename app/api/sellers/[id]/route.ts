@@ -33,7 +33,7 @@ export async function GET(
       .maybeSingle();
     if (sellerError) throw sellerError;
     if (!seller)
-      throw new ApiError("Seller not found.", 404, "SELLER_NOT_FOUND");
+      throw new ApiError("Satıcı profili tapılmadı.", 404, "SELLER_NOT_FOUND");
 
     let listingsQuery = supabase
       .from("listings")

@@ -14,10 +14,10 @@ export async function POST(request: Request) {
       .eq("id", input.listingId)
       .maybeSingle();
     if (!listing)
-      throw new ApiError("Listing not found", 404, "LISTING_NOT_FOUND");
+      throw new ApiError("Elan tapılmadı.", 404, "LISTING_NOT_FOUND");
     if (listing.seller_id === user.id)
       throw new ApiError(
-        "You cannot report your own listing",
+        "Öz elanını şikayət edə bilməzsən.",
         409,
         "OWN_LISTING",
       );
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       .single();
     if (error?.code === "23505")
       throw new ApiError(
-        "You already have an open report for this listing",
+        "Bu elan üçün artıq açıq şikayətin var.",
         409,
         "REPORT_EXISTS",
       );

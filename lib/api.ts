@@ -4,6 +4,7 @@ import {
   BOOK_CATEGORIES,
   BOOK_CONDITIONS,
 } from "./marketplace";
+import { AZ_COPY, localizeApiError } from "./i18n";
 
 export class ApiError extends Error {
   constructor(
@@ -24,7 +25,7 @@ const listingImages = z
   .max(5)
   .refine(
     (images) => new Set(images).size === images.length,
-    "Listing images must be unique.",
+    AZ_COPY.api.uniqueImages,
   );
 
 export const listingInput = z
@@ -88,7 +89,10 @@ export const moderationInput = z
     imageUrl: z.string().url().optional(),
   })
   .strict()
-  .refine((value) => value.text || value.imageUrl, "Text or image is required");
+  .refine(
+    (value) => value.text || value.imageUrl,
+    AZ_COPY.api.textOrImageRequired,
+  );
 const adminActionReason = z.string().trim().min(10).max(1000);
 export const adminModerationInput = z
   .object({
@@ -155,38 +159,42 @@ export function assertRateLimit(
     return;
   }
   if (current.count >= limit)
-    throw new ApiError(
-      "Too many requests. Please try again shortly.",
-      429,
-      "RATE_LIMITED",
-    );
+    throw new ApiError(AZ_COPY.api.rateLimited, 429, "RATE_LIMITED");
   current.count += 1;
 }
 
 export function apiError(error: unknown, status = 400) {
   if (error instanceof z.ZodError) {
+    const fieldErrors = error.flatten().fieldErrors;
+    const details = Object.fromEntries(
+      Object.keys(fieldErrors).map((field) => [
+        field,
+        [AZ_COPY.api.invalidField],
+      ]),
+    );
     return Response.json(
       {
-        error: "Invalid request data.",
+        error: AZ_COPY.api.invalidData,
         code: "VALIDATION_ERROR",
-        details: error.flatten().fieldErrors,
+        details,
       },
       { status: 422 },
     );
   }
   if (error instanceof ApiError) {
+    const fallback =
+      error.status >= 500 ? AZ_COPY.api.internalError : AZ_COPY.api.badRequest;
     return Response.json(
-      { error: error.message, code: error.code },
+      { error: localizeApiError(error.code, fallback), code: error.code },
       { status: error.status },
     );
   }
-  const message =
-    status < 500 && error instanceof Error
-      ? error.message
-      : "Something went wrong";
   if (status >= 500) console.error("BookSwap API error", error);
   return Response.json(
-    { error: message, code: status >= 500 ? "INTERNAL_ERROR" : "BAD_REQUEST" },
+    {
+      error: status >= 500 ? AZ_COPY.api.internalError : AZ_COPY.api.badRequest,
+      code: status >= 500 ? "INTERNAL_ERROR" : "BAD_REQUEST",
+    },
     { status },
   );
 }

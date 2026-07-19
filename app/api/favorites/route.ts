@@ -9,7 +9,7 @@ import { requireSupabaseAdmin } from "@/lib/supabase";
 
 function listingUnavailable() {
   return new ApiError(
-    "This listing is not available to save",
+    "Bu elanı seçilmişlərə əlavə etmək mümkün deyil.",
     404,
     "LISTING_UNAVAILABLE",
   );
@@ -65,9 +65,7 @@ export async function POST(request: Request) {
     const supabase = requireSupabaseAdmin();
     const { data: listing, error: listingError } = await supabase
       .from("listings")
-      .select(
-        "status,seller:users!listings_seller_id_fkey!inner(banned)",
-      )
+      .select("status,seller:users!listings_seller_id_fkey!inner(banned)")
       .eq("id", listingId)
       .in("status", [...FAVORITE_VISIBLE_STATUSES])
       .eq("seller.banned", false)

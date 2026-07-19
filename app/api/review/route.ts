@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       : room?.listing;
     if (!room || listing?.status !== "sold")
       throw new ApiError(
-        "Only the buyer can review a completed sale",
+        "Yalnız tamamlanmış satışın alıcısı rəy yaza bilər.",
         403,
         "REVIEW_NOT_ALLOWED",
       );

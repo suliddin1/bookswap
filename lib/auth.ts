@@ -7,10 +7,14 @@ export async function requireUser(request: Request) {
     .get("authorization")
     ?.replace(/^Bearer\s+/i, "");
   if (!token)
-    throw new ApiError("Authentication required", 401, "AUTH_REQUIRED");
+    throw new ApiError("Davam etmək üçün daxil ol.", 401, "AUTH_REQUIRED");
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user)
-    throw new ApiError("Invalid or expired session", 401, "INVALID_SESSION");
+    throw new ApiError(
+      "Sessiyanın müddəti bitib. Yenidən daxil ol.",
+      401,
+      "INVALID_SESSION",
+    );
   const { data: profile, error: profileError } = await supabase
     .from("users")
     .select("id,banned,is_admin")
@@ -18,16 +22,12 @@ export async function requireUser(request: Request) {
     .single();
   if (profileError || !profile)
     throw new ApiError(
-      "Account profile is unavailable",
+      "Hesab profili əlçatan deyil.",
       403,
       "PROFILE_UNAVAILABLE",
     );
   if (profile.banned)
-    throw new ApiError(
-      "This account has been suspended",
-      403,
-      "ACCOUNT_SUSPENDED",
-    );
+    throw new ApiError("Bu hesab dayandırılıb.", 403, "ACCOUNT_SUSPENDED");
   return {
     id: data.user.id,
     email: data.user.email ?? null,
@@ -38,6 +38,10 @@ export async function requireUser(request: Request) {
 export async function requireAdmin(request: Request) {
   const user = await requireUser(request);
   if (!user.isAdmin)
-    throw new ApiError("Admin access required", 403, "ADMIN_REQUIRED");
+    throw new ApiError(
+      "Bu əməliyyat üçün idarəçi icazəsi tələb olunur.",
+      403,
+      "ADMIN_REQUIRED",
+    );
   return user;
 }
