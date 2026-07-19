@@ -41,10 +41,27 @@ test("premium navigation remains usable on mobile", async ({ page }) => {
 test("safety and user rights guidance is publicly reachable", async ({
   page,
 }) => {
-  await page.goto("/safety");
+  await page.goto("/faq");
+  await expect(page).toHaveTitle(/Tez-tez verilən suallar/i);
   await expect(
-    page.getByRole("heading", { name: /Təhlükəsiz al, təhlükəsiz sat/i }),
+    page.getByRole("heading", { name: /Tez-tez verilən suallar/i }),
   ).toBeVisible();
+  await page
+    .getByText("BookSwap ödənişi və təhvili idarə edirmi?", { exact: true })
+    .click();
+  await expect(page.getByText(/alıcı müdafiəsi təqdim etmir/i)).toBeVisible();
+  await page
+    .getByRole("link", { name: "Təhlükəsizlik bələdçisini aç" })
+    .click();
+  await expect(page).toHaveURL(/\/safety$/);
+  await expect(
+    page.getByRole("heading", { name: /Alış və satışda təhlükəsizlik/i }),
+  ).toBeVisible();
+  await expect(page).toHaveTitle(/Təhlükəsizlik mərkəzi/i);
+  await expect(
+    page.getByRole("heading", { name: "BookSwap-ın rolu" }),
+  ).toBeVisible();
+  await expect(page.getByText(/bütün iddialarını təsdiqləmir/i)).toBeVisible();
   const privacyRequests: string[] = [];
   page.on("request", (request) => {
     if (request.url().includes("/api/privacy-requests"))

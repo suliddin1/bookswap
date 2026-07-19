@@ -385,6 +385,8 @@ describe("marketplace input validation", () => {
       "../lib/client-listing-images.ts",
       "../lib/client-api.ts",
       "../app/admin/page.tsx",
+      "../app/faq/page.tsx",
+      "../app/safety/page.tsx",
       "../components/admin-panel.tsx",
       "../lib/admin-actions.ts",
       "../app/api/admin/ban/route.ts",
@@ -468,9 +470,36 @@ describe("marketplace input validation", () => {
       "No administrator actions",
       "Your listing was approved",
       "Your listing was rejected",
+      "Safety Center",
+      "Help center",
+      "Dashboard → My Listings",
+      "Mark sold",
+      "Report this listing",
     ]) {
       expect(sources).not.toContain(oldCopy);
     }
+  });
+
+  it("keeps FAQ and safety guidance centralized within the accepted trust boundary", () => {
+    const routeSources = ["../app/faq/page.tsx", "../app/safety/page.tsx"]
+      .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
+      .join("\n");
+    const guidance = JSON.stringify({
+      faq: AZ_COPY.faq,
+      safety: AZ_COPY.safety,
+    });
+
+    expect(routeSources).toContain("AZ_COPY.faq");
+    expect(routeSources).toContain("AZ_COPY.safety");
+    expect(guidance).toContain("BookSwap vəsait saxlamır");
+    expect(guidance).toContain("alıcı müdafiəsi təqdim etmir");
+    expect(guidance).toContain("çatdırılmaya zəmanət vermir");
+    expect(guidance).toContain("bütün iddialarını təsdiqləmir");
+    expect(guidance).not.toContain("Yetkinlik yaşına");
+    expect(guidance).not.toContain("Trust & safety");
+    expect(new Set(AZ_COPY.safety.sections.map(({ id }) => id)).size).toBe(
+      AZ_COPY.safety.sections.length,
+    );
   });
 
   it("renders messaging dates and notification copy deterministically", () => {

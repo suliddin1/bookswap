@@ -40,6 +40,113 @@ export const AZ_COPY = {
     userRights: "İstifadəçi hüquqları",
     copyright: "© 2026 BookSwap",
   },
+  faq: {
+    metadataTitle: "Tez-tez verilən suallar",
+    metadataDescription:
+      "BookSwap-da elan, kitabın vəziyyəti, ödəniş, təhvil, şikayət və hesab idarəetməsi üzrə cavablar.",
+    eyebrow: "Kömək mərkəzi",
+    title: "Tez-tez verilən suallar.",
+    intro:
+      "Elan yaratmaqdan kitabı təhvil verməyə qədər BookSwap-ın hazırkı qaydaları və təhlükəsizlik sərhədləri.",
+    questions: [
+      {
+        question: "BookSwap nədir?",
+        answer:
+          "BookSwap oxucuların istifadə olunmuş kitabları elan etdiyi və bir-biri ilə birbaşa əlaqə saxladığı kitab bazarıdır. BookSwap kitabları saxlamır və ya təhvil almır.",
+      },
+      {
+        question: "BookSwap ödənişi və təhvili idarə edirmi?",
+        answer:
+          "Xeyr. Alıcı və satıcı ödənişi, görüşü, təhvili və istəyə bağlı çatdırılmanı özləri razılaşdırırlar. BookSwap vəsait saxlamır, ödənişi emal etmir, alıcı müdafiəsi təqdim etmir, kitabın vəziyyətinə və ya çatdırılmaya zəmanət vermir və razılaşmanı sığortalamır.",
+      },
+      {
+        question: "Kitabın vəziyyətini necə seçməliyəm?",
+        answer:
+          "“Yeni kimidir” — demək olar ki, istifadə izi yoxdur; “Çox yaxşı” — yüngül izlər var; “Yaxşı” — görünən, amma istifadəyə mane olmayan izlər var; “İstifadə olunub” — qeydlər, əyilmə və ya nəzərəçarpan aşınma ola bilər. Bütün qüsurları təsvirdə və fotolarda göstərin.",
+      },
+      {
+        question: "Razılaşmadan əvvəl nəyi yoxlamalıyam?",
+        answer:
+          "Əsas şərtləri BookSwap mesajlarında dəqiqləşdirin. Kitabın real fotolarını, ISBN-ni, nəşrini, səhifələrini və qüsurlarını yoxlayın. Şifrə, birdəfəlik kod, kartın CVV-si və şəxsiyyət sənədinin tam fotosunu paylaşmayın.",
+      },
+      {
+        question: "Elanı necə satılıb işarələyim?",
+        answer:
+          "Kabinetdə “Elanlarım” bölməsini açıb “Satılıb işarələ” düyməsini seçin. Razılaşma baş tutmazsa, “Yenidən yayımla” ilə elanı yenidən aktiv edə bilərsiniz.",
+      },
+      {
+        question: "Şübhəli elan görsəm nə edim?",
+        answer:
+          "Elan səhifəsində “Bu elanı şikayət et” bölməsindən səbəbi göndərin və yazışmaları saxlayın. Təcili fiziki təhlükə varsa, yerli hüquq-mühafizə orqanına müraciət edin.",
+      },
+      {
+        question: "Rəyi kim yaza bilər?",
+        answer:
+          "Yalnız həmin elan üzrə alıcı kimi söhbət açmış istifadəçi elan satılıb işarələndikdən sonra rəy yaza bilər. BookSwap hər rəydəki iddianı ayrıca təsdiqləmir.",
+      },
+      {
+        question: "Hesabımı və məlumatlarımı necə idarə edə bilərəm?",
+        answer:
+          "Profil məlumatlarını Kabinetdən dəyişə bilərsiniz. Məlumat çıxarışı, düzəliş və hesabın silinməsi kimi məxfilik sorğularını “İstifadəçi hüquqları” səhifəsindən göndərin.",
+      },
+    ],
+    moreTitle: "Əlavə kömək lazımdır?",
+    moreBody:
+      "Görüş, ödəniş və şəxsi məlumatlarla bağlı tövsiyələri oxuyun və ya məxfilik sorğusunu uyğun səhifədən göndərin.",
+    safetyAction: "Təhlükəsizlik bələdçisini aç",
+    rightsAction: "İstifadəçi hüquqlarını aç",
+  },
+  safety: {
+    metadataTitle: "Təhlükəsizlik mərkəzi",
+    metadataDescription:
+      "BookSwap-da kitab alıb-satarkən hesabı, şəxsi məlumatları, ödənişi, görüşü və şikayət sübutlarını qorumaq üçün tövsiyələr.",
+    eyebrow: "Etibar və təhlükəsizlik",
+    title: "Alış və satışda təhlükəsizlik.",
+    intro:
+      "BookSwap kitabları tapmağa və satıcı ilə əlaqə saxlamağa kömək edir; əməliyyatın şərtlərini və təhlükəsizliyini istifadəçilər özləri qiymətləndirirlər.",
+    sections: [
+      {
+        id: "bookswap-role",
+        title: "BookSwap-ın rolu",
+        body: "BookSwap vəsait saxlamır və ödənişi emal etmir; alıcı müdafiəsi təqdim etmir; kitabın vəziyyətini və istifadəçilərin bütün iddialarını təsdiqləmir; təhvilə və ya çatdırılmaya zəmanət vermir; razılaşmanı sığortalamır.",
+        items: [],
+      },
+      {
+        id: "before-agreement",
+        title: "Razılaşmadan əvvəl",
+        body: "Tələsmədən elanı, kitabı və qarşı tərəfin təklif etdiyi şərtləri yoxlayın.",
+        items: [
+          "Əsas şərtləri BookSwap mesajlarında yazılı saxlayın; şikayət lazım olarsa, bu yazışmalar araşdırmaya kömək edə bilər.",
+          "Kitabın real fotolarını, ISBN-ni, nəşrini, səhifələrini, əlavələrini və bütün qüsurlarını yoxlayın.",
+          "Həddən artıq aşağı qiymət, tələsdirmə, gözlənilməz ödəniş linki və platformadan dərhal kənara keçmək tələbi risk əlaməti ola bilər.",
+          "Şifrə, SMS və ya tətbiq təsdiq kodu, kartın CVV-si və şəxsiyyət sənədinin tam fotosunu paylaşmayın.",
+        ],
+      },
+      {
+        id: "meeting-handoff",
+        title: "Görüş və təhvil zamanı",
+        body: "Görüşü və ya istəyə bağlı çatdırılmanı istifadəçilər özləri razılaşdırır; BookSwap bu prosesi idarə etmir.",
+        items: [
+          "Mümkün olduqda işıqlı, ictimai yer seçin və görüşün vaxtını, məkanını etibar etdiyiniz şəxsə bildirin.",
+          "Ödəniş etməzdən əvvəl kitabın üz qabığını, səhifələrini, əlavələrini və elanla uyğunluğunu yoxlayın.",
+          "Şərtlər dəyişirsə, sizə təzyiq göstərilirsə və ya özünüzü narahat hiss edirsinizsə, razılaşmanı dayandırın.",
+        ],
+      },
+      {
+        id: "report-problem",
+        title: "Problem və ya şübhə yaranarsa",
+        body: "BookSwap şikayəti araşdıra və platforma qaydalarına uyğun tədbir görə bilər, amma ödənişi geri qaytaran və ya mübahisəni həll edən tərəf deyil.",
+        items: [
+          "Elanın səhifəsində “Bu elanı şikayət et” bölməsindən səbəbi göndərin; elan məlumatlarını və yazışmaları saxlayın.",
+          "Şübhəli kart əməliyyatı və ya köçürmə varsa, dərhal bankınızla və ya ödəniş xidmətinizlə əlaqə saxlayın.",
+          "Dələduzluq, təhdid və ya fiziki təhlükə halında yerli hüquq-mühafizə orqanına müraciət edin.",
+        ],
+      },
+    ],
+    faqAction: "Tez-tez verilən sualları aç",
+    rightsAction: "İstifadəçi hüquqlarını aç",
+    relatedLabel: "Əlaqəli kömək səhifələri",
+  },
   global: {
     loading: "Kitablar hazırlanır",
     errorBadge: "Xəta baş verdi",

@@ -46,7 +46,7 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="hide-mobile flex items-center gap-5 text-[10px] font-extrabold uppercase tracking-[.09em]">
+        <nav className="hidden items-center gap-5 text-[10px] font-extrabold uppercase tracking-[.09em] min-[1101px]:flex">
           <Link href="/" className="transition hover:text-orange">
             {AZ_COPY.navigation.home}
           </Link>
@@ -76,7 +76,7 @@ export function SiteHeader() {
           </Link>
         </nav>
 
-        <div className="hide-mobile flex items-center gap-2">
+        <div className="hidden items-center gap-2 min-[1101px]:flex">
           <Link
             href="/listings"
             aria-label={AZ_COPY.navigation.search}
@@ -123,7 +123,7 @@ export function SiteHeader() {
         </div>
 
         <button
-          className="grid h-10 w-10 place-items-center rounded-full md:hidden"
+          className="grid h-10 w-10 place-items-center rounded-full min-[1101px]:hidden"
           onClick={() => setOpen(!open)}
           aria-label={AZ_COPY.navigation.menu}
           aria-expanded={open}
@@ -135,7 +135,7 @@ export function SiteHeader() {
       {open && (
         <div
           id="mobile-navigation"
-          className="border-t border-[#e8e5df] bg-paper px-5 py-5 md:hidden"
+          className="border-t border-[#e8e5df] bg-paper px-5 py-5 min-[1101px]:hidden"
         >
           <nav className="flex flex-col gap-4 text-sm font-extrabold">
             <Link href="/" onClick={() => setOpen(false)}>

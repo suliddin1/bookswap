@@ -143,3 +143,11 @@ Status: Accepted.
 HTTP status and machine `code` values remain the stable API contract; natural-language `error` text is presentation. The shared serializer maps every recognized code to reviewed Azerbaijani, replaces Zod/schema detail with generic per-field Azerbaijani guidance, and returns generic Azerbaijani copy for unexpected 4xx/5xx failures. Provider, database, configuration, and arbitrary `Error.message` text may be logged internally when appropriate but must never be serialized to users. Auth-provider error responses preserve safe code/status identifiers while replacing provider prose with the existing Azerbaijani Auth mapping.
 
 Optional notification email is derived from the same stable type/event and reviewed presentation function used in-app. Subjects and fallback bodies are Azerbaijani, HTML declares `lang=az`, and user-authored message previews are preserved only after HTML escaping. Unknown system payload prose is not trusted and falls back safely. Required durable in-app notification semantics from ADR-017/ADR-019 are unchanged; email remains optional, and changing already applied SQL-authored legacy notification prose requires a separate additive migration with authorized development verification.
+
+## ADR-022 - Public trust guidance is centralized and policy-bounded
+
+Status: Accepted.
+
+Public FAQ and safety metadata, questions, answers, section labels, and action names are code-owned by the typed Azerbaijani presentation contract. Route components render that reviewed data without duplicating policy prose. Stable listing condition/status values and user-authored content remain unchanged; only their presentation labels are localized.
+
+Trust guidance must reflect ADR-012 and the product trust model: BookSwap facilitates discovery and communication but does not hold funds, provide buyer protection, verify every condition or claim, guarantee handoff/delivery, or insure an agreement. General credential, inspection, public-meeting, reporting, bank, and emergency risk-reduction guidance is not a protection promise. Age-specific rules, allowed payment/delivery arrangements, dispute boundaries, and contact-disclosure policy remain excluded until DR-003/DR-004 are decided. Chat history may be described only as potentially helpful to an investigation, never as continuously monitored or guaranteed evidence.

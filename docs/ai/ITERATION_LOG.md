@@ -1,5 +1,27 @@
 # Iteration log
 
+## 2026-07-19 - P1 Azerbaijani FAQ and safety guidance
+
+Goal / acceptance IDs: P1-010; L10N-01, SEO-01, A11Y-01, RESP-01, BROW-01, TEST-01.
+
+Ownership: root exclusively owns the FAQ and safety route copy/metadata, their shared presentation contract, focused tests, four-viewport production evidence, and affected durable documentation for this slice. Existing transaction behavior, payment/handoff options, reporting and moderation behavior, account eligibility, legal pages, database schema, notification producers, and user-authored content remain unchanged.
+
+Starting state: clean branch `autonomous/bookswap-product` at `686e8f9`. The public `/faq` and `/safety` routes render Azerbaijani body text, but their copy remains scattered outside `lib/i18n.ts`; metadata and several headings/actions/condition names remain English or mixed-language. Safety guidance says chat creates moderation evidence in a way that can imply ongoing review and includes a minor instruction despite DR-003 being unresolved. The pages do not yet state the complete accepted no-protection boundary from ADR-012 and the product trust model.
+
+Planned contract: centralize natural Azerbaijani FAQ/safety copy and metadata; translate presentation labels without changing stable listing condition or status values; state truthfully that users arrange transactions and BookSwap does not hold funds, verify every claim/condition, guarantee delivery, or insure exchanges; retain practical credential, inspection, public-meeting, reporting, bank, and emergency guidance without deciding unresolved age, payment, delivery, dispute, or contact-disclosure policy; improve FAQ/safety semantics where needed; verify metadata, accessible names, keyboard behavior, 200% zoom/reflow, exact viewport width, mojibake, overlays, hydration, and console/network failures at 1440x900, 1024x768, 390x844, and 360x800; then run the complete repository gate and update durable evidence.
+
+Implemented: added typed FAQ/safety metadata, questions, answers, section IDs, guidance, and related-page actions to `lib/i18n.ts`; route components now render only that reviewed contract. Mixed English metadata, headings, condition names, dashboard/report/review actions, and `marketplace` wording were replaced with natural Azerbaijani. The safety boundary explicitly excludes held/processed funds, buyer protection, verified condition/claims, delivery guarantees, insurance, refunds, and platform dispute resolution. The unresolved minor instruction was removed, and chat history is described only as potentially useful during an investigation. Existing wire values, transaction behavior, moderation/report handling, account eligibility, schema, and legal pages are unchanged.
+
+Accessibility/responsive repair: FAQ disclosures now expose at least 44px keyboard targets and visible focus; information sections may use explicit labelled landmarks; help actions use Next links and wrap within their container. The first 200% text-resize probe found the desktop header sign-in group overflowing at 1024px. The header now changes to its compact navigation below 1101px, and long Azerbaijani headings/actions wrap under constrained text size. Rebuilt optimized-production pages pass base and 200% text-resize width checks at all four required viewports.
+
+Adversarial review: dictionary/source tests require the accepted no-protection language and reject unresolved age copy and the removed English trust heading. Production Chromium toggled the payment/handoff disclosure by keyboard, navigated FAQ to safety, checked all eight questions/four labelled sections, and found no stale age instruction, mojibake, hydration/framework overlay, console warning/error, page error, unexpected request failure, or HTTP 4xx/5xx. One exact Next RSC prefetch `ERR_ABORTED` occurred in each desktop/tablet context and none on mobile; these cancellations had no response/console effect and were classified separately. Visual inspection of all eight captures is clean.
+
+Validation: lint and strict TypeScript pass; 38/38 unit tests pass; the 37-route optimized production build passes; 10/10 Playwright tests pass. FAQ and safety match 1440x900, 1024x768, 390x844, and 360x800 exactly, with `lang=az`, one `h1`, correct metadata, reduced motion, keyboard disclosure behavior, labelled sections, and 200% text resize. `git diff --check`, tracked UTF-8/mojibake scanning, and artifact review pass.
+
+Evidence boundary and cleanup: no database/schema/package/Auth/Storage/email/provider mutation was made. DR-003 and DR-004 remain unresolved, SQL-authored legacy notification prose remains migration-bound, and legal operator/contact/retention/domain facts remain external. The production server is stopped, port 3000 is free, and the temporary browser harness, screenshots, and logs are removed. Ownership is released by the coherent local checkpoint.
+
+Next slice: P1-010 has no remaining unblocked code-only guidance slice; its SQL/legal remainder needs authorization or external decisions. The next highest-priority unblocked item is P1-011, the WCAG 2.2 AA review and targeted remediation. Do not begin it inside this checkpoint.
+
 ## 2026-07-19 - P1 Azerbaijani API and optional-email copy
 
 Goal / acceptance IDs: P1-010; L10N-01, NOTIF-01, AUTH-01, SVC-01, BROW-01, TEST-01.
