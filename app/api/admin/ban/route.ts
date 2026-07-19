@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     );
     if (userId === admin.id)
       throw new ApiError(
-        "You cannot suspend your own account",
+        "Öz hesabını dayandıra bilməzsən.",
         409,
         "SELF_BAN_FORBIDDEN",
       );

@@ -1,5 +1,25 @@
 # Iteration log
 
+## 2026-07-19 - P1 Azerbaijani administrator dashboard and actions
+
+Goal / acceptance IDs: P1-010; L10N-01, ADMIN-01, ADMIN-02, MOD-01, REP-01, SEO-01, RESP-01, A11Y-01, BROW-01, TEST-01.
+
+Ownership: root exclusively owns the administrator route metadata, dashboard presentation and response parsing, administrator action/API error copy, shared Azerbaijani admin labels and deterministic formatting, focused tests, browser evidence, and affected durable documentation for this slice. Existing RPC names, wire actions/statuses, authorization, transaction boundaries, database schema, and immutable audit records remain unchanged.
+
+Starting state: clean branch `autonomous/bookswap-product` at `4632983`. The immutable administrator-action and automated-moderation ledgers are complete, but `/admin` has no localized metadata or private robots contract and exposes English headings, statistics, reason guidance, loading/error/action states, table labels, account/report/privacy controls, audit/moderation labels, fallback text, and runtime-dependent date-time formatting. The client trusts untyped dashboard bodies and displays raw route messages. Protected Next-route browser execution remains blocked by P0-005, so representative UI evidence must remain browser-local and must not be claimed as backend evidence.
+
+Planned contract: add Azerbaijani private route metadata and a centralized admin copy/label contract; preserve all machine values while translating their presentation; parse the dashboard response defensively; map recognized API codes to safe localized feedback; replace runtime locale defaults with the explicit Baku formatter; provide named loading, empty, busy, error, table, status, and action states; verify no stale owned English, mojibake, hydration/runtime errors, horizontal page overflow, inaccessible controls, or unintended protected mutations at 1440x900, 1024x768, 390x844, and 360x800; then run the complete repository gate and update durable evidence.
+
+Implemented: added Azerbaijani private route metadata, centralized administrator copy, audit/action/state and moderation diagnostic label maps, safe administrator API error messages, and deterministic Baku timestamps. The client now strictly parses the complete dashboard response before rendering, ignores raw server/parser prose, preserves action/status/category identifiers beside translated administrator diagnostics, exposes named loading/empty/error/busy/success states, and improves table/control/long-address semantics. Stable RPCs, authorization, transaction boundaries, database rows, and immutable audit content are unchanged. The moderation email handoff now carries a stable event identifier plus reviewed Azerbaijani body copy.
+
+Adversarial review: malformed representative dashboard data produced only the safe Azerbaijani fallback; signed-out admin started no protected request. Browser-local success and 409 conflict actions preserved `approve`, listing ID, and a bounded reason, while the conflict exposed only localized `ADMIN_ACTION_CONFLICT` copy. The first external browser attempt reproduced the documented ignored-local-config DNS boundary, so Auth/API/Realtime were fully isolated in the final representative matrix and no protected-route/backend success is claimed. One exact Next RSC prefetch cancellation and the expected simulated 409 resource line were classified separately; every other console, request, response, hydration, and overlay failure remained fatal.
+
+Validation: lint and strict TypeScript pass; 34/34 unit tests pass; the 37-route optimized production build passes; 9/9 Playwright tests pass. Production Chromium passed `/admin` at 1440x900, 1024x768, 390x844, and 360x800 with `lang=az`, one `h1`, private robots, deterministic `14 iyl 2026, 22:05`, localized audit/moderation/state presentation, exact page width, contained table scrolling, and no unexpected browser failure. Desktop/mobile visual inspection preserved the bookstore UI. No database, Auth, Storage, email-provider, or protected route mutation was made.
+
+Evidence boundary and cleanup: P0-005 still blocks real authenticated Next admin execution. The production server is stopped, port 3000 is free, and the temporary browser harness, screenshots, logs, and Playwright result file are removed; the repository-local Playwright runtime remains. Ownership is released by this coherent local checkpoint.
+
+Next slice: continue P1-010 with the broader user-facing API error and transactional email/durable-notification copy inventory. Reviewed legal facts remain externally blocked and P1-011 remains the next independent non-localization item.
+
 ## 2026-07-14 / recovered 2026-07-19 - P1 Azerbaijani messaging and notification journeys
 
 Goal / acceptance IDs: P1-010; L10N-01, CHAT-03, NOTIF-01, MOD-01, SEO-01, RESP-01, A11Y-01, BROW-01, TEST-01.

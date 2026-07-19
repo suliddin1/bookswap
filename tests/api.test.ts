@@ -38,10 +38,14 @@ import {
   planListingUpdateModeration,
 } from "../lib/moderation";
 import { throwAdminActionError } from "../lib/admin-actions";
+import { parseAdminDashboardResponse } from "../lib/admin-dashboard";
 import {
   APP_LOCALE,
   AZ_COPY,
   DOCUMENT_LANGUAGE,
+  formatAdminAuditAction,
+  formatAdminAuditState,
+  formatAdminAuditTarget,
   formatAzn,
   formatAzDate,
   formatAzDateTime,
@@ -51,6 +55,12 @@ import {
   formatCondition,
   formatLoadedBooks,
   formatListingStatus,
+  formatModerationCategory,
+  formatModerationContentType,
+  formatModerationOutcome,
+  formatModerationProvider,
+  formatModerationReason,
+  formatModerationSurface,
   formatNotificationPresentation,
   formatPrivacyRequestStatus,
   formatPrivacyRequestType,
@@ -95,6 +105,25 @@ describe("marketplace input validation", () => {
     expect(formatPrivacyRequestType("deletion")).toContain("silinməsi");
     expect(formatPrivacyRequestStatus("in_progress")).toBe("İcradadır");
     expect(formatPrivacyRequestType("custom")).toBe("custom");
+    expect(formatAdminAuditTarget("privacy_request")).toBe("Məxfilik sorğusu");
+    expect(formatAdminAuditAction("listing.approved")).toBe("Elan təsdiqlənib");
+    expect(formatAdminAuditState("listing", { status: "active" })).toBe(
+      "Vəziyyət: Aktiv",
+    );
+    expect(formatAdminAuditState("user", { banned: true })).toBe(
+      AZ_COPY.admin.accountSuspended,
+    );
+    expect(formatModerationOutcome("unavailable")).toContain("əlçatan");
+    expect(formatModerationSurface("chat_message")).toBe("Söhbət mesajı");
+    expect(formatModerationContentType("image")).toBe("Şəkil");
+    expect(formatModerationProvider("local_rules")).toBe("Yerli qaydalar");
+    expect(formatModerationReason("PROVIDER_TIMED_OUT")).toContain(
+      "vaxtı bitib",
+    );
+    expect(formatModerationCategory("violence")).toBe("Zorakılıq");
+    expect(formatAdminAuditAction("unknown.action")).toBe(
+      AZ_COPY.admin.unknownValue,
+    );
     expect(formatReviewSummary(4.5, 2)).toBe("2 rəyə əsasən 4,5");
     expect(formatLoadedBooks(7)).toBe("7 kitab yüklənib");
     expect(formatStars(5)).toBe("5 ulduz");
@@ -102,6 +131,9 @@ describe("marketplace input validation", () => {
       "açıq şikayətin",
     );
     expect(localizeApiError("UNKNOWN", "fallback")).toBe("fallback");
+    expect(localizeApiError("ADMIN_ACTION_CONFLICT", "fallback")).toContain(
+      "mümkün deyil",
+    );
     expect(localizeAuthError({ code: "invalid_credentials" })).toBe(
       AZ_COPY.auth.invalidCredentials,
     );
@@ -111,7 +143,25 @@ describe("marketplace input validation", () => {
     expect(formatCategory("User supplied value")).toBe("User supplied value");
   });
 
-  it("keeps localized public marketplace surfaces free of their old English copy", () => {
+  it("accepts only complete administrator dashboard response shapes", () => {
+    const data = {
+      listings: [],
+      users: [],
+      reports: [],
+      privacyRequests: [],
+      moderationDecisions: [],
+      auditLog: [],
+    };
+    expect(parseAdminDashboardResponse({ data })).toEqual(data);
+    expect(() =>
+      parseAdminDashboardResponse({
+        data: { ...data, users: [{ id: "not-a-uuid" }] },
+      }),
+    ).toThrow();
+    expect(() => parseAdminDashboardResponse({ data: [] })).toThrow();
+  });
+
+  it("keeps localized marketplace surfaces free of their old English copy", () => {
     const sources = [
       "../app/layout.tsx",
       "../app/manifest.ts",
@@ -156,6 +206,11 @@ describe("marketplace input validation", () => {
       "../lib/chat-client.ts",
       "../lib/client-listing-images.ts",
       "../lib/client-api.ts",
+      "../app/admin/page.tsx",
+      "../components/admin-panel.tsx",
+      "../lib/admin-actions.ts",
+      "../app/api/admin/ban/route.ts",
+      "../app/api/admin/moderate/route.ts",
     ]
       .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
       .join("\n");
@@ -222,6 +277,19 @@ describe("marketplace input validation", () => {
       "BookSwap update",
       "There is an update on your account",
       "You are all caught up",
+      "Protected administration",
+      "Trust & safety",
+      "Admin-role access",
+      "Reason for the next administrator action",
+      "Immutable administrator action history",
+      "Recent listings",
+      "Reader accounts",
+      "Open reports",
+      "Privacy & rights requests",
+      "Automated moderation decisions",
+      "No administrator actions",
+      "Your listing was approved",
+      "Your listing was rejected",
     ]) {
       expect(sources).not.toContain(oldCopy);
     }
@@ -879,6 +947,10 @@ describe("marketplace input validation", () => {
       new URL("../components/admin-panel.tsx", import.meta.url),
       "utf8",
     );
+    const adminPage = readFileSync(
+      new URL("../app/admin/page.tsx", import.meta.url),
+      "utf8",
+    );
     const adminAuditMigration = readFileSync(
       new URL(
         "../supabase/migrations/20260714073000_add_transactional_admin_audit.sql",
@@ -936,6 +1008,9 @@ describe("marketplace input validation", () => {
     );
     expect(moderationRoute).toContain('.rpc("admin_moderate_listing"');
     expect(moderationRoute).toContain("sendOptionalNotificationEmail");
+    expect(moderationRoute).toContain('"listing.approved"');
+    expect(moderationRoute).toContain('"listing.rejected"');
+    expect(moderationRoute).toContain("AZ_COPY.notifications.listingApproved");
     expect(moderationRoute).not.toContain('.from("listings")');
     expect(adminBanRoute).toContain("admin_set_user_ban");
     expect(adminReportsRoute).toContain("admin_resolve_report");
@@ -944,7 +1019,13 @@ describe("marketplace input validation", () => {
     expect(adminDashboardRoute).toContain("listingsError");
     expect(adminDashboardRoute).toContain("auditError");
     expect(adminPanel).toContain("admin-action-reason");
-    expect(adminPanel).toContain("Immutable administrator action history");
+    expect(adminPanel).toContain("AZ_COPY.admin.historyTitle");
+    expect(adminPanel).toContain("parseAdminDashboardResponse");
+    expect(adminPanel).toContain("formatAzDateTime");
+    expect(adminPanel).not.toContain("new Intl.DateTimeFormat");
+    expect(adminPanel).not.toContain("body.error");
+    expect(adminPage).toContain("AZ_COPY.admin.metadataTitle");
+    expect(adminPage).toContain("index: false, follow: false");
     expect(adminAuditMigration).toContain(
       "create table public.admin_audit_log",
     );

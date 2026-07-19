@@ -494,6 +494,78 @@ export const AZ_COPY = {
     emptyBody:
       "Mesajlar, moderasiya qərarları və vacib hesab yenilikləri burada görünəcək.",
   },
+  admin: {
+    metadataTitle: "İdarəetmə paneli",
+    metadataDescription:
+      "BookSwap-da etibar, təhlükəsizlik və istifadəçi sorğularının qorunan idarəetmə paneli.",
+    authTitle: "İdarəetmə icazəsi tələb olunur.",
+    authBody:
+      "Bu qorunan səhifəni yalnız səlahiyyətli BookSwap idarəçiləri aça bilər.",
+    returnHome: "Ana səhifəyə qayıt",
+    loadFailed: "İdarəetmə məlumatlarını yükləmək mümkün olmadı.",
+    loading: "İdarəetmə məlumatları yüklənir",
+    eyebrow: "Qorunan idarəetmə",
+    title: "Etibar və təhlükəsizlik.",
+    intro:
+      "Elanlara, oxucu hesablarına, icma şikayətlərinə və hüquq sorğularına yalnız idarəçi rolu ilə baxış.",
+    listingsStat: "Elanlar",
+    readersStat: "Oxucular",
+    reportsStat: "Açıq şikayətlər",
+    moderationStat: "Moderasiya qərarları",
+    reasonLabel: "Növbəti idarəçi əməliyyatının səbəbi",
+    reasonPlaceholder: "Sübutu və qərarın əsasını qeyd et...",
+    reasonHelp:
+      "Elan, hesab, şikayət, məxfilik və etiraz qərarları üçün tələb olunur. Dəyişdirilməz tarixçədə saxlanılır.",
+    reasonTooShort: "Ən azı 10 simvoldan ibarət konkret səbəb yaz.",
+    actionFailed: "İdarəçi əməliyyatını tamamlamaq mümkün olmadı.",
+    actionRecording: "İdarəçi əməliyyatı qeydə alınır...",
+    actionRecorded: "İdarəçi əməliyyatı qeydə alındı.",
+    historyTitle: "Dəyişdirilməz idarəçi əməliyyatları tarixçəsi",
+    historyBody:
+      "Hər vəziyyət dəyişikliyi və onun səbəbi bir əməliyyatda saxlanılır. Tətbiq rolları bu qeydləri əlavə, dəyişdirə və ya silə bilməz.",
+    historyEmpty: "Hələ idarəçi əməliyyatı qeydə alınmayıb.",
+    actor: "İcra edən",
+    target: "Hədəf",
+    stateChange: "Vəziyyət dəyişikliyi",
+    accountActive: "Hesab aktivdir",
+    accountSuspended: "Hesab dayandırılıb",
+    resolvedAt: "Tamamlanma vaxtı",
+    notSet: "Təyin edilməyib",
+    recentListings: "Son elanlar",
+    listing: "Elan",
+    seller: "Satıcı",
+    status: "Vəziyyət",
+    location: "Məkan",
+    moderate: "Moderasiya",
+    approve: "Elanı təsdiqlə",
+    reject: "Elanı rədd et",
+    listingsEmpty: "Göstəriləcək elan yoxdur.",
+    readerAccounts: "Oxucu hesabları",
+    noLocation: "Məkan göstərilməyib",
+    ban: "Hesabı dayandır",
+    unban: "Hesabı aktivləşdir",
+    readersEmpty: "Göstəriləcək oxucu hesabı yoxdur.",
+    openReports: "Açıq şikayətlər",
+    reportListing: "Elan",
+    generalReport: "Ümumi şikayət",
+    resolve: "Həll et",
+    dismiss: "Əsassız say",
+    reportsEmpty: "Açıq şikayət yoxdur.",
+    privacyRequests: "Məxfilik və hüquq sorğuları",
+    user: "İstifadəçi",
+    reviewing: "Baxışdadır",
+    complete: "Tamamla",
+    privacyReject: "Rədd et",
+    privacyEmpty: "Açıq məxfilik sorğusu yoxdur.",
+    automatedModeration: "Avtomatlaşdırılmış moderasiya qərarları",
+    automatedModerationBody:
+      "Nəticələr və provayder diaqnostikası yoxlama üçün saxlanılır. Göndərilən mətn və şəkil ünvanları bu reyestrdə saxlanılmır.",
+    deletedAccount: "Silinmiş hesab",
+    moderationEmpty: "Hələ avtomatlaşdırılmış moderasiya qərarı yoxdur.",
+    securityNote:
+      "İdarəetmə endpoint-ləri qorunan məlumatı qaytarmazdan və ya dəyişməzdən əvvəl daxil olmuş istifadəçinin verilənlər bazasındakı rolunu yoxlayır.",
+    unknownValue: "Naməlum",
+  },
   privacyRequests: {
     authTitle: "Məxfilik sorğusu üçün daxil ol.",
     authBody:
@@ -599,6 +671,87 @@ const privacyRequestStatusLabels: Record<string, string> = {
   rejected: "Rədd edilib",
 };
 
+const adminAuditTargetLabels: Record<string, string> = {
+  user: "Oxucu hesabı",
+  listing: "Elan",
+  report: "Şikayət",
+  privacy_request: "Məxfilik sorğusu",
+  appeal: "Moderasiya etirazı",
+};
+
+const adminAuditActionLabels: Record<string, string> = {
+  "user.banned": "Hesab dayandırılıb",
+  "user.unbanned": "Hesab aktivləşdirilib",
+  "listing.approved": "Elan təsdiqlənib",
+  "listing.rejected": "Elan rədd edilib",
+  "report.resolved": "Şikayət həll edilib",
+  "report.dismissed": "Şikayət əsassız sayılıb",
+  "privacy_request.in_progress": "Məxfilik sorğusuna baxılır",
+  "privacy_request.completed": "Məxfilik sorğusu tamamlanıb",
+  "privacy_request.rejected": "Məxfilik sorğusu rədd edilib",
+  "appeal.in_progress": "Etiraza baxılır",
+  "appeal.completed": "Etiraz tamamlanıb",
+  "appeal.rejected": "Etiraz rədd edilib",
+};
+
+const adminWorkflowStatusLabels: Record<string, string> = {
+  open: "Açıqdır",
+  resolved: "Həll edilib",
+  dismissed: "Əsassız sayılıb",
+};
+
+const moderationOutcomeLabels: Record<string, string> = {
+  approved: "Təsdiqlənib",
+  rejected: "Rədd edilib",
+  unavailable: "Yoxlama əlçatan olmayıb",
+};
+
+const moderationSurfaceLabels: Record<string, string> = {
+  listing_create: "Yeni elan",
+  listing_update: "Elan yeniləməsi",
+  chat_message: "Söhbət mesajı",
+  moderation_api: "Moderasiya yoxlaması",
+};
+
+const moderationContentTypeLabels: Record<string, string> = {
+  text: "Mətn",
+  image: "Şəkil",
+};
+
+const moderationProviderLabels: Record<string, string> = {
+  local_rules: "Yerli qaydalar",
+  openai: "OpenAI Moderations",
+  none: "Provayder yoxdur",
+};
+
+const moderationReasonLabels: Record<string, string> = {
+  PROVIDER_NOT_CONFIGURED: "Moderasiya provayderi konfiqurasiya edilməyib",
+  LOCAL_MARKETPLACE_RULE: "BookSwap bazar qaydası ilə rədd edilib",
+  PROVIDER_APPROVED: "Provayder məzmunu təsdiqləyib",
+  PROVIDER_FLAGGED: "Provayder məzmunu işarələyib",
+  PROVIDER_RESPONSE_INVALID: "Provayder cavabı etibarsız olub",
+  PROVIDER_REQUEST_FAILED: "Provayder sorğusu uğursuz olub",
+  PROVIDER_RATE_LIMITED: "Provayder sorğu həddini tətbiq edib",
+  PROVIDER_UNREACHABLE: "Provayderlə əlaqə qurulmayıb",
+  PROVIDER_TIMED_OUT: "Provayder sorğusunun vaxtı bitib",
+};
+
+const moderationCategoryLabels: Record<string, string> = {
+  harassment: "Təqib",
+  "harassment/threatening": "Hədə-qorxu ilə təqib",
+  hate: "Nifrət məzmunu",
+  "hate/threatening": "Hədə-qorxu ilə nifrət məzmunu",
+  illicit: "Qanunsuz fəaliyyət",
+  "illicit/violent": "Zorakı qanunsuz fəaliyyət",
+  "self-harm": "Özünə zərər",
+  "self-harm/instructions": "Özünə zərər təlimatı",
+  "self-harm/intent": "Özünə zərər niyyəti",
+  sexual: "Seksual məzmun",
+  "sexual/minors": "Yetkinlik yaşına çatmayanlarla bağlı seksual məzmun",
+  violence: "Zorakılıq",
+  "violence/graphic": "Qrafik zorakılıq",
+};
+
 const apiErrorLabels: Record<string, string> = {
   AUTH_REQUIRED: "Davam etmək üçün daxil ol.",
   INVALID_SESSION: "Sessiyanın müddəti bitib. Yenidən daxil ol.",
@@ -626,6 +779,12 @@ const apiErrorLabels: Record<string, string> = {
     "Məzmun yoxlamasını qeyd etmək mümkün olmadı. Bir az sonra yenidən cəhd et.",
   CONTENT_REJECTED:
     "Elanın məzmunu BookSwap qaydalarına uyğun olmadığı üçün qəbul edilmədi.",
+  ADMIN_REQUIRED: "Bu əməliyyat üçün idarəçi icazəsi tələb olunur.",
+  SELF_BAN_FORBIDDEN: "Öz hesabını dayandıra bilməzsən.",
+  TARGET_NOT_FOUND: "Seçilmiş hədəf tapılmadı.",
+  ADMIN_ACTION_FORBIDDEN: "Bu idarəçi əməliyyatına icazə verilmir.",
+  ADMIN_ACTION_CONFLICT: "Hədəfi artıq bu vəziyyətə keçirmək mümkün deyil.",
+  INVALID_ADMIN_ACTION: "İdarəçi əməliyyatı etibarlı deyil.",
 };
 
 const authErrorLabels: Record<string, string> = {
@@ -677,7 +836,7 @@ const azMonthAbbreviations = [
   "dek",
 ] as const;
 
-function formatAzNumber(value: number) {
+export function formatAzNumber(value: number) {
   return numberFormatter
     .formatToParts(value)
     .map((part) => {
@@ -787,6 +946,74 @@ export function formatPrivacyRequestType(value: string) {
 
 export function formatPrivacyRequestStatus(value: string) {
   return privacyRequestStatusLabels[value] ?? value;
+}
+
+export function formatAdminAuditTarget(value: string) {
+  return adminAuditTargetLabels[value] ?? AZ_COPY.admin.unknownValue;
+}
+
+export function formatAdminAuditAction(value: string) {
+  return adminAuditActionLabels[value] ?? AZ_COPY.admin.unknownValue;
+}
+
+export function formatAdminAuditState(targetType: string, value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    return AZ_COPY.admin.unknownValue;
+  const state = value as Record<string, unknown>;
+  const parts: string[] = [];
+
+  if (typeof state.banned === "boolean")
+    parts.push(
+      state.banned
+        ? AZ_COPY.admin.accountSuspended
+        : AZ_COPY.admin.accountActive,
+    );
+
+  if (typeof state.status === "string") {
+    const status =
+      targetType === "listing"
+        ? formatListingStatus(state.status)
+        : targetType === "privacy_request" || targetType === "appeal"
+          ? formatPrivacyRequestStatus(state.status)
+          : (adminWorkflowStatusLabels[state.status] ??
+            AZ_COPY.admin.unknownValue);
+    parts.push(`${AZ_COPY.admin.status}: ${status}`);
+  }
+
+  if ("resolvedAt" in state)
+    parts.push(
+      `${AZ_COPY.admin.resolvedAt}: ${
+        typeof state.resolvedAt === "string"
+          ? formatAzDateTime(state.resolvedAt)
+          : AZ_COPY.admin.notSet
+      }`,
+    );
+
+  return parts.length ? parts.join(" · ") : AZ_COPY.admin.unknownValue;
+}
+
+export function formatModerationOutcome(value: string) {
+  return moderationOutcomeLabels[value] ?? AZ_COPY.admin.unknownValue;
+}
+
+export function formatModerationSurface(value: string) {
+  return moderationSurfaceLabels[value] ?? AZ_COPY.admin.unknownValue;
+}
+
+export function formatModerationContentType(value: string) {
+  return moderationContentTypeLabels[value] ?? AZ_COPY.admin.unknownValue;
+}
+
+export function formatModerationProvider(value: string) {
+  return moderationProviderLabels[value] ?? AZ_COPY.admin.unknownValue;
+}
+
+export function formatModerationReason(value: string) {
+  return moderationReasonLabels[value] ?? AZ_COPY.admin.unknownValue;
+}
+
+export function formatModerationCategory(value: string) {
+  return moderationCategoryLabels[value] ?? AZ_COPY.admin.unknownValue;
 }
 
 export function formatReviewSummary(rating: number, reviewCount: number) {

@@ -3,6 +3,7 @@ import { throwAdminActionError } from "@/lib/admin-actions";
 import { requireAdmin } from "@/lib/auth";
 import { sendOptionalNotificationEmail } from "@/lib/notify";
 import { requireSupabaseAdmin } from "@/lib/supabase";
+import { AZ_COPY } from "@/lib/i18n";
 
 export async function POST(request: Request) {
   try {
@@ -31,7 +32,11 @@ export async function POST(request: Request) {
       "SYSTEM",
       {
         listingId,
-        message: `Your listing was ${action === "approve" ? "approved" : "rejected"}.`,
+        event: action === "approve" ? "listing.approved" : "listing.rejected",
+        message:
+          action === "approve"
+            ? AZ_COPY.notifications.listingApproved
+            : AZ_COPY.notifications.listingRejected,
       },
     );
     return Response.json({
