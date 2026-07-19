@@ -70,29 +70,35 @@ export function Catalog({
 
   return (
     <div className="container-shell py-10 md:py-14">
-      <div className="flex flex-col justify-between gap-6 border-b-2 border-[#5b3c25] pb-7 md:flex-row md:items-end">
-        <div>
+      <div className="flex min-w-0 flex-col justify-between gap-6 border-b-2 border-[#5b3c25] pb-7 md:flex-row md:items-end">
+        <div className="min-w-0">
           <span className="bookmark-badge">{AZ_COPY.catalog.badge}</span>
-          <h1 className="display mt-5 text-5xl font-semibold md:text-7xl">
+          <h1 className="display mt-5 break-words text-5xl font-semibold md:text-7xl">
             {AZ_COPY.catalog.title}
           </h1>
         </div>
-        <p className="max-w-sm text-xs leading-7 text-gray-500">
+        <p className="max-w-sm text-xs leading-7 text-muted">
           {AZ_COPY.catalog.intro}
         </p>
       </div>
 
-      <section className="catalog-drawer mt-7 rounded-sm p-4 md:p-5">
-        <div className="mb-4 flex items-center justify-between border-b border-[#cfbea0] pb-3">
-          <span className="flex items-center gap-2 text-[9px] font-extrabold uppercase tracking-[.16em]">
+      <section
+        aria-labelledby="catalog-filter-heading"
+        className="catalog-drawer mt-7 rounded-sm p-4 md:p-5"
+      >
+        <div className="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-4 border-b border-[#95866f] pb-3">
+          <h2
+            id="catalog-filter-heading"
+            className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[.16em]"
+          >
             <BookOpen size={13} className="text-orange" />{" "}
             {AZ_COPY.catalog.searchCard}
-          </span>
-          <span className="text-[9px] text-gray-400">
+          </h2>
+          <span className="min-w-0 break-words text-xs text-muted">
             {AZ_COPY.catalog.availableCopies}
           </span>
         </div>
-        <div className="grid gap-4 md:grid-cols-[1.4fr_.7fr_.7fr_.6fr]">
+        <div className="grid min-w-0 gap-4 md:grid-cols-[1.4fr_.7fr_.7fr_.6fr]">
           <CatalogField label={AZ_COPY.catalog.titleAuthorIsbn}>
             <label className="relative block">
               <Search
@@ -100,7 +106,7 @@ export function Catalog({
                 size={14}
               />
               <input
-                className="input !min-h-[42px] !pl-9"
+                className="input !min-h-11 !pl-9 !pr-11"
                 placeholder={AZ_COPY.catalog.searchPlaceholder}
                 aria-label={AZ_COPY.catalog.searchLabel}
                 maxLength={200}
@@ -110,7 +116,7 @@ export function Catalog({
               {query && (
                 <button
                   onClick={() => setQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  className="absolute right-0 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-lg"
                   aria-label={AZ_COPY.catalog.clearSearch}
                 >
                   <X size={13} />
@@ -149,7 +155,7 @@ export function Catalog({
           <CatalogField label={AZ_COPY.catalog.maximumPrice}>
             <div className="pt-1">
               <input
-                className="w-full accent-orange"
+                className="h-11 w-full accent-orange"
                 type="range"
                 min="5"
                 max="200"
@@ -158,7 +164,7 @@ export function Catalog({
                 aria-label={AZ_COPY.catalog.maximumPriceLabel}
                 onChange={(event) => setMaxPrice(Number(event.target.value))}
               />
-              <span className="mt-1 block text-center text-[9px] font-bold">
+              <span className="mt-1 block text-center text-xs font-bold">
                 {formatAzn(maxPrice)}-dək
               </span>
             </div>
@@ -166,25 +172,28 @@ export function Catalog({
         </div>
       </section>
 
-      <div className="mt-9 grid gap-8 lg:grid-cols-[180px_1fr]">
-        <aside>
-          <p className="border-b-2 border-[#5b3c25] pb-3 text-[9px] font-extrabold uppercase tracking-[.16em]">
+      <div className="mt-9 grid min-w-0 gap-8 lg:grid-cols-[180px_minmax(0,1fr)]">
+        <aside className="min-w-0" aria-labelledby="catalog-category-heading">
+          <h2
+            id="catalog-category-heading"
+            className="border-b-2 border-[#5b3c25] pb-3 text-xs font-extrabold uppercase tracking-[.16em]"
+          >
             {AZ_COPY.catalog.subjectIndex}
-          </p>
-          <div className="mt-2 divide-y divide-[#d5c5a8] border-b border-[#d5c5a8]">
+          </h2>
+          <div className="mt-2 divide-y divide-[#95866f] border-b border-[#95866f]">
             {categories.map((item, index) => (
               <button
                 key={item}
                 onClick={() => setCategory(item)}
                 aria-pressed={category === item}
-                className={`flex w-full items-center justify-between py-3 text-left text-[10px] font-bold transition ${category === item ? "text-orange" : "text-gray-600 hover:pl-1 hover:text-ink"}`}
+                className={`flex min-h-11 w-full min-w-0 items-center justify-between gap-3 py-3 text-left text-xs font-bold transition ${category === item ? "text-orange" : "text-gray-600 hover:pl-1 hover:text-ink"}`}
               >
-                <span>
+                <span className="min-w-0 break-words">
                   {item === ALL_BOOKS_VALUE
                     ? AZ_COPY.catalog.allBooks
                     : formatCategory(item)}
                 </span>
-                <span className="display text-sm text-[#b8a482]">
+                <span className="display shrink-0 text-sm text-muted">
                   {String(index + 1).padStart(2, "0")}
                 </span>
               </button>
@@ -192,23 +201,31 @@ export function Catalog({
           </div>
           <div className="mt-7 border-l-2 border-orange pl-4">
             <b className="display text-xl">{AZ_COPY.catalog.readerListed}</b>
-            <p className="mt-2 text-[9px] leading-5 text-gray-500">
+            <p className="mt-2 text-xs leading-5 text-muted">
               {AZ_COPY.catalog.readerListedBody}
             </p>
           </div>
         </aside>
 
-        <section>
-          <div className="mb-6 flex items-center justify-between border-b border-[#cdbd9e] pb-3">
-            <p className="text-[9px] font-bold uppercase tracking-[.14em]">
+        <section
+          aria-labelledby="catalog-results-heading"
+          aria-busy={loading || loadingMore}
+          className="min-w-0"
+        >
+          <div className="mb-6 flex flex-col items-start justify-between gap-2 border-b border-[#95866f] pb-3 sm:flex-row sm:items-center">
+            <h2
+              id="catalog-results-heading"
+              aria-live="polite"
+              className="text-xs font-bold uppercase tracking-[.14em]"
+            >
               {data.length} kataloq nəticəsi yüklənib
-            </p>
-            <label className="relative">
+            </h2>
+            <label className="relative block w-full min-w-0 sm:w-auto">
               <span className="sr-only">{AZ_COPY.catalog.sortLabel}</span>
               <select
                 value={sort}
                 onChange={(event) => setSort(event.target.value)}
-                className="appearance-none bg-transparent pr-5 text-[9px] font-bold uppercase tracking-[.1em]"
+                className="min-h-11 w-full max-w-full appearance-none bg-transparent pr-6 text-xs font-bold uppercase tracking-[.1em]"
               >
                 <option value="newest">{AZ_COPY.catalog.newest}</option>
                 <option value="price-low">{AZ_COPY.catalog.lowestPrice}</option>
@@ -283,8 +300,8 @@ function CatalogField({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <span className="mb-2 block text-[8px] font-extrabold uppercase tracking-[.13em] text-gray-500">
+    <div className="min-w-0">
+      <span className="mb-2 block break-words text-xs font-extrabold uppercase tracking-[.13em] text-muted">
         {label}
       </span>
       {children}
@@ -306,13 +323,13 @@ function Select({
   icon: typeof MapPin;
 }) {
   return (
-    <label className="relative block">
+    <label className="relative block min-w-0">
       <Icon
         size={12}
         className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-orange"
       />
       <select
-        className="input !min-h-[42px] appearance-none !pl-8 !pr-8 text-[10px]"
+        className="input !min-h-11 min-w-0 appearance-none !pl-8 !pr-8 text-xs"
         value={value}
         aria-label={label}
         onChange={(event) => onChange(event.target.value)}

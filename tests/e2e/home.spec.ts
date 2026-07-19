@@ -1,4 +1,43 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function horizontalOverflow(page: Page) {
+  return page.locator("body *").evaluateAll((elements) =>
+    elements
+      .map((element) => {
+        const bounds = element.getBoundingClientRect();
+        return {
+          element: `${element.tagName.toLowerCase()}.${element.className}`,
+          left: Math.round(bounds.left),
+          right: Math.round(bounds.right),
+          width: Math.round(bounds.width),
+        };
+      })
+      .filter(
+        ({ left, right, width }) =>
+          width > 0 && (left < -1 || right > window.innerWidth + 1),
+      )
+      .slice(0, 20),
+  );
+}
+
+function relativeLuminance(hex: string) {
+  const channels = hex
+    .match(/[a-f\d]{2}/gi)!
+    .map((channel) => Number.parseInt(channel, 16) / 255)
+    .map((channel) =>
+      channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
+    );
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+
+function contrastRatio(foreground: string, background: string) {
+  const foregroundLuminance = relativeLuminance(foreground);
+  const backgroundLuminance = relativeLuminance(background);
+  return (
+    (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) /
+    (Math.min(foregroundLuminance, backgroundLuminance) + 0.05)
+  );
+}
 
 test("reader can browse from home to catalog", async ({ page }) => {
   await page.goto("/");
@@ -36,6 +75,101 @@ test("premium navigation remains usable on mobile", async ({ page }) => {
   await expect(
     page.getByRole("link", { name: "Kitab sat", exact: true }).last(),
   ).toBeVisible();
+});
+
+test("public shell provides a keyboard entry point and managed mobile menu", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  const skipLink = page.getByRole("link", { name: "Əsas məzmuna keç" });
+  await page.keyboard.press("Tab");
+  await expect(skipLink).toBeFocused();
+  await expect(skipLink).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("main#main-content")).toBeFocused();
+
+  const menuButton = page.getByRole("button", { name: "Menyu" });
+  const menuBounds = await menuButton.boundingBox();
+  expect(menuBounds?.width).toBeGreaterThanOrEqual(44);
+  expect(menuBounds?.height).toBeGreaterThanOrEqual(44);
+  await menuButton.focus();
+  await page.keyboard.press("Enter");
+  await expect(menuButton).toHaveAttribute("aria-expanded", "true");
+  const currentHomeLink = page
+    .getByRole("navigation", { name: "Menyu" })
+    .last()
+    .getByRole("link", { name: "Ana səhifə" });
+  await expect(currentHomeLink).toBeFocused();
+  await expect(currentHomeLink).toHaveAttribute("aria-current", "page");
+  await page.keyboard.press("Escape");
+  await expect(menuButton).toBeFocused();
+  await expect(menuButton).toHaveAttribute("aria-expanded", "false");
+});
+
+test("public catalog meets discovery target, contrast, and reflow contracts", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto("/listings");
+
+  await expect(page.locator("a button")).toHaveCount(0);
+  const controls = [
+    page.getByLabel("Ad, müəllif və ya ISBN ilə axtar"),
+    page.getByLabel("Məkana görə filtrlə"),
+    page.getByLabel("Vəziyyətə görə filtrlə"),
+    page.getByLabel("AZN ilə maksimum qiymət"),
+    page.getByLabel("Elanları sırala"),
+  ];
+  for (const control of controls) {
+    const bounds = await control.boundingBox();
+    expect(bounds?.height).toBeGreaterThanOrEqual(44);
+  }
+
+  await controls[0].fill("kitab");
+  const clearSearch = page.getByRole("button", {
+    name: "Kataloq axtarışını təmizlə",
+  });
+  const clearBounds = await clearSearch.boundingBox();
+  expect(clearBounds?.width).toBeGreaterThanOrEqual(44);
+  expect(clearBounds?.height).toBeGreaterThanOrEqual(44);
+
+  const colors = await page.evaluate(() => {
+    const styles = getComputedStyle(document.documentElement);
+    return {
+      orange: styles.getPropertyValue("--orange").trim(),
+      muted: styles.getPropertyValue("--muted").trim(),
+      line: styles.getPropertyValue("--line").trim(),
+      paper: styles.getPropertyValue("--paper").trim(),
+    };
+  });
+  expect(contrastRatio(colors.orange, colors.paper)).toBeGreaterThanOrEqual(
+    4.5,
+  );
+  expect(contrastRatio(colors.muted, "#e8decd")).toBeGreaterThanOrEqual(4.5);
+  expect(contrastRatio(colors.line, "#fffdf8")).toBeGreaterThanOrEqual(3);
+
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
+});
+
+test("public discovery honors reduced motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", {
+      name: /Növbəti kitabını tap.*Oxuduğuna ikinci həyat ver/i,
+    }),
+  ).toBeVisible();
+  const longAnimations = await page.evaluate(() =>
+    document
+      .getAnimations()
+      .map((animation) => animation.effect?.getComputedTiming().duration)
+      .filter((duration) => typeof duration === "number" && duration > 1),
+  );
+  expect(longAnimations).toHaveLength(0);
 });
 
 test("safety and user rights guidance is publicly reachable", async ({

@@ -13,29 +13,49 @@ export function SiteFooter() {
           >
             <BookOpen size={18} className="text-orange" /> BookSwap
           </Link>
-          <p className="mt-3 max-w-sm text-xs leading-6 text-gray-500">
+          <p className="mt-3 max-w-sm text-xs leading-6 text-muted">
             {AZ_COPY.footer.description}
           </p>
         </div>
         <nav
-          className="grid content-start gap-3 text-xs font-bold text-gray-600"
+          className="grid content-start text-xs font-bold text-gray-600"
           aria-label={AZ_COPY.footer.marketplace}
         >
           <span className="eyebrow">{AZ_COPY.footer.marketplace}</span>
-          <Link href="/listings">{AZ_COPY.footer.browse}</Link>
-          <Link href="/listings/new">{AZ_COPY.footer.sell}</Link>
-          <Link href="/safety">{AZ_COPY.footer.safety}</Link>
-          <Link href="/faq">{AZ_COPY.footer.faq}</Link>
+          <Link className="inline-flex min-h-11 items-center" href="/listings">
+            {AZ_COPY.footer.browse}
+          </Link>
+          <Link
+            className="inline-flex min-h-11 items-center"
+            href="/listings/new"
+          >
+            {AZ_COPY.footer.sell}
+          </Link>
+          <Link className="inline-flex min-h-11 items-center" href="/safety">
+            {AZ_COPY.footer.safety}
+          </Link>
+          <Link className="inline-flex min-h-11 items-center" href="/faq">
+            {AZ_COPY.footer.faq}
+          </Link>
         </nav>
         <nav
-          className="grid content-start gap-3 text-xs font-bold text-gray-600"
+          className="grid content-start text-xs font-bold text-gray-600"
           aria-label={AZ_COPY.footer.legal}
         >
           <span className="eyebrow">{AZ_COPY.footer.rights}</span>
-          <Link href="/privacy">{AZ_COPY.footer.privacy}</Link>
-          <Link href="/terms">{AZ_COPY.footer.terms}</Link>
-          <Link href="/user-rights">{AZ_COPY.footer.userRights}</Link>
-          <span className="pt-2 text-[9px] font-normal text-gray-500">
+          <Link className="inline-flex min-h-11 items-center" href="/privacy">
+            {AZ_COPY.footer.privacy}
+          </Link>
+          <Link className="inline-flex min-h-11 items-center" href="/terms">
+            {AZ_COPY.footer.terms}
+          </Link>
+          <Link
+            className="inline-flex min-h-11 items-center"
+            href="/user-rights"
+          >
+            {AZ_COPY.footer.userRights}
+          </Link>
+          <span className="pt-2 text-xs font-normal text-muted">
             {AZ_COPY.footer.copyright}
           </span>
         </nav>

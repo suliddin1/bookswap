@@ -111,7 +111,7 @@ export default function HomePage() {
         <div className="container-shell relative z-10 text-center">
           <MotionReveal>
             <span className="bookmark-badge">{AZ_COPY.home.badge}</span>
-            <h1 className="display mx-auto mt-7 max-w-5xl text-[56px] font-semibold leading-[.94] md:text-[92px]">
+            <h1 className="display mx-auto mt-7 max-w-5xl break-words text-[56px] font-semibold leading-[.94] [overflow-wrap:anywhere] md:text-[92px]">
               {AZ_COPY.home.heroLead}
               <br />
               <span className="text-orange">{AZ_COPY.home.heroAccent}</span>
@@ -147,7 +147,7 @@ export default function HomePage() {
                 <Link
                   key={category}
                   href={`/listings?category=${encodeURIComponent(category)}`}
-                  className="flex items-center gap-2 rounded-full border border-[#cdbd9e] bg-[#fffaf0]/65 px-4 py-2 text-[10px] font-bold transition hover:-translate-y-0.5 hover:border-orange"
+                  className="flex min-h-11 items-center gap-2 rounded-full border border-[#95866f] bg-[#fffaf0]/65 px-4 py-2 text-xs font-bold transition hover:-translate-y-0.5 hover:border-orange"
                 >
                   <Icon size={13} className="text-orange" />{" "}
                   {formatCategory(category)}
@@ -183,7 +183,7 @@ export default function HomePage() {
           {loading ? (
             <SkeletonShelf />
           ) : featured.length ? (
-            <div className="shelf-row mt-10 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4">
+            <div className="shelf-row mt-10 grid min-w-0 grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4">
               {featured.map((listing) => (
                 <BookCard key={listing.id} listing={listing} />
               ))}
@@ -207,32 +207,32 @@ export default function HomePage() {
 
       <section className="border-y border-[#cdbd9e] bg-[#ebe1d0] py-16">
         <div className="container-shell">
-          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
-            <div>
+          <div className="flex min-w-0 flex-col justify-between gap-5 md:flex-row md:items-end">
+            <div className="min-w-0">
               <span className="eyebrow">{AZ_COPY.home.browseLabel}</span>
-              <h2 className="display mt-3 text-4xl font-semibold md:text-5xl">
+              <h2 className="display mt-3 break-words text-4xl font-semibold [overflow-wrap:anywhere] md:text-5xl">
                 {AZ_COPY.home.browseTitle}
               </h2>
             </div>
-            <p className="max-w-sm text-[11px] leading-6 text-gray-500">
+            <p className="max-w-sm text-sm leading-6 text-muted">
               {AZ_COPY.home.browseBody}
             </p>
           </div>
-          <div className="mt-9 grid grid-cols-2 gap-3 md:grid-cols-5">
+          <div className="mt-9 grid min-w-0 grid-cols-2 gap-3 md:grid-cols-5">
             {quickCategories.map(([category, Icon], index) => (
               <Link
                 key={category}
                 href={`/listings?category=${encodeURIComponent(category)}`}
-                className="catalog-drawer group relative min-h-[150px] overflow-hidden rounded-sm p-5 transition hover:-translate-y-1"
+                className="catalog-drawer group relative min-h-[150px] min-w-0 overflow-hidden rounded-sm p-5 transition hover:-translate-y-1"
               >
                 <span className="display absolute right-3 top-3 text-4xl text-[#d8c6a5]">
                   0{index + 1}
                 </span>
                 <Icon size={19} className="text-orange" />
-                <h3 className="display mt-12 text-2xl font-semibold">
+                <h3 className="display mt-12 break-words text-2xl font-semibold [overflow-wrap:anywhere]">
                   {formatCategory(category)}
                 </h3>
-                <span className="mt-2 flex items-center gap-1 text-[9px] font-bold text-gray-500">
+                <span className="mt-2 flex min-h-6 items-center gap-1 text-xs font-bold text-muted">
                   {AZ_COPY.home.openShelf} <ArrowRight size={11} />
                 </span>
               </Link>
@@ -251,13 +251,13 @@ export default function HomePage() {
           {loading ? (
             <SkeletonShelf />
           ) : recent.length ? (
-            <div className="shelf-row mt-10 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4">
+            <div className="shelf-row mt-10 grid min-w-0 grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4">
               {recent.map((listing) => (
                 <BookCard key={listing.id} listing={listing} />
               ))}
             </div>
           ) : data.length ? (
-            <div className="shelf-row mt-10 grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4">
+            <div className="shelf-row mt-10 grid min-w-0 grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4">
               {featured.map((listing) => (
                 <BookCard key={listing.id} listing={listing} />
               ))}
@@ -288,7 +288,7 @@ export default function HomePage() {
           </div>
           <div className="relative max-w-xl">
             <span className="bookmark-badge">{AZ_COPY.home.sellerBadge}</span>
-            <h2 className="display mt-5 text-5xl font-semibold leading-none">
+            <h2 className="display mt-5 break-words text-5xl font-semibold leading-none [overflow-wrap:anywhere]">
               {AZ_COPY.home.sellerTitleLead}
               <br />
               {AZ_COPY.home.sellerTitleAccent}
@@ -316,16 +316,16 @@ function MarketplaceHeading({
   link: string;
 }) {
   return (
-    <div className="flex items-end justify-between gap-5 border-b border-[#cdbd9e] pb-5">
-      <div>
+    <div className="flex min-w-0 items-end justify-between gap-5 border-b border-[#cdbd9e] pb-5">
+      <div className="min-w-0">
         <span className="eyebrow">{label}</span>
-        <h2 className="display mt-3 text-4xl font-semibold md:text-5xl">
+        <h2 className="display mt-3 break-words text-4xl font-semibold [overflow-wrap:anywhere] md:text-5xl">
           {title}
         </h2>
       </div>
       <Link
         href={link}
-        className="hide-mobile flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.12em] text-orange"
+        className="hide-mobile flex min-h-11 items-center gap-2 text-xs font-bold uppercase tracking-[.12em] text-orange"
       >
         {AZ_COPY.home.viewAll} <ArrowRight size={13} />
       </Link>
@@ -335,7 +335,7 @@ function MarketplaceHeading({
 
 function SkeletonShelf() {
   return (
-    <div className="shelf-row mt-10 grid grid-cols-2 gap-5 md:grid-cols-4">
+    <div className="shelf-row mt-10 grid min-w-0 grid-cols-2 gap-5 md:grid-cols-4">
       {[0, 1, 2, 3].map((item) => (
         <BookSkeleton key={item} />
       ))}

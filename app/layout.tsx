@@ -52,8 +52,13 @@ export default function RootLayout({
   return (
     <html lang={DOCUMENT_LANGUAGE} dir="ltr" suppressHydrationWarning>
       <body className={`${manrope.variable} ${fraunces.variable}`}>
+        <a href="#main-content" className="skip-link">
+          {AZ_COPY.navigation.skipToContent}
+        </a>
         <SiteHeader />
-        <main>{children}</main>
+        <main id="main-content" tabIndex={-1}>
+          {children}
+        </main>
         <SiteFooter />
       </body>
     </html>

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 export function MotionReveal({
   children,
@@ -11,13 +11,19 @@ export function MotionReveal({
   className?: string;
   delay?: number;
 }) {
+  const reduceMotion = useReducedMotion();
+
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: 18 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={
+        reduceMotion
+          ? { duration: 0 }
+          : { duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }
+      }
     >
       {children}
     </motion.div>

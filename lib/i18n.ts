@@ -12,6 +12,7 @@ export const AZ_COPY = {
       "Oxucuları ikinci əl kitablar üçün birləşdirən kitab bazarı.",
   },
   navigation: {
+    skipToContent: "Əsas məzmuna keç",
     home: "Ana səhifə",
     browse: "Kitablar",
     sell: "Kitab sat",

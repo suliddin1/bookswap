@@ -7,7 +7,9 @@ const config: Config = {
       colors: {
         ink: "#17140F",
         paper: "#F4EFE5",
-        orange: "#B88928",
+        orange: "#8F6213",
+        muted: "#6B6254",
+        line: "#95866F",
         blue: "#493B28",
       },
       boxShadow: {
