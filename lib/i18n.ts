@@ -658,6 +658,9 @@ export const AZ_COPY = {
     readersStat: "Oxucular",
     reportsStat: "Açıq şikayətlər",
     moderationStat: "Moderasiya qərarları",
+    navigationLabel: "İdarəetmə bölmələri",
+    overviewTitle: "Panelin icmalı",
+    actionSectionTitle: "Qərarın əsaslandırılması",
     reasonLabel: "Növbəti idarəçi əməliyyatının səbəbi",
     reasonPlaceholder: "Sübutu və qərarın əsasını qeyd et...",
     reasonHelp:
@@ -666,6 +669,8 @@ export const AZ_COPY = {
     actionFailed: "İdarəçi əməliyyatını tamamlamaq mümkün olmadı.",
     actionRecording: "İdarəçi əməliyyatı qeydə alınır...",
     actionRecorded: "İdarəçi əməliyyatı qeydə alındı.",
+    actionRecordedRefreshFailed:
+      "Əməliyyat qeydə alındı, amma panel məlumatını yeniləmək mümkün olmadı.",
     historyTitle: "Dəyişdirilməz idarəçi əməliyyatları tarixçəsi",
     historyBody:
       "Hər vəziyyət dəyişikliyi və onun səbəbi bir əməliyyatda saxlanılır. Tətbiq rolları bu qeydləri əlavə, dəyişdirə və ya silə bilməz.",
@@ -683,27 +688,32 @@ export const AZ_COPY = {
     status: "Vəziyyət",
     location: "Məkan",
     moderate: "Moderasiya",
+    listingsTableLabel: "Son elanların moderasiya cədvəli",
     approve: "Elanı təsdiqlə",
     reject: "Elanı rədd et",
     listingsEmpty: "Göstəriləcək elan yoxdur.",
     readerAccounts: "Oxucu hesabları",
+    readerAccountsListLabel: "Oxucu hesabları siyahısı",
     noLocation: "Məkan göstərilməyib",
     ban: "Hesabı dayandır",
     unban: "Hesabı aktivləşdir",
     readersEmpty: "Göstəriləcək oxucu hesabı yoxdur.",
     openReports: "Açıq şikayətlər",
+    reportsListLabel: "Açıq şikayətlər siyahısı",
     reportListing: "Elan",
     generalReport: "Ümumi şikayət",
     resolve: "Həll et",
     dismiss: "Əsassız say",
     reportsEmpty: "Açıq şikayət yoxdur.",
     privacyRequests: "Məxfilik və hüquq sorğuları",
+    privacyRequestsListLabel: "Məxfilik və hüquq sorğuları siyahısı",
     user: "İstifadəçi",
     reviewing: "Baxışdadır",
     complete: "Tamamla",
     privacyReject: "Rədd et",
     privacyEmpty: "Açıq məxfilik sorğusu yoxdur.",
     automatedModeration: "Avtomatlaşdırılmış moderasiya qərarları",
+    moderationListLabel: "Avtomatlaşdırılmış moderasiya qərarları siyahısı",
     automatedModerationBody:
       "Nəticələr və provayder diaqnostikası yoxlama üçün saxlanılır. Göndərilən mətn və şəkil ünvanları bu reyestrdə saxlanılmır.",
     deletedAccount: "Silinmiş hesab",
@@ -1138,9 +1148,12 @@ export function formatAdminAuditState(targetType: string, value: unknown) {
   if ("resolvedAt" in state)
     parts.push(
       `${AZ_COPY.admin.resolvedAt}: ${
-        typeof state.resolvedAt === "string"
+        typeof state.resolvedAt === "string" &&
+        Number.isFinite(Date.parse(state.resolvedAt))
           ? formatAzDateTime(state.resolvedAt)
-          : AZ_COPY.admin.notSet
+          : state.resolvedAt === null
+            ? AZ_COPY.admin.notSet
+            : AZ_COPY.admin.unknownValue
       }`,
     );
 

@@ -116,6 +116,12 @@ describe("marketplace input validation", () => {
     expect(formatAdminAuditState("user", { banned: true })).toBe(
       AZ_COPY.admin.accountSuspended,
     );
+    expect(
+      formatAdminAuditState("report", {
+        status: "resolved",
+        resolvedAt: "not-a-timestamp",
+      }),
+    ).toContain(AZ_COPY.admin.unknownValue);
     expect(formatModerationOutcome("unavailable")).toContain("əlçatan");
     expect(formatModerationSurface("chat_message")).toBe("Söhbət mesajı");
     expect(formatModerationContentType("image")).toBe("Şəkil");
@@ -334,6 +340,24 @@ describe("marketplace input validation", () => {
     expect(() =>
       parseAdminDashboardResponse({
         data: { ...data, users: [{ id: "not-a-uuid" }] },
+      }),
+    ).toThrow();
+    expect(() =>
+      parseAdminDashboardResponse({
+        data: {
+          ...data,
+          users: [
+            {
+              id: "11111111-1111-4111-8111-111111111111",
+              name: "Sınaq idarəçisi",
+              email: "admin@example.invalid",
+              city: "Baku",
+              banned: false,
+              is_admin: true,
+              created_at: "not-a-timestamp",
+            },
+          ],
+        },
       }),
     ).toThrow();
     expect(() => parseAdminDashboardResponse({ data: [] })).toThrow();
@@ -584,7 +608,9 @@ describe("marketplace input validation", () => {
     expect(
       parseChatRoomSummaries([{ ...room, last_message_at: "not-a-date" }]),
     ).toBeNull();
-    expect(parseChatMessage({ ...message, created_at: "not-a-date" })).toBeNull();
+    expect(
+      parseChatMessage({ ...message, created_at: "not-a-date" }),
+    ).toBeNull();
     expect(
       parseChatRoomDetail({ ...room, messages: [{ text: "missing" }] }),
     ).toBeNull();

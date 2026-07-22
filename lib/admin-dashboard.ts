@@ -2,6 +2,12 @@ import { z } from "zod";
 import type { Listing } from "./types";
 
 const listingStatuses = ["draft", "active", "sold", "locked"] as const;
+const timestampSchema = z
+  .string()
+  .refine(
+    (value) => Number.isFinite(Date.parse(value)),
+    "Invalid administrator timestamp",
+  );
 
 const listingSchema = z.custom<Listing>(
   (value) => {
@@ -40,7 +46,7 @@ const userSchema = z
     city: z.string().nullable(),
     banned: z.boolean(),
     is_admin: z.boolean(),
-    created_at: z.string(),
+    created_at: timestampSchema,
   })
   .passthrough();
 
@@ -59,7 +65,7 @@ const privacyRequestSchema = z
     type: z.string(),
     details: z.string(),
     status: z.string(),
-    created_at: z.string(),
+    created_at: timestampSchema,
   })
   .passthrough();
 
@@ -73,7 +79,7 @@ const moderationDecisionSchema = z
     outcome: z.string(),
     reason_code: z.string(),
     categories: z.array(z.string()),
-    created_at: z.string(),
+    created_at: timestampSchema,
     actor: z.object({ id: z.string().uuid(), name: z.string() }).nullable(),
   })
   .passthrough();
@@ -89,7 +95,7 @@ const auditEntrySchema = z
     reason: z.string(),
     before_state: z.unknown(),
     after_state: z.unknown(),
-    created_at: z.string(),
+    created_at: timestampSchema,
   })
   .passthrough();
 

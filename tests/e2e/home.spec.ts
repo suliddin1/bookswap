@@ -242,6 +242,7 @@ test("public catalog meets discovery target, contrast, and reflow contracts", as
     page.getByLabel("Elanları sırala"),
   ];
   for (const control of controls) {
+    await expect(control).toBeVisible();
     const bounds = await control.boundingBox();
     expect(bounds?.height).toBeGreaterThanOrEqual(44);
   }
@@ -792,7 +793,10 @@ test("messaging and notification controls keep focus, context, and 200% reflow",
       roomId: string;
       text: string;
     };
-    expect(submitted).toEqual({ roomId, text: "Salam, kitabı görmək istərdim." });
+    expect(submitted).toEqual({
+      roomId,
+      text: "Salam, kitabı görmək istərdim.",
+    });
     await route.fulfill({
       contentType: "application/json",
       body: JSON.stringify({
@@ -829,14 +833,18 @@ test("messaging and notification controls keep focus, context, and 200% reflow",
   await expect(conversationList).toContainText("14 iyl 2026, 22:05");
   await expect.poll(() => roomListGets).toBe(1);
   expect(
-    await conversationList.locator("time").first().evaluate((element) =>
-      Number.parseFloat(getComputedStyle(element).fontSize),
-    ),
+    await conversationList
+      .locator("time")
+      .first()
+      .evaluate((element) =>
+        Number.parseFloat(getComputedStyle(element).fontSize),
+      ),
   ).toBeGreaterThanOrEqual(12);
   expect(
-    await conversationList.locator("b").first().evaluate((element) =>
-      getComputedStyle(element).textOverflow,
-    ),
+    await conversationList
+      .locator("b")
+      .first()
+      .evaluate((element) => getComputedStyle(element).textOverflow),
   ).not.toBe("ellipsis");
   expect(await horizontalOverflow(page)).toEqual([]);
   const messagesResizeStyle = await page.addStyleTag({
@@ -876,7 +884,9 @@ test("messaging and notification controls keep focus, context, and 200% reflow",
   );
 
   await page.goto(`/chat/${roomId}`);
-  await expect(page.getByRole("heading", { name: longSellerName })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: longSellerName }),
+  ).toBeVisible();
   const transcript = page.getByRole("log", { name: "BookSwap söhbəti" });
   await expect(transcript).toContainText(`${longSellerName}:`);
   await expect(transcript).toContainText("Siz:");
@@ -893,7 +903,9 @@ test("messaging and notification controls keep focus, context, and 200% reflow",
     ),
   ).toBe(true);
   await expect.poll(() => roomDetailGets).toBe(1);
-  const listingLink = page.getByRole("link", { name: longListingTitle }).first();
+  const listingLink = page
+    .getByRole("link", { name: longListingTitle })
+    .first();
   const listingLinkBounds = await listingLink.boundingBox();
   expect(listingLinkBounds?.height).toBeGreaterThanOrEqual(24);
 
@@ -919,6 +931,234 @@ test("messaging and notification controls keep focus, context, and 200% reflow",
   await chatResizeStyle.evaluate((element) =>
     element.parentNode?.removeChild(element),
   );
+});
+
+test("administrator dashboard keeps protected reads signed out", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const dashboardRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/api/admin/dashboard"))
+      dashboardRequests.push(request.url());
+  });
+
+  await page.goto("/admin");
+  await expect(page.locator("h1")).toHaveText(
+    "İdarəetmə icazəsi tələb olunur.",
+  );
+  await expect(page).toHaveTitle(/İdarəetmə paneli/i);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    /noindex/i,
+  );
+  expect(dashboardRequests).toHaveLength(0);
+});
+
+test("administrator actions keep context, focus, targets, and 200% reflow", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await installAuthenticatedUiFixture(page);
+
+  const adminId = "11111111-1111-4111-8111-111111111111";
+  const listingId = "22222222-2222-4222-8222-222222222222";
+  const sellerId = "33333333-3333-4333-8333-333333333333";
+  const reportId = "44444444-4444-4444-8444-444444444444";
+  const privacyRequestId = "55555555-5555-4555-8555-555555555555";
+  const moderationId = "66666666-6666-4666-8666-666666666666";
+  const auditId = "77777777-7777-4777-8777-777777777777";
+  const timestamp = "2026-07-14T18:05:00.000Z";
+  const longReaderName =
+    "NigarMəmmədovaÇoxUzunOxucuAdıSınağıSətirdənKənaraÇıxmamalıdır";
+  const longListingTitle =
+    "Azərbaycan ədəbiyyatından çox uzun kitab adı və xüsusi nəşr məlumatı";
+  const longReportReason =
+    "Elanın təsvirində fasiləsizuzunməlumatparçasıfasiləsizuzunməlumatparçası var";
+  const listing = {
+    id: listingId,
+    title: longListingTitle,
+    author: "Əbdürrəhim bəy Haqverdiyev",
+    description: "Yaxşı saxlanmış fiziki kitab nüsxəsi.",
+    price: 17.5,
+    category: "Fiction",
+    condition: "Very good",
+    city: "Baku",
+    status: "draft",
+    seller: { id: sellerId, name: longReaderName },
+    images: [],
+  };
+  const user = {
+    id: sellerId,
+    name: longReaderName,
+    email: "very-long-administrator-reader-address@example.invalid",
+    city: "Baku",
+    banned: false,
+    is_admin: false,
+    created_at: timestamp,
+  };
+  const report = {
+    id: reportId,
+    listing_id: listingId,
+    reason: longReportReason,
+  };
+  const dashboard = {
+    listings: [listing],
+    users: [
+      {
+        ...user,
+        id: adminId,
+        name: "Sınaq idarəçisi",
+        email: "admin@example.invalid",
+        is_admin: true,
+      },
+      user,
+    ],
+    reports: [report],
+    privacyRequests: [
+      {
+        id: privacyRequestId,
+        user_id: sellerId,
+        type: "access",
+        details:
+          "Məlumatların ixracı üçün uzunməzmunuzunməzmunuzunməzmunu yoxlanmalıdır.",
+        status: "open",
+        created_at: timestamp,
+      },
+    ],
+    moderationDecisions: [
+      {
+        id: moderationId,
+        surface: "listing_create",
+        target_id: listingId,
+        content_type: "text",
+        provider: "local_rules",
+        outcome: "approved",
+        reason_code: "LOCAL_RULES_CLEAR",
+        categories: [],
+        created_at: timestamp,
+        actor: { id: adminId, name: "Sınaq idarəçisi" },
+      },
+    ],
+    auditLog: [
+      {
+        id: auditId,
+        actor_id: adminId,
+        actor_name: "Sınaq idarəçisi",
+        target_type: "report",
+        target_id: reportId,
+        action: "report.resolved",
+        reason:
+          "Sübutlara əsaslanan uzun idarəçi qərarı fasiləsizuzunsəbəbparçası ilə saxlanılıb.",
+        before_state: { status: "open", resolvedAt: null },
+        after_state: { status: "resolved", resolvedAt: timestamp },
+        created_at: timestamp,
+      },
+    ],
+  };
+
+  let dashboardGets = 0;
+  let reportPatches = 0;
+  let actionPayload: unknown;
+  await page.route("**/api/admin/dashboard", async (route) => {
+    dashboardGets += 1;
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ data: dashboard }),
+    });
+  });
+  await page.route("**/api/admin/reports", async (route) => {
+    reportPatches += 1;
+    actionPayload = route.request().postDataJSON();
+    dashboard.reports = [];
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ data: { id: reportId, status: "resolved" } }),
+    });
+  });
+
+  await page.goto("/admin");
+  await expect(
+    page.getByRole("heading", { name: "Etibar və təhlükəsizlik." }),
+  ).toBeVisible();
+  await expect.poll(() => dashboardGets).toBe(1);
+  await expect(page.locator("main")).toHaveCount(1);
+  await expect(
+    page.getByRole("navigation", { name: "İdarəetmə bölmələri" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", {
+      name: "Son elanların moderasiya cədvəli",
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("list", { name: "Oxucu hesabları siyahısı" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("list", { name: "Açıq şikayətlər siyahısı" }),
+  ).toContainText(longReportReason);
+
+  const reason = page.getByLabel("Növbəti idarəçi əməliyyatının səbəbi");
+  const resolveReport = page.getByRole("button", {
+    name: `Həll et: ${longReportReason}`,
+  });
+  const resolveBounds = await resolveReport.boundingBox();
+  expect(resolveBounds?.height).toBeGreaterThanOrEqual(44);
+  await resolveReport.click();
+  await expect(reason).toBeFocused();
+  await expect(reason).toHaveAttribute("aria-invalid", "true");
+  await expect(reason).toHaveAttribute(
+    "aria-describedby",
+    "admin-action-reason-help admin-action-feedback",
+  );
+  await expect(page.locator("#admin-action-feedback[role='alert']")).toHaveText(
+    "Ən azı 10 simvoldan ibarət konkret səbəb yaz.",
+  );
+
+  const actionReason = "Şikayət sübutlarla yoxlanıldı və həll edildi.";
+  await reason.fill(actionReason);
+  await resolveReport.click();
+  await expect.poll(() => reportPatches).toBe(1);
+  expect(actionPayload).toEqual({
+    reportId,
+    status: "resolved",
+    reason: actionReason,
+  });
+  await expect.poll(() => dashboardGets).toBe(2);
+  await expect(page.getByText("Açıq şikayət yoxdur.")).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({
+      hasText: "İdarəçi əməliyyatı qeydə alındı.",
+    }),
+  ).toBeFocused();
+
+  const moderationLink = page
+    .getByRole("navigation", { name: "İdarəetmə bölmələri" })
+    .getByRole("link", { name: "Avtomatlaşdırılmış moderasiya qərarları" });
+  await moderationLink.click();
+  const moderationHeading = page.getByRole("heading", {
+    name: "Avtomatlaşdırılmış moderasiya qərarları",
+  });
+  await expect(moderationHeading).toBeFocused();
+  expect(
+    await moderationHeading.evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).outlineWidth),
+    ),
+  ).toBeGreaterThanOrEqual(3);
+
+  const pageWidth = async () =>
+    page.evaluate(() => ({
+      client: document.documentElement.clientWidth,
+      scroll: document.documentElement.scrollWidth,
+    }));
+  expect(await pageWidth()).toEqual({ client: 320, scroll: 320 });
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await pageWidth()).toEqual({ client: 320, scroll: 320 });
+  await expect(
+    page
+      .getByRole("list", { name: "Oxucu hesabları siyahısı" })
+      .getByText(longReaderName, { exact: true }),
+  ).toBeVisible();
 });
 
 test("favorites exposes a localized private sign-in state", async ({
