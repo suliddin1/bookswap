@@ -32,13 +32,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+function isTimestamp(value: unknown): value is string {
+  return typeof value === "string" && Number.isFinite(Date.parse(value));
+}
+
 function isReaderSummary(value: unknown): value is ReaderSummary {
   return (
     isRecord(value) &&
     typeof value.id === "string" &&
     typeof value.name === "string" &&
     (value.city === undefined || typeof value.city === "string") &&
-    (value.created_at === undefined || typeof value.created_at === "string")
+    (value.created_at === undefined || isTimestamp(value.created_at))
   );
 }
 
@@ -72,7 +76,7 @@ export function parseChatMessage(value: unknown): ChatMessage | null {
     typeof value.id !== "string" ||
     typeof value.sender_id !== "string" ||
     typeof value.text !== "string" ||
-    typeof value.created_at !== "string"
+    !isTimestamp(value.created_at)
   )
     return null;
   return {
@@ -93,7 +97,7 @@ function parseChatRoomSummary(value: unknown): ChatRoomSummary | null {
     !isListing(value.listing) ||
     typeof value.unreadCount !== "number" ||
     !Number.isFinite(value.unreadCount) ||
-    typeof value.last_message_at !== "string"
+    !isTimestamp(value.last_message_at)
   )
     return null;
   return {

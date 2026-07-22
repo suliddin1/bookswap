@@ -4,24 +4,33 @@ import { useEffect, useRef, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export function useNotifications(userId?: string) {
-  const [unreadIds, setUnreadIds] = useState<string[]>([]);
+  const [ownedUnreadIds, setOwnedUnreadIds] = useState<{
+    ownerId: string;
+    ids: string[];
+  } | null>(null);
+  const unreadIds =
+    ownedUnreadIds && ownedUnreadIds.ownerId === userId
+      ? ownedUnreadIds.ids
+      : [];
   const latestEvents = useRef(new Map<string, boolean>());
 
   useEffect(() => {
     const supabase = getSupabaseClient();
     latestEvents.current = new Map();
-    setUnreadIds([]);
+    setOwnedUnreadIds(null);
     if (!supabase || !userId) return;
     let active = true;
 
     const apply = (item: { id: string; read: boolean; user_id: string }) => {
       if (!active || item.user_id !== userId) return;
       latestEvents.current.set(item.id, !item.read);
-      setUnreadIds((current) => {
-        const next = new Set(current);
+      setOwnedUnreadIds((current) => {
+        const next = new Set(
+          current?.ownerId === userId ? current.ids : [],
+        );
         if (item.read) next.delete(item.id);
         else next.add(item.id);
-        return Array.from(next);
+        return { ownerId: userId, ids: Array.from(next) };
       });
     };
 
@@ -42,7 +51,7 @@ export function useNotifications(userId?: string) {
         if (unread) next.add(id);
         else next.delete(id);
       }
-      setUnreadIds(Array.from(next));
+      setOwnedUnreadIds({ ownerId: userId, ids: Array.from(next) });
     };
 
     const channel = supabase

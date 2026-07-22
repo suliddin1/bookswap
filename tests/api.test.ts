@@ -582,6 +582,10 @@ describe("marketplace input validation", () => {
     expect(parseChatMessage(message)).toEqual(message);
     expect(parseChatRoomSummaries([{ ...room, unreadCount: "2" }])).toBeNull();
     expect(
+      parseChatRoomSummaries([{ ...room, last_message_at: "not-a-date" }]),
+    ).toBeNull();
+    expect(parseChatMessage({ ...message, created_at: "not-a-date" })).toBeNull();
+    expect(
       parseChatRoomDetail({ ...room, messages: [{ text: "missing" }] }),
     ).toBeNull();
   });

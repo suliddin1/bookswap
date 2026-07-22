@@ -2,7 +2,7 @@
 
 import { Bell, CheckCheck } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { useAuth } from "@/hooks/use-auth";
 import { authFetch } from "@/lib/client-api";
@@ -28,13 +28,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+function isTimestamp(value: unknown): value is string {
+  return typeof value === "string" && Number.isFinite(Date.parse(value));
+}
+
 function isNotificationItem(value: unknown): value is NotificationItem {
   return (
     isRecord(value) &&
     typeof value.id === "string" &&
     (value.type === "MESSAGE" || value.type === "SYSTEM") &&
     typeof value.read === "boolean" &&
-    typeof value.created_at === "string"
+    isTimestamp(value.created_at)
   );
 }
 
@@ -67,65 +71,123 @@ function notificationHref(item: NotificationItem) {
 
 export function NotificationsPage() {
   const { user, loading: authLoading } = useAuth();
-  const [items, setItems] = useState<NotificationItem[] | null>(null);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [actionError, setActionError] = useState("");
-  const [notice, setNotice] = useState("");
-  const [marking, setMarking] = useState(false);
+  const userId = user?.id;
+  const [notificationData, setNotificationData] = useState<{
+    ownerId: string;
+    items: NotificationItem[];
+  } | null>(null);
+  const items =
+    notificationData && notificationData.ownerId === userId
+      ? notificationData.items
+      : null;
+  const [loadFailedForUserId, setLoadFailedForUserId] = useState<
+    string | null
+  >(null);
+  const loadFailed = Boolean(
+    userId && loadFailedForUserId === userId,
+  );
+  const [feedback, setFeedback] = useState<{
+    ownerId: string;
+    message: string;
+    isError: boolean;
+  } | null>(null);
+  const visibleFeedback = feedback?.ownerId === userId ? feedback : null;
+  const [markingForUserId, setMarkingForUserId] = useState<string | null>(
+    null,
+  );
+  const marking = Boolean(userId && markingForUserId === userId);
+  const feedbackRef = useRef<HTMLParagraphElement>(null);
+  const loadErrorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
-      setItems(null);
-      setLoadFailed(false);
+    if (!userId) {
+      setNotificationData(null);
+      setLoadFailedForUserId(null);
+      setFeedback(null);
+      setMarkingForUserId(null);
       return;
     }
 
     const controller = new AbortController();
-    setLoadFailed(false);
+    let active = true;
+    setNotificationData(null);
+    setLoadFailedForUserId(null);
+    setFeedback(null);
     authFetch("/api/notifications", { signal: controller.signal })
       .then(async (response) => {
         const body: unknown = await response.json();
         if (!response.ok || !isRecord(body)) throw new Error();
         const parsed = parseNotifications(body.data);
         if (!parsed) throw new Error();
-        setItems(parsed);
+        if (active) setNotificationData({ ownerId: userId, items: parsed });
       })
       .catch((reason: unknown) => {
-        if (!(reason instanceof DOMException && reason.name === "AbortError"))
-          setLoadFailed(true);
+        if (
+          active &&
+          !(reason instanceof DOMException && reason.name === "AbortError")
+        )
+          setLoadFailedForUserId(userId);
       });
-    return () => controller.abort();
-  }, [authLoading, user]);
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [authLoading, userId]);
+
+  useEffect(() => {
+    if (visibleFeedback && !marking)
+      window.requestAnimationFrame(() => feedbackRef.current?.focus());
+  }, [marking, visibleFeedback]);
+
+  useEffect(() => {
+    if (loadFailed) loadErrorRef.current?.focus();
+  }, [loadFailed]);
 
   async function markAllRead() {
-    if (marking) return;
-    setMarking(true);
-    setActionError("");
-    setNotice("");
+    if (!userId || marking) return;
+    const requestUserId = userId;
+    setMarkingForUserId(requestUserId);
+    setFeedback(null);
     try {
       const response = await authFetch("/api/notifications", {
         method: "PATCH",
       });
       const body: unknown = await response.json();
       if (!response.ok) {
-        setActionError(
-          localizeApiError(
+        setFeedback({
+          ownerId: requestUserId,
+          message: localizeApiError(
             responseCode(body),
             AZ_COPY.notifications.markFailed,
           ),
-        );
+          isError: true,
+        });
         return;
       }
-      setItems(
-        (current) =>
-          current?.map((item) => ({ ...item, read: true })) ?? current,
+      setNotificationData((current) =>
+        current?.ownerId === requestUserId
+          ? {
+              ...current,
+              items: current.items.map((item) => ({ ...item, read: true })),
+            }
+          : current,
       );
-      setNotice(AZ_COPY.notifications.markedAllRead);
+      setFeedback({
+        ownerId: requestUserId,
+        message: AZ_COPY.notifications.markedAllRead,
+        isError: false,
+      });
     } catch {
-      setActionError(AZ_COPY.notifications.markFailed);
+      setFeedback({
+        ownerId: requestUserId,
+        message: AZ_COPY.notifications.markFailed,
+        isError: true,
+      });
     } finally {
-      setMarking(false);
+      setMarkingForUserId((current) =>
+        current === requestUserId ? null : current,
+      );
     }
   }
 
@@ -144,7 +206,12 @@ export function NotificationsPage() {
 
   if (loadFailed)
     return (
-      <div className="container-shell py-16">
+      <div
+        ref={loadErrorRef}
+        className="container-shell py-16"
+        role="alert"
+        tabIndex={-1}
+      >
         <EmptyState
           title={AZ_COPY.notifications.unavailableTitle}
           body={AZ_COPY.notifications.unavailableBody}
@@ -171,7 +238,7 @@ export function NotificationsPage() {
       <div className="flex flex-col items-start gap-5 border-b-2 border-[#5b3c25] pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <span className="bookmark-badge">{AZ_COPY.notifications.badge}</span>
-          <h1 className="display mt-4 text-5xl font-semibold">
+          <h1 className="display mt-4 break-words text-4xl font-semibold [overflow-wrap:anywhere] sm:text-5xl">
             {AZ_COPY.notifications.title}
           </h1>
         </div>
@@ -182,6 +249,7 @@ export function NotificationsPage() {
             className="btn-secondary min-h-11"
             disabled={marking}
             aria-busy={marking}
+            aria-controls="notifications-list"
           >
             <CheckCheck aria-hidden="true" size={15} />
             {marking
@@ -191,19 +259,24 @@ export function NotificationsPage() {
         )}
       </div>
 
-      {actionError && (
-        <p role="alert" className="mt-4 text-xs text-red-700">
-          {actionError}
-        </p>
-      )}
-      {notice && (
-        <p role="status" className="mt-4 text-xs font-bold text-green-800">
-          {notice}
+      {visibleFeedback && (
+        <p
+          ref={feedbackRef}
+          role={visibleFeedback.isError ? "alert" : "status"}
+          aria-atomic="true"
+          tabIndex={-1}
+          className={`mt-4 text-xs focus:outline focus:outline-[3px] focus:outline-offset-[3px] focus:outline-[#8f6213] ${visibleFeedback.isError ? "text-red-700" : "font-bold text-green-800"}`}
+        >
+          {visibleFeedback.message}
         </p>
       )}
 
       {items.length ? (
-        <ul className="card mt-8 divide-y divide-[#e8dfcf] overflow-hidden">
+        <ul
+          id="notifications-list"
+          aria-label={AZ_COPY.notifications.listLabel}
+          className="card mt-8 min-w-0 divide-y divide-[#d8cbb5]"
+        >
           {items.map((item) => {
             const presentation = formatNotificationPresentation(
               item.type,
@@ -211,7 +284,7 @@ export function NotificationsPage() {
             );
             const content = (
               <article
-                className={`flex gap-4 p-5 ${item.read ? "opacity-75" : "bg-[#fffaf0]"}`}
+                className={`flex min-w-0 gap-4 rounded-xl p-5 max-[430px]:p-4 ${item.read ? "bg-[#f8f3e9]" : "bg-[#fffaf0]"}`}
               >
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#eee3c8] text-orange">
                   <Bell aria-hidden="true" size={16} />
@@ -220,7 +293,7 @@ export function NotificationsPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     <b className="text-sm">{presentation.title}</b>
                     {!item.read && (
-                      <span className="rounded-full bg-orange px-2 py-1 text-[10px] font-bold text-white">
+                      <span className="rounded-full bg-orange px-2 py-1 text-xs font-bold text-white">
                         {AZ_COPY.notifications.unread}
                       </span>
                     )}
@@ -230,7 +303,7 @@ export function NotificationsPage() {
                   </p>
                   <time
                     dateTime={item.created_at}
-                    className="mt-2 block text-[10px] text-gray-500"
+                    className="mt-2 block text-xs text-[#6b6254]"
                   >
                     {formatAzDateTime(item.created_at)}
                   </time>

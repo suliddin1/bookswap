@@ -684,6 +684,243 @@ test("messages, chat, and notifications keep protected reads signed out", async 
   expect(protectedRequests).toHaveLength(0);
 });
 
+test("messaging and notification controls keep focus, context, and 200% reflow", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await installAuthenticatedUiFixture(page);
+
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const roomId = "22222222-2222-4222-8222-222222222222";
+  const sellerId = "33333333-3333-4333-8333-333333333333";
+  const listingId = "44444444-4444-4444-8444-444444444444";
+  const timestamp = "2026-07-14T18:05:00.000Z";
+  const longSellerName =
+    "Nigar MəmmədovaÇoxUzunOxucuAdıSınağıSətirdənKənaraÇıxmamalıdır";
+  const longListingTitle =
+    "Azərbaycan ədəbiyyatından çox uzun kitab adı və xüsusi nəşr məlumatı";
+  const seller = {
+    id: sellerId,
+    name: longSellerName,
+    city: "Baku",
+    created_at: timestamp,
+  };
+  const buyer = {
+    id: userId,
+    name: "Sınaq oxucusu",
+    city: "Ganja",
+    created_at: timestamp,
+  };
+  const listing = {
+    id: listingId,
+    title: longListingTitle,
+    author: "Əbdürrəhim bəy Haqverdiyev",
+    description: "Yaxşı saxlanmış fiziki kitab nüsxəsi.",
+    price: 17.5,
+    category: "Fiction",
+    condition: "Very good",
+    city: "Baku",
+    status: "active",
+    seller,
+    images: [],
+  };
+  const room = {
+    id: roomId,
+    currentUserId: userId,
+    buyer,
+    seller,
+    listing,
+    unreadCount: 2,
+    last_message_at: timestamp,
+  };
+  const messages = Array.from({ length: 18 }, (_, index) => ({
+    id: `message-${index}`,
+    sender_id: index % 2 ? userId : sellerId,
+    text:
+      index === 0
+        ? "Kitab hələ satışdadır və vəziyyəti elandakı təsvirə uyğundur."
+        : `Söhbət mesajı ${index + 1}`,
+    created_at: timestamp,
+  }));
+  const notifications = [
+    {
+      id: "55555555-5555-4555-8555-555555555555",
+      type: "MESSAGE",
+      payload: { roomId, preview: "Kitab hələ satışdadır." },
+      read: false,
+      created_at: timestamp,
+    },
+    {
+      id: "66666666-6666-4666-8666-666666666666",
+      type: "SYSTEM",
+      payload: { listingId, event: "listing.approved" },
+      read: true,
+      created_at: timestamp,
+    },
+  ];
+
+  let roomListGets = 0;
+  let roomDetailGets = 0;
+  let notificationGets = 0;
+  let notificationPatches = 0;
+  let messagePosts = 0;
+
+  await page.route("**/api/chat/rooms", async (route) => {
+    roomListGets += 1;
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ data: [room] }),
+    });
+  });
+  await page.route(`**/api/chat/rooms/${roomId}`, async (route) => {
+    if (route.request().method() === "PATCH") {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ data: { roomId } }),
+      });
+      return;
+    }
+    roomDetailGets += 1;
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ data: { ...room, messages } }),
+    });
+  });
+  await page.route("**/api/chat/message", async (route) => {
+    messagePosts += 1;
+    const submitted = route.request().postDataJSON() as {
+      roomId: string;
+      text: string;
+    };
+    expect(submitted).toEqual({ roomId, text: "Salam, kitabı görmək istərdim." });
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: {
+          id: "77777777-7777-4777-8777-777777777777",
+          sender_id: userId,
+          text: submitted.text,
+          created_at: timestamp,
+        },
+      }),
+    });
+  });
+  await page.route("**/api/notifications", async (route) => {
+    if (route.request().method() === "PATCH") {
+      notificationPatches += 1;
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ data: { updated: 1 } }),
+      });
+      return;
+    }
+    notificationGets += 1;
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ data: notifications }),
+    });
+  });
+
+  await page.goto("/messages");
+  await expect(page.getByRole("heading", { name: "Mesajlar." })).toBeVisible();
+  const conversationList = page.getByRole("list", { name: "Söhbətlər" });
+  await expect(conversationList).toContainText(longSellerName);
+  await expect(conversationList).toContainText(longListingTitle);
+  await expect(conversationList).toContainText("14 iyl 2026, 22:05");
+  await expect.poll(() => roomListGets).toBe(1);
+  expect(
+    await conversationList.locator("time").first().evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).fontSize),
+    ),
+  ).toBeGreaterThanOrEqual(12);
+  expect(
+    await conversationList.locator("b").first().evaluate((element) =>
+      getComputedStyle(element).textOverflow,
+    ),
+  ).not.toBe("ellipsis");
+  expect(await horizontalOverflow(page)).toEqual([]);
+  const messagesResizeStyle = await page.addStyleTag({
+    content: "html { font-size: 200% !important; }",
+  });
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await messagesResizeStyle.evaluate((element) =>
+    element.parentNode?.removeChild(element),
+  );
+
+  await page.goto("/notifications");
+  await expect(
+    page.getByRole("heading", { name: "Bildirişlər." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("list", { name: "Bildirişlər siyahısı" }),
+  ).toContainText("14 iyl 2026, 22:05");
+  await expect.poll(() => notificationGets).toBe(1);
+  const markAll = page.getByRole("button", { name: "Hamısını oxunmuş et" });
+  const markAllBounds = await markAll.boundingBox();
+  expect(markAllBounds?.height).toBeGreaterThanOrEqual(44);
+  await markAll.click();
+  await expect.poll(() => notificationPatches).toBe(1);
+  const markedStatus = page.getByText(
+    "Bütün bildirişlər oxunmuş kimi qeyd edildi.",
+    { exact: true },
+  );
+  await expect(markedStatus).toBeFocused();
+  await expect(page.getByText("Oxunmayıb", { exact: true })).toHaveCount(0);
+  expect(await horizontalOverflow(page)).toEqual([]);
+  const notificationsResizeStyle = await page.addStyleTag({
+    content: "html { font-size: 200% !important; }",
+  });
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await notificationsResizeStyle.evaluate((element) =>
+    element.parentNode?.removeChild(element),
+  );
+
+  await page.goto(`/chat/${roomId}`);
+  await expect(page.getByRole("heading", { name: longSellerName })).toBeVisible();
+  const transcript = page.getByRole("log", { name: "BookSwap söhbəti" });
+  await expect(transcript).toContainText(`${longSellerName}:`);
+  await expect(transcript).toContainText("Siz:");
+  await transcript.focus();
+  await expect(transcript).toBeFocused();
+  expect(
+    await transcript.evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).outlineWidth),
+    ),
+  ).toBeGreaterThanOrEqual(3);
+  expect(
+    await transcript.evaluate(
+      (element) => element.scrollHeight > element.clientHeight,
+    ),
+  ).toBe(true);
+  await expect.poll(() => roomDetailGets).toBe(1);
+  const listingLink = page.getByRole("link", { name: longListingTitle }).first();
+  const listingLinkBounds = await listingLink.boundingBox();
+  expect(listingLinkBounds?.height).toBeGreaterThanOrEqual(24);
+
+  const composer = page.getByLabel("Mesaj", { exact: true });
+  await composer.fill("Birinci sətir");
+  await composer.press("Shift+Enter");
+  await expect(composer).toHaveValue("Birinci sətir\n");
+  expect(messagePosts).toBe(0);
+  await composer.fill("Salam, kitabı görmək istərdim.");
+  const sendButton = page.getByRole("button", { name: "Mesaj göndər" });
+  const sendBounds = await sendButton.boundingBox();
+  expect(sendBounds?.height).toBeGreaterThanOrEqual(44);
+  await composer.press("Enter");
+  await expect.poll(() => messagePosts).toBe(1);
+  await expect(composer).toHaveValue("");
+  await expect(composer).toBeFocused();
+  await expect(transcript).toContainText("Salam, kitabı görmək istərdim.");
+  expect(await horizontalOverflow(page)).toEqual([]);
+  const chatResizeStyle = await page.addStyleTag({
+    content: "html { font-size: 200% !important; }",
+  });
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await chatResizeStyle.evaluate((element) =>
+    element.parentNode?.removeChild(element),
+  );
+});
+
 test("favorites exposes a localized private sign-in state", async ({
   page,
 }) => {

@@ -11,20 +11,31 @@ type ChatReadState = {
 };
 
 export function useChatUnread(userId?: string) {
-  const [states, setStates] = useState<Record<string, ChatReadState>>({});
+  const [ownedStates, setOwnedStates] = useState<{
+    ownerId: string;
+    states: Record<string, ChatReadState>;
+  } | null>(null);
+  const states =
+    ownedStates && ownedStates.ownerId === userId ? ownedStates.states : {};
   const latestEvents = useRef(new Map<string, ChatReadState>());
 
   useEffect(() => {
     const supabase = getSupabaseClient();
     latestEvents.current = new Map();
-    setStates({});
+    setOwnedStates(null);
     if (!supabase || !userId) return;
     let active = true;
 
     const apply = (state: ChatReadState) => {
       if (!active || state.user_id !== userId) return;
       latestEvents.current.set(state.room_id, state);
-      setStates((current) => ({ ...current, [state.room_id]: state }));
+      setOwnedStates((current) => ({
+        ownerId: userId,
+        states: {
+          ...(current?.ownerId === userId ? current.states : {}),
+          [state.room_id]: state,
+        },
+      }));
     };
 
     const load = async () => {
@@ -49,7 +60,7 @@ export function useChatUnread(userId?: string) {
         if (!loaded || loaded.updated_at <= state.updated_at)
           next[roomId] = state;
       }
-      setStates(next);
+      setOwnedStates({ ownerId: userId, states: next });
     };
 
     const channel = supabase

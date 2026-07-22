@@ -557,6 +557,7 @@ export const AZ_COPY = {
     loading: "Mesajlar yüklənir",
     eyebrow: "Oxucudan oxucuya",
     title: "Mesajlar.",
+    listLabel: "Söhbətlər",
     unread: (count: number) => `${count} oxunmamış mesaj`,
     emptyTitle: "Hələ söhbət yoxdur.",
     emptyBody: "Kitab elanı səhifəsindən satıcıya yaza bilərsən.",
@@ -573,6 +574,7 @@ export const AZ_COPY = {
     unavailableBody: "Söhbət tapılmadı və ya ona baxmaq icazən yoxdur.",
     openMessages: "Mesajlara qayıt",
     conversation: "BookSwap söhbəti",
+    you: "Siz",
     private: "Məxfi",
     trustNote:
       "Kitabın vəziyyətini və təhvil detallarını müzakirə et. BookSwap ödəniş qəbul etmir və razılaşmaya zəmanət vermir.",
@@ -601,6 +603,7 @@ export const AZ_COPY = {
     loading: "Bildirişlər yüklənir",
     badge: "Hesab yenilikləri",
     title: "Bildirişlər.",
+    listLabel: "Bildirişlər siyahısı",
     markAllRead: "Hamısını oxunmuş et",
     markingAllRead: "Yenilənir...",
     markFailed: "Bildirişləri oxunmuş etmək mümkün olmadı.",
