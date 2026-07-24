@@ -818,6 +818,120 @@ test("profile and privacy controls expose keyboard focus and 200% reflow", async
   expect(await horizontalOverflow(page)).toEqual([]);
 });
 
+test("private account failures reject malformed success responses", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await installAuthenticatedUiFixture(page);
+  const apiRequests: string[] = [];
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (
+      ["/api/profile", "/api/privacy-requests", "/api/favorites"].includes(
+        url.pathname,
+      )
+    )
+      apiRequests.push(url.pathname);
+  });
+
+  await page.route("**/api/profile", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: {
+          profile: { name: null, phone: null, city: "Baku" },
+          listings: {},
+          favoriteCount: "2",
+        },
+        diagnostic: "provider-secret-detail",
+      }),
+    });
+  });
+  await page.route("**/api/privacy-requests", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: [
+          {
+            id: "33333333-3333-4333-8333-333333333333",
+            type: "access",
+            status: "open",
+            created_at: "not-a-date",
+          },
+        ],
+        diagnostic: "provider-secret-detail",
+      }),
+    });
+  });
+  await page.route("**/api/favorites", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: {},
+        diagnostic: "provider-secret-detail",
+      }),
+    });
+  });
+
+  await page.goto("/profile");
+  const profileError = page
+    .getByRole("alert")
+    .filter({ hasText: AZ_COPY.profile.unavailableBody });
+  await expect(
+    page.getByRole("heading", {
+      name: AZ_COPY.profile.unavailableTitle,
+      level: 1,
+    }),
+  ).toBeVisible();
+  await expect(profileError).toBeFocused();
+  await expect(page.locator("body")).not.toContainText(
+    "provider-secret-detail",
+  );
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
+
+  await page.goto("/user-rights");
+  const privacyError = page
+    .locator('p[role="alert"]')
+    .filter({ hasText: AZ_COPY.privacyRequests.loadFailed });
+  await expect(privacyError).toBeVisible();
+  await expect(privacyError).toBeFocused();
+  await expect(page.locator("body")).not.toContainText("not-a-date");
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
+
+  await page.goto("/favorites");
+  await expect(
+    page.getByRole("heading", {
+      name: AZ_COPY.favorites.unavailableTitle,
+      level: 1,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(AZ_COPY.favorites.unavailableBody, { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(
+    "provider-secret-detail",
+  );
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
+
+  expect(apiRequests.sort()).toEqual(
+    ["/api/profile", "/api/privacy-requests", "/api/favorites"].sort(),
+  );
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
 test("messages, chat, and notifications keep protected reads signed out", async ({
   page,
 }) => {

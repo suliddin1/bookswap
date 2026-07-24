@@ -3,6 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  parsePrivacyRequestListResponse,
+  parsePrivacyRequestResponse,
+  PRIVACY_REQUEST_TYPES,
+  type PrivacyRequestItem,
+} from "@/lib/account-responses";
 import { authFetch } from "@/lib/client-api";
 import {
   AZ_COPY,
@@ -13,26 +19,10 @@ import {
 } from "@/lib/i18n";
 import type { FormEvent } from "react";
 
-const requestTypes = [
-  "access",
-  "correction",
-  "export",
-  "deletion",
-  "objection",
-  "appeal",
-] as const;
-
-type RequestItem = {
-  id: string;
-  type: string;
-  status: string;
-  created_at: string;
-};
-
 export function PrivacyRequestForm() {
   const { user, loading } = useAuth();
   const userId = user?.id;
-  const [items, setItems] = useState<RequestItem[]>([]);
+  const [items, setItems] = useState<PrivacyRequestItem[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [status, setStatus] = useState("");
@@ -64,7 +54,9 @@ export function PrivacyRequestForm() {
           throw new Error(
             localizeApiError(body.code, AZ_COPY.privacyRequests.loadFailed),
           );
-        if (active) setItems(body.data ?? []);
+        const parsedItems = parsePrivacyRequestListResponse(body);
+        if (!parsedItems) throw new Error(AZ_COPY.privacyRequests.loadFailed);
+        if (active) setItems(parsedItems);
       })
       .catch((reason) => {
         if (active && reason?.name !== "AbortError")
@@ -81,8 +73,8 @@ export function PrivacyRequestForm() {
   }, [userId]);
 
   useEffect(() => {
-    if (loadError) loadErrorRef.current?.focus();
-  }, [loadError]);
+    if (loaded && loadError) loadErrorRef.current?.focus();
+  }, [loadError, loaded]);
 
   useEffect(() => {
     if (status && !busy && !detailsInvalid) statusRef.current?.focus();
@@ -120,7 +112,9 @@ export function PrivacyRequestForm() {
         throw new Error(
           localizeApiError(body.code, AZ_COPY.privacyRequests.failed),
         );
-      setItems((current) => [body.data, ...current]);
+      const parsedItem = parsePrivacyRequestResponse(body);
+      if (!parsedItem) throw new Error(AZ_COPY.privacyRequests.failed);
+      setItems((current) => [parsedItem, ...current]);
       formElement.reset();
       setDetailsInvalid(false);
       setStatus(AZ_COPY.privacyRequests.submitted);
@@ -169,7 +163,7 @@ export function PrivacyRequestForm() {
             {AZ_COPY.privacyRequests.type}
           </span>
           <select name="type" className="input" required>
-            {requestTypes.map((type) => (
+            {PRIVACY_REQUEST_TYPES.map((type) => (
               <option key={type} value={type}>
                 {formatPrivacyRequestType(type)}
               </option>

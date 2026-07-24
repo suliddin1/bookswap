@@ -86,6 +86,14 @@ function isListing(value: unknown): value is Listing {
   );
 }
 
+export function parseListing(value: unknown): Listing | null {
+  return isListing(value) ? value : null;
+}
+
+export function parseListingArray(value: unknown): Listing[] | null {
+  return Array.isArray(value) && value.every(isListing) ? value : null;
+}
+
 function isListingReview(value: unknown): value is ListingReview {
   if (!isRecord(value)) return false;
   const author = value.author;
@@ -122,13 +130,10 @@ export function parseListingPageResponse(value: unknown): {
 } | null {
   if (!isRecord(value) || !isRecord(value.data)) return null;
   const { items, nextCursor } = value.data;
-  if (
-    !Array.isArray(items) ||
-    !items.every(isListing) ||
-    (nextCursor !== null && typeof nextCursor !== "string")
-  )
+  const parsedItems = parseListingArray(items);
+  if (!parsedItems || (nextCursor !== null && typeof nextCursor !== "string"))
     return null;
-  return { items, nextCursor };
+  return { items: parsedItems, nextCursor };
 }
 
 export function parseListingDetailResponse(
@@ -152,12 +157,12 @@ export function parseSellerResponse(value: unknown): {
 } | null {
   if (!isRecord(value) || !isRecord(value.data)) return null;
   const { seller, items, nextCursor } = value.data;
+  const parsedItems = parseListingArray(items);
   if (
     !isPublicSeller(seller) ||
-    !Array.isArray(items) ||
-    !items.every(isListing) ||
+    !parsedItems ||
     (nextCursor !== null && typeof nextCursor !== "string")
   )
     return null;
-  return { seller, items, nextCursor };
+  return { seller, items: parsedItems, nextCursor };
 }

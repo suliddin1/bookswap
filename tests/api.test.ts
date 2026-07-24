@@ -86,6 +86,14 @@ import {
   parseListingPageResponse,
   parseSellerResponse,
 } from "../lib/marketplace-responses";
+import {
+  parseFavoriteListingsResponse,
+  parseListingMutationResponse,
+  parsePrivacyRequestListResponse,
+  parsePrivacyRequestResponse,
+  parseProfileDashboardResponse,
+  parseProfileResponse,
+} from "../lib/account-responses";
 import { POST as reportWebVital } from "../app/api/vitals/route";
 
 const originalOpenAIKey = process.env.OPENAI_API_KEY;
@@ -173,6 +181,68 @@ describe("marketplace input validation", () => {
           ...seller.data,
           seller: { ...seller.data.seller, createdAt: "not-a-date" },
         },
+      }),
+    ).toBeNull();
+  });
+
+  it("rejects malformed private account success responses", () => {
+    const listing = {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      title: "Kabinet kitabı",
+      author: "Sınaq müəllifi",
+      description: "Kabinet cavab sınağı",
+      price: 9.5,
+      category: "Fiction",
+      condition: "Good",
+      city: "Baku",
+      status: "active",
+      seller: {
+        id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        name: "Sınaq oxucusu",
+      },
+    };
+    const profile = { name: "Sınaq oxucusu", phone: null, city: "Baku" };
+    const privacyItem = {
+      id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      type: "access",
+      status: "open",
+      created_at: "2026-07-24T10:00:00.000Z",
+    };
+
+    expect(
+      parseProfileDashboardResponse({
+        data: { profile, listings: [listing], favoriteCount: 2 },
+      }),
+    ).toEqual({ profile, listings: [listing], favoriteCount: 2 });
+    expect(parseProfileResponse({ data: profile })).toEqual(profile);
+    expect(parseFavoriteListingsResponse({ data: [listing] })).toEqual([
+      listing,
+    ]);
+    expect(parseListingMutationResponse({ data: listing })).toEqual(listing);
+    expect(parsePrivacyRequestListResponse({ data: [privacyItem] })).toEqual([
+      privacyItem,
+    ]);
+    expect(parsePrivacyRequestResponse({ data: privacyItem })).toEqual(
+      privacyItem,
+    );
+
+    expect(
+      parseProfileDashboardResponse({
+        data: { profile, listings: {}, favoriteCount: "2" },
+      }),
+    ).toBeNull();
+    expect(
+      parseProfileResponse({ data: { ...profile, phone: 994 } }),
+    ).toBeNull();
+    expect(parseFavoriteListingsResponse({ data: {} })).toBeNull();
+    expect(
+      parsePrivacyRequestListResponse({
+        data: [{ ...privacyItem, created_at: "not-a-date" }],
+      }),
+    ).toBeNull();
+    expect(
+      parsePrivacyRequestResponse({
+        data: { ...privacyItem, status: "provider-status" },
       }),
     ).toBeNull();
   });

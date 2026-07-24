@@ -17,9 +17,14 @@ import { useEffect, useRef, useState } from "react";
 import { BookCard } from "@/components/book-card";
 import { EmptyState } from "@/components/empty-state";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  parseListingMutationResponse,
+  parseProfileDashboardResponse,
+  parseProfileResponse,
+  type ProfileDashboardData,
+} from "@/lib/account-responses";
 import { authFetch } from "@/lib/client-api";
 import { AZ_COPY, formatCity, localizeApiError } from "@/lib/i18n";
-import type { Listing } from "@/lib/types";
 import type { FormEvent, KeyboardEvent, ReactNode } from "react";
 
 const tabs = [
@@ -32,22 +37,10 @@ const tabs = [
 
 type TabId = (typeof tabs)[number][0];
 
-type ProfileRecord = {
-  name: string;
-  phone: string | null;
-  city: string | null;
-};
-
-type DashboardData = {
-  profile: ProfileRecord;
-  listings: Listing[];
-  favoriteCount: number;
-};
-
 export function ProfileDashboard() {
   const { user, loading } = useAuth();
   const userId = user?.id;
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, setData] = useState<ProfileDashboardData | null>(null);
   const [dataOwnerId, setDataOwnerId] = useState<string | null>(null);
   const dashboardData = dataOwnerId === userId ? data : null;
   const [tab, setTab] = useState<TabId>("listings");
@@ -138,12 +131,14 @@ export function ProfileDashboard() {
         throw new Error(
           localizeApiError(body.code, AZ_COPY.profile.statusFailed),
         );
+      const parsedListing = parseListingMutationResponse(body);
+      if (!parsedListing) throw new Error(AZ_COPY.profile.statusFailed);
       setData((current) =>
         current
           ? {
               ...current,
               listings: current.listings.map((item) =>
-                item.id === id ? body.data : item,
+                item.id === id ? parsedListing : item,
               ),
             }
           : current,
@@ -200,7 +195,9 @@ export function ProfileDashboard() {
         throw new Error(
           localizeApiError(body.code, AZ_COPY.profile.profileSaveFailed),
         );
-      setData({ ...dashboardData, profile: body.data });
+      const parsedProfile = parseProfileResponse(body);
+      if (!parsedProfile) throw new Error(AZ_COPY.profile.profileSaveFailed);
+      setData({ ...dashboardData, profile: parsedProfile });
       setDataOwnerId(userId ?? null);
       setProfileSaved(true);
     } catch {
@@ -232,8 +229,10 @@ export function ProfileDashboard() {
           throw new Error(
             localizeApiError(body.code, AZ_COPY.profile.unavailableBody),
           );
+        const parsedDashboard = parseProfileDashboardResponse(body);
+        if (!parsedDashboard) throw new Error(AZ_COPY.profile.unavailableBody);
         if (active) {
-          setData(body.data);
+          setData(parsedDashboard);
           setDataOwnerId(userId);
         }
       })

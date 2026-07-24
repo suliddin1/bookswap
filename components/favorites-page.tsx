@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { BookCard } from "@/components/book-card";
 import { EmptyState } from "@/components/empty-state";
 import { useAuth } from "@/hooks/use-auth";
+import { parseFavoriteListingsResponse } from "@/lib/account-responses";
 import { authFetch } from "@/lib/client-api";
 import { AZ_COPY } from "@/lib/i18n";
 import type { Listing } from "@/lib/types";
@@ -27,7 +28,9 @@ export function FavoritesPage() {
       .then(async (response) => {
         const body = await response.json();
         if (!response.ok) throw new Error();
-        if (active) setItems(body.data);
+        const parsedItems = parseFavoriteListingsResponse(body);
+        if (!parsedItems) throw new Error();
+        if (active) setItems(parsedItems);
       })
       .catch(() => {
         if (active) setError("load");
