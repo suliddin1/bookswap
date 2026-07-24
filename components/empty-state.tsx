@@ -21,7 +21,9 @@ export function EmptyState({
       <span className="empty-state-icon">
         <BookOpen size={22} />
       </span>
-      <Heading className="display text-3xl font-semibold">{title}</Heading>
+      <Heading className="display min-w-0 max-w-full break-words text-3xl font-semibold [overflow-wrap:anywhere]">
+        {title}
+      </Heading>
       <p>{body}</p>
       {action && href && (
         <Link href={href} className="btn-primary mt-5">

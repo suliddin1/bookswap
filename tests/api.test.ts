@@ -29,7 +29,6 @@ import {
   createListingCursorScope,
   decodeListingCursor,
   encodeListingCursor,
-  getListingCursorFilter,
   parseListingLimit,
   parseListingSort,
 } from "../lib/listing-pagination";
@@ -922,9 +921,6 @@ describe("marketplace input validation", () => {
       sort: "newest",
       scope,
     });
-    expect(getListingCursorFilter(decoded!)).toContain(
-      "and(created_at.eq.2026-07-14T05:00:00.000Z,id.lt.aaaaaaaa",
-    );
     expect(() =>
       decodeListingCursor(
         encoded,
@@ -952,12 +948,12 @@ describe("marketplace input validation", () => {
       "price-high",
       scope,
     );
-    expect(getListingCursorFilter(low!)).toBe(
-      `price.gt.17.5,and(price.eq.17.5,id.gt.${row.id})`,
-    );
-    expect(getListingCursorFilter(high!)).toBe(
-      `price.lt.17.5,and(price.eq.17.5,id.lt.${row.id})`,
-    );
+    expect(low).toMatchObject({ id: row.id, price: 17.5, sort: "price-low" });
+    expect(high).toMatchObject({
+      id: row.id,
+      price: 17.5,
+      sort: "price-high",
+    });
   });
 
   it("validates public listing sort and page limits", () => {
@@ -1437,5 +1433,75 @@ describe("marketplace input validation", () => {
     expect(packageJson.scripts["test:performance"]).toBe(
       "node scripts/check-performance-budgets.mjs",
     );
+  });
+
+  it("keeps deep marketplace cursors indexable and query plans replayable", () => {
+    const catalogRoute = readFileSync(
+      new URL("../app/api/listings/route.ts", import.meta.url),
+      "utf8",
+    );
+    const sellerRoute = readFileSync(
+      new URL("../app/api/sellers/[id]/route.ts", import.meta.url),
+      "utf8",
+    );
+    const planProbe = readFileSync(
+      new URL("../supabase/tests/marketplace_query_plans.sql", import.meta.url),
+      "utf8",
+    );
+    const marketplaceRpcMigration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260724090000_add_public_marketplace_page_rpcs.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const rpcContainmentMigration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260724093000_contain_marketplace_page_rpcs.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const rpcInputHardeningMigration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260724094500_reject_null_marketplace_sort.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+
+    expect(catalogRoute).toContain('.rpc("catalog_listings_page"');
+    expect(catalogRoute).toContain("p_cursor_created_at:");
+    expect(catalogRoute).toContain("p_cursor_price:");
+    expect(sellerRoute).toContain('.rpc("seller_listings_page"');
+    expect(sellerRoute).toContain("p_cursor_created_at:");
+
+    expect(planProbe).toContain("explain (analyze, buffers, format json)");
+    expect(planProbe).toContain("from generate_series(1, 60000)");
+    expect(planProbe).toContain("catalog_newest_cursor");
+    expect(planProbe).toContain("catalog_price_low_cursor");
+    expect(planProbe).toContain("seller_inventory_cursor");
+    expect(planProbe).toContain('"Rows Removed by Filter" > 100');
+    expect(planProbe).toContain("Representative query-plan fixture cleanup");
+    expect(marketplaceRpcMigration).toContain("security definer");
+    expect(marketplaceRpcMigration).toContain("set search_path = ''");
+    expect(marketplaceRpcMigration).toContain("and not seller_row.banned");
+    expect(marketplaceRpcMigration).toContain(
+      "websearch_to_tsquery('simple', $1)",
+    );
+    expect(marketplaceRpcMigration).toContain(
+      "(listing.price, listing.id) > ($8, $9)",
+    );
+    expect(marketplaceRpcMigration).toContain("to anon, authenticated");
+    expect(rpcContainmentMigration).toContain("set schema private");
+    expect(rpcContainmentMigration).toContain("security invoker");
+    expect(rpcContainmentMigration).toContain(
+      "from private.catalog_listings_page(",
+    );
+    expect(rpcContainmentMigration).toContain(
+      "from private.seller_listings_page(",
+    );
+    expect(rpcInputHardeningMigration).toContain("if p_sort is null then");
+    expect(rpcInputHardeningMigration).toContain("security invoker");
   });
 });

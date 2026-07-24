@@ -20,6 +20,23 @@ type Table<
 
 type Timestamps = { created_at: string };
 
+type PublicListingPageRow = Timestamps & {
+  id: string;
+  title: string;
+  author: string;
+  description: string;
+  isbn: string | null;
+  price: number;
+  original_price: number | null;
+  images: string[];
+  category: string;
+  condition: string;
+  city: string;
+  status: "draft" | "active" | "sold" | "locked";
+  seller_id: string;
+  seller: Json;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -460,6 +477,30 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      catalog_listings_page: {
+        Args: {
+          p_query: string;
+          p_category: string | null;
+          p_city: string | null;
+          p_condition: string | null;
+          p_max_price: number | null;
+          p_sort: string;
+          p_cursor_created_at: string | null;
+          p_cursor_price: number | null;
+          p_cursor_id: string | null;
+          p_limit: number;
+        };
+        Returns: PublicListingPageRow[];
+      };
+      seller_listings_page: {
+        Args: {
+          p_seller_id: string;
+          p_cursor_created_at: string | null;
+          p_cursor_id: string | null;
+          p_limit: number;
+        };
+        Returns: PublicListingPageRow[];
+      };
       admin_set_user_ban: {
         Args: {
           p_actor_id: string;

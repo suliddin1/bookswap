@@ -119,11 +119,3 @@ export function decodeListingCursor(
     );
   }
 }
-
-export function getListingCursorFilter(cursor: ListingCursor) {
-  if (cursor.sort === "newest")
-    return `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`;
-  if (cursor.sort === "price-low")
-    return `price.gt.${cursor.price},and(price.eq.${cursor.price},id.gt.${cursor.id})`;
-  return `price.lt.${cursor.price},and(price.eq.${cursor.price},id.lt.${cursor.id})`;
-}

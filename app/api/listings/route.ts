@@ -17,7 +17,6 @@ import {
   createListingCursorScope,
   decodeListingCursor,
   encodeListingCursor,
-  getListingCursorFilter,
   parseListingLimit,
   parseListingSort,
 } from "@/lib/listing-pagination";
@@ -73,33 +72,18 @@ export async function GET(request: Request) {
     });
     const cursor = decodeListingCursor(searchParams.get("cursor"), sort, scope);
     const supabase = requireSupabaseClient();
-    let builder = supabase
-      .from("listings")
-      .select(
-        "*, seller:users!listings_seller_id_fkey(id,name,city,created_at)",
-      )
-      .eq("status", "active")
-      .limit(limit + 1);
-    if (sort === "price-low")
-      builder = builder
-        .order("price", { ascending: true })
-        .order("id", { ascending: true });
-    else if (sort === "price-high")
-      builder = builder
-        .order("price", { ascending: false })
-        .order("id", { ascending: false });
-    else
-      builder = builder
-        .order("created_at", { ascending: false })
-        .order("id", { ascending: false });
-    if (query)
-      builder = builder.textSearch("search", query, { type: "websearch" });
-    if (category) builder = builder.eq("category", category);
-    if (city) builder = builder.eq("city", city);
-    if (condition) builder = builder.eq("condition", condition);
-    if (maxPrice !== null) builder = builder.lte("price", maxPrice);
-    if (cursor) builder = builder.or(getListingCursorFilter(cursor));
-    const { data, error } = await builder;
+    const { data, error } = await supabase.rpc("catalog_listings_page", {
+      p_query: query,
+      p_category: category,
+      p_city: city,
+      p_condition: condition,
+      p_max_price: maxPrice,
+      p_sort: sort,
+      p_cursor_created_at: cursor?.createdAt ?? null,
+      p_cursor_price: cursor?.price ?? null,
+      p_cursor_id: cursor?.id ?? null,
+      p_limit: limit + 1,
+    });
     if (error) return apiError(error, 500);
     const rows = data ?? [];
     const pageRows = rows.slice(0, limit);

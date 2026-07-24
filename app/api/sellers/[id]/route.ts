@@ -4,7 +4,6 @@ import {
   createListingCursorScope,
   decodeListingCursor,
   encodeListingCursor,
-  getListingCursorFilter,
   parseListingLimit,
   parsePublicUuid,
 } from "@/lib/listing-pagination";
@@ -35,24 +34,16 @@ export async function GET(
     if (!seller)
       throw new ApiError("Satıcı profili tapılmadı.", 404, "SELLER_NOT_FOUND");
 
-    let listingsQuery = supabase
-      .from("listings")
-      .select(
-        "*, seller:users!listings_seller_id_fkey(id,name,city,created_at)",
-      )
-      .eq("seller_id", id)
-      .in("status", ["active", "sold"])
-      .order("created_at", { ascending: false })
-      .order("id", { ascending: false })
-      .limit(limit + 1);
-    if (cursor)
-      listingsQuery = listingsQuery.or(getListingCursorFilter(cursor));
-
     const [
       { data: rows, error: listingsError },
       { data: reviews, error: reviewsError },
     ] = await Promise.all([
-      listingsQuery,
+      supabase.rpc("seller_listings_page", {
+        p_seller_id: id,
+        p_cursor_created_at: cursor?.createdAt ?? null,
+        p_cursor_id: cursor?.id ?? null,
+        p_limit: limit + 1,
+      }),
       supabase
         .from("reviews")
         .select("rating, listing:listings!inner(seller_id,status)")
