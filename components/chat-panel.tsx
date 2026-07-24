@@ -60,9 +60,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
   const [loadFailedForContext, setLoadFailedForContext] = useState<
     string | null
   >(null);
-  const loadFailed = Boolean(
-    contextKey && loadFailedForContext === contextKey,
-  );
+  const loadFailed = Boolean(contextKey && loadFailedForContext === contextKey);
   const [sendErrorState, setSendErrorState] = useState<{
     contextKey: string;
     message: string;
@@ -423,7 +421,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
                   </h1>
                   <Link
                     href={`/listings/${room.listing.id}`}
-                    className="inline-flex min-h-6 items-center break-words text-xs text-[#6b6254] hover:text-[#8f6213] [overflow-wrap:anywhere]"
+                    className="inline-flex min-h-6 items-center break-words text-xs text-[#6b6254] [overflow-wrap:anywhere] hover:text-[#8f6213]"
                   >
                     {room.listing.title}
                   </Link>
@@ -455,7 +453,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
                     transcript.clientHeight <=
                   48;
               }}
-              className="min-h-[280px] max-h-[min(58vh,560px)] flex-1 overflow-y-auto bg-[#f6f0e5] p-4 md:p-7"
+              className="max-h-[min(58vh,560px)] min-h-[280px] flex-1 overflow-y-auto bg-[#f6f0e5] p-4 md:p-7"
             >
               <p className="mb-6 text-center text-xs font-bold leading-5 text-[#6b6254]">
                 {AZ_COPY.chat.trustNote}
@@ -550,10 +548,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
                   <Send aria-hidden="true" size={16} />
                 </button>
               </div>
-              <p
-                id="chat-message-help"
-                className="mt-2 text-xs text-[#6b6254]"
-              >
+              <p id="chat-message-help" className="mt-2 text-xs text-[#6b6254]">
                 {AZ_COPY.chat.messageHelp}
               </p>
               {sendError && (
@@ -569,13 +564,12 @@ export function ChatPanel({ roomId }: { roomId: string }) {
           </section>
 
           <aside className="hide-mobile border-l border-[#d8cbb5] p-6">
-            <span className="eyebrow !text-xs">
-              {AZ_COPY.chat.aboutBook}
-            </span>
+            <span className="eyebrow !text-xs">{AZ_COPY.chat.aboutBook}</span>
             <div className="mt-5 flex gap-4">
               <BookCover
                 listing={room.listing}
                 className="w-[78px] shrink-0 !p-2"
+                sizes="78px"
               />
               <div className="min-w-0">
                 <b className="block break-words text-sm">

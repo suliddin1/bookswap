@@ -234,6 +234,8 @@ export function ListingDetail({ id }: { id: string }) {
             <BookCover
               listing={displayedListing}
               className="w-full max-w-[310px]"
+              sizes="(max-width: 640px) 72vw, 310px"
+              priority
             />
             <span className="pill absolute bottom-5 left-5 !text-xs">
               <ShieldCheck size={12} className="text-orange" />{" "}
@@ -256,11 +258,11 @@ export function ListingDetail({ id }: { id: string }) {
                   className={`relative aspect-square overflow-hidden rounded-lg border-2 ${selectedImage === index ? "border-orange" : "border-transparent"}`}
                 >
                   <Image
-                    unoptimized
                     src={image}
                     alt=""
                     fill
                     sizes="96px"
+                    quality={65}
                     className="object-cover"
                   />
                 </button>

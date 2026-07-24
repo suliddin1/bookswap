@@ -1,6 +1,5 @@
-"use client";
-
 import Link from "next/link";
+import { Suspense } from "react";
 import {
   ArrowRight,
   BookCopy,
@@ -10,12 +9,10 @@ import {
   Search,
   Sparkles,
 } from "lucide-react";
-import { BookCard } from "@/components/book-card";
 import { BookCover } from "@/components/book-cover";
-import { BookSkeleton } from "@/components/book-skeleton";
-import { EmptyState } from "@/components/empty-state";
+import { HomeListingSection } from "@/components/home-marketplace-sections";
+import { HomeListingSectionFallback } from "@/components/home-section-shells";
 import { MotionReveal } from "@/components/motion-reveal";
-import { useListings } from "@/hooks/use-listings";
 import { AZ_COPY, formatCategory } from "@/lib/i18n";
 import type { Listing } from "@/lib/types";
 
@@ -101,10 +98,6 @@ const quickCategories = [
 ] as const;
 
 export default function HomePage() {
-  const { data, loading, error } = useListings();
-  const featured = data.slice(0, 4);
-  const recent = data.slice(4, 8);
-
   return (
     <>
       <section className="relative overflow-hidden border-b border-[#cdbd9e] pt-14 md:pt-20">
@@ -173,98 +166,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-20">
-        <div className="container-shell">
-          <MarketplaceHeading
-            label={AZ_COPY.home.featuredLabel}
-            title={AZ_COPY.home.featuredTitle}
-            link="/listings"
-          />
-          {loading ? (
-            <SkeletonShelf />
-          ) : featured.length ? (
-            <div className="shelf-row mt-10 grid min-w-0 grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4">
-              {featured.map((listing) => (
-                <BookCard key={listing.id} listing={listing} />
-              ))}
-            </div>
-          ) : (
-            <div className="mt-10">
-              <EmptyState
-                title={AZ_COPY.home.featuredEmptyTitle}
-                body={
-                  error
-                    ? AZ_COPY.global.listingsUnavailable
-                    : AZ_COPY.home.featuredEmptyBody
-                }
-                action={AZ_COPY.catalog.sellBook}
-                href="/listings/new"
-              />
-            </div>
-          )}
-        </div>
-      </section>
+      <Suspense fallback={<HomeListingSectionFallback kind="featured" />}>
+        <HomeListingSection kind="featured" />
+      </Suspense>
 
-      <section className="border-y border-[#cdbd9e] bg-[#ebe1d0] py-16">
-        <div className="container-shell">
-          <div className="flex min-w-0 flex-col justify-between gap-5 md:flex-row md:items-end">
-            <div className="min-w-0">
-              <span className="eyebrow">{AZ_COPY.home.browseLabel}</span>
-              <h2 className="display mt-3 break-words text-4xl font-semibold [overflow-wrap:anywhere] md:text-5xl">
-                {AZ_COPY.home.browseTitle}
-              </h2>
-            </div>
-            <p className="max-w-sm text-sm leading-6 text-muted">
-              {AZ_COPY.home.browseBody}
-            </p>
-          </div>
-          <div className="mt-9 grid min-w-0 grid-cols-2 gap-3 md:grid-cols-5">
-            {quickCategories.map(([category, Icon], index) => (
-              <Link
-                key={category}
-                href={`/listings?category=${encodeURIComponent(category)}`}
-                className="catalog-drawer group relative min-h-[150px] min-w-0 overflow-hidden rounded-sm p-5 transition hover:-translate-y-1"
-              >
-                <span className="display absolute right-3 top-3 text-4xl text-[#d8c6a5]">
-                  0{index + 1}
-                </span>
-                <Icon size={19} className="text-orange" />
-                <h3 className="display mt-12 break-words text-2xl font-semibold [overflow-wrap:anywhere]">
-                  {formatCategory(category)}
-                </h3>
-                <span className="mt-2 flex min-h-6 items-center gap-1 text-xs font-bold text-muted">
-                  {AZ_COPY.home.openShelf} <ArrowRight size={11} />
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      <BrowseSection />
 
-      <section className="py-20">
-        <div className="container-shell">
-          <MarketplaceHeading
-            label={AZ_COPY.home.recentLabel}
-            title={AZ_COPY.home.recentTitle}
-            link="/listings"
-          />
-          {loading ? (
-            <SkeletonShelf />
-          ) : recent.length ? (
-            <div className="shelf-row mt-10 grid min-w-0 grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4">
-              {recent.map((listing) => (
-                <BookCard key={listing.id} listing={listing} />
-              ))}
-            </div>
-          ) : data.length ? (
-            <div className="shelf-row mt-10 grid min-w-0 grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4">
-              {featured.map((listing) => (
-                <BookCard key={listing.id} listing={listing} />
-              ))}
-            </div>
-          ) : null}
-        </div>
-      </section>
+      <Suspense fallback={<HomeListingSectionFallback kind="recent" />}>
+        <HomeListingSection kind="recent" />
+      </Suspense>
 
       <section className="container-shell pb-24">
         <div className="desk-surface relative overflow-hidden rounded-md border border-[#24170f] px-7 py-14 text-[#fff8e9] md:px-14">
@@ -306,39 +216,42 @@ export default function HomePage() {
   );
 }
 
-function MarketplaceHeading({
-  label,
-  title,
-  link,
-}: {
-  label: string;
-  title: string;
-  link: string;
-}) {
+function BrowseSection() {
   return (
-    <div className="flex min-w-0 items-end justify-between gap-5 border-b border-[#cdbd9e] pb-5">
-      <div className="min-w-0">
-        <span className="eyebrow">{label}</span>
-        <h2 className="display mt-3 break-words text-4xl font-semibold [overflow-wrap:anywhere] md:text-5xl">
-          {title}
-        </h2>
+    <section className="border-y border-[#cdbd9e] bg-[#ebe1d0] py-16">
+      <div className="container-shell">
+        <div className="flex min-w-0 flex-col justify-between gap-5 md:flex-row md:items-end">
+          <div className="min-w-0">
+            <span className="eyebrow">{AZ_COPY.home.browseLabel}</span>
+            <h2 className="display mt-3 break-words text-4xl font-semibold [overflow-wrap:anywhere] md:text-5xl">
+              {AZ_COPY.home.browseTitle}
+            </h2>
+          </div>
+          <p className="max-w-sm text-sm leading-6 text-muted">
+            {AZ_COPY.home.browseBody}
+          </p>
+        </div>
+        <div className="mt-9 grid min-w-0 grid-cols-2 gap-3 md:grid-cols-5">
+          {quickCategories.map(([category, Icon], index) => (
+            <Link
+              key={category}
+              href={`/listings?category=${encodeURIComponent(category)}`}
+              className="catalog-drawer group relative min-h-[150px] min-w-0 overflow-hidden rounded-sm p-5 transition hover:-translate-y-1"
+            >
+              <span className="display absolute right-3 top-3 text-4xl text-[#d8c6a5]">
+                0{index + 1}
+              </span>
+              <Icon size={19} className="text-orange" />
+              <h3 className="display mt-12 break-words text-2xl font-semibold [overflow-wrap:anywhere]">
+                {formatCategory(category)}
+              </h3>
+              <span className="mt-2 flex min-h-6 items-center gap-1 text-xs font-bold text-muted">
+                {AZ_COPY.home.openShelf} <ArrowRight size={11} />
+              </span>
+            </Link>
+          ))}
+        </div>
       </div>
-      <Link
-        href={link}
-        className="hide-mobile flex min-h-11 items-center gap-2 text-xs font-bold uppercase tracking-[.12em] text-orange"
-      >
-        {AZ_COPY.home.viewAll} <ArrowRight size={13} />
-      </Link>
-    </div>
-  );
-}
-
-function SkeletonShelf() {
-  return (
-    <div className="shelf-row mt-10 grid min-w-0 grid-cols-2 gap-5 md:grid-cols-4">
-      {[0, 1, 2, 3].map((item) => (
-        <BookSkeleton key={item} />
-      ))}
-    </div>
+    </section>
   );
 }

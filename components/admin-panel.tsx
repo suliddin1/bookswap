@@ -550,7 +550,11 @@ export function AdminPanel() {
                   <tr key={listing.id} className="border-b border-[#e8dfcf]">
                     <td className="p-4">
                       <div className="flex min-w-0 items-center gap-3">
-                        <BookCover listing={listing} className="w-9 !p-1" />
+                        <BookCover
+                          listing={listing}
+                          className="w-9 !p-1"
+                          sizes="36px"
+                        />
                         <b className="min-w-0 break-words text-xs [overflow-wrap:anywhere]">
                           {listing.title}
                         </b>

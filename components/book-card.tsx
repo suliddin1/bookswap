@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Heart, MapPin } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import { BookCover } from "@/components/book-cover";
 import { authFetch } from "@/lib/client-api";
@@ -17,7 +16,6 @@ export function BookCard({
   saved?: boolean;
 }) {
   const [isSaved, setIsSaved] = useState(saved);
-  const reduceMotion = useReducedMotion();
 
   async function toggleFavorite(event: React.MouseEvent) {
     event.preventDefault();
@@ -36,11 +34,7 @@ export function BookCard({
   }
 
   return (
-    <motion.article
-      className="book-card market-book-card group"
-      whileHover={reduceMotion ? undefined : { y: -5 }}
-      transition={{ duration: reduceMotion ? 0 : 0.25 }}
-    >
+    <article className="book-card market-book-card group">
       <Link href={`/listings/${listing.id}`} className="relative block">
         <BookCover listing={listing} />
         {listing.status === "sold" && (
@@ -94,6 +88,6 @@ export function BookCard({
           )}
         </div>
       </div>
-    </motion.article>
+    </article>
   );
 }

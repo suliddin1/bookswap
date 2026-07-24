@@ -19,12 +19,10 @@ export function MessagesList() {
     rooms: ChatRoomSummary[];
   } | null>(null);
   const rooms = roomData && roomData.ownerId === userId ? roomData.rooms : null;
-  const [loadFailedForUserId, setLoadFailedForUserId] = useState<
-    string | null
-  >(null);
-  const loadFailed = Boolean(
-    userId && loadFailedForUserId === userId,
+  const [loadFailedForUserId, setLoadFailedForUserId] = useState<string | null>(
+    null,
   );
+  const loadFailed = Boolean(userId && loadFailedForUserId === userId);
   const loadErrorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -152,6 +150,7 @@ export function MessagesList() {
                   <BookCover
                     listing={room.listing}
                     className="w-12 shrink-0 !p-1"
+                    sizes="48px"
                   />
                   <div className="min-w-0 flex-1">
                     <b className="block break-words text-sm [overflow-wrap:anywhere]">

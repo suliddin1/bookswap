@@ -134,7 +134,7 @@ export function SellerProfile({ id }: { id: string }) {
           </span>
           <div className="min-w-0 flex-1">
             <span className="bookmark-badge">{AZ_COPY.seller.badge}</span>
-            <h1 className="display mt-4 text-4xl font-semibold md:text-6xl">
+            <h1 className="display mt-4 break-words text-4xl font-semibold [overflow-wrap:anywhere] md:text-6xl">
               {seller.name}
             </h1>
             <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[10px] font-bold text-gray-500">

@@ -1368,4 +1368,74 @@ describe("marketplace input validation", () => {
     );
     expect(deduplicationMigration).toContain("select distinct");
   });
+
+  it("keeps marketplace client and cover delivery costs bounded", () => {
+    const home = readFileSync(
+      new URL("../app/page.tsx", import.meta.url),
+      "utf8",
+    );
+    const homeMarketplace = readFileSync(
+      new URL("../components/home-marketplace-sections.tsx", import.meta.url),
+      "utf8",
+    );
+    const homeListingsHook = readFileSync(
+      new URL("../hooks/use-home-listings.ts", import.meta.url),
+      "utf8",
+    );
+    const bookCard = readFileSync(
+      new URL("../components/book-card.tsx", import.meta.url),
+      "utf8",
+    );
+    const motionReveal = readFileSync(
+      new URL("../components/motion-reveal.tsx", import.meta.url),
+      "utf8",
+    );
+    const bookCover = readFileSync(
+      new URL("../components/book-cover.tsx", import.meta.url),
+      "utf8",
+    );
+    const bookSkeleton = readFileSync(
+      new URL("../components/book-skeleton.tsx", import.meta.url),
+      "utf8",
+    );
+    const sellerProfile = readFileSync(
+      new URL("../components/seller-profile.tsx", import.meta.url),
+      "utf8",
+    );
+    const listingDetail = readFileSync(
+      new URL("../components/listing-detail.tsx", import.meta.url),
+      "utf8",
+    );
+    const nextConfig = readFileSync(
+      new URL("../next.config.js", import.meta.url),
+      "utf8",
+    );
+    const packageJson = JSON.parse(
+      readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+    );
+
+    expect(home.startsWith('"use client"')).toBe(false);
+    expect(home).toContain("HomeListingSection");
+    expect(homeMarketplace.startsWith('"use client"')).toBe(true);
+    expect(homeMarketplace).toContain("useHomeListings()");
+    expect(homeListingsHook).toContain("pending ??= fetch");
+    expect(bookCard).not.toContain("framer-motion");
+    expect(motionReveal).not.toContain("framer-motion");
+    expect(packageJson.dependencies["framer-motion"]).toBeUndefined();
+
+    expect(bookCover).toContain('from "next/image"');
+    expect(bookCover).toContain("sizes={sizes}");
+    expect(bookCover).toContain("quality={72}");
+    expect(bookCover).toContain("isLocalPreview");
+    expect(bookSkeleton).toContain("market-book-card animate-pulse");
+    expect(sellerProfile).toContain("[overflow-wrap:anywhere]");
+    expect(listingDetail).not.toContain("unoptimized");
+    expect(nextConfig).toContain('hostname: "*.supabase.co"');
+    expect(nextConfig).toContain(
+      'pathname: "/storage/v1/object/public/listing-images/**"',
+    );
+    expect(packageJson.scripts["test:performance"]).toBe(
+      "node scripts/check-performance-budgets.mjs",
+    );
+  });
 });

@@ -1,14 +1,15 @@
 # Project state
 
-Snapshot date: 2026-07-22.
+Snapshot date: 2026-07-24.
 
 ## Repository protection
 
 - Active and only authorized repository: D:\Codex Projects\2HandedBook.
 - Protected out-of-scope checkout: D:\GitHub\BookSwap.
 - Branch: autonomous/bookswap-product.
-- Checkpoint: d644ad2b5775ae98386ae96636f23d5f530b0ef1, chore: checkpoint existing BookSwap development state.
-- Checkpoint captured 86 legitimate files (5,497 insertions, 452 deletions) after ignored/untracked/secret/whitespace review.
+- Initial repository checkpoint: d644ad2b5775ae98386ae96636f23d5f530b0ef1, chore: checkpoint existing BookSwap development state.
+- That initial checkpoint captured 86 legitimate files (5,497 insertions, 452 deletions) after ignored/untracked/secret/whitespace review.
+- Latest pre-slice checkpoint: 9e18be8, feat: improve admin accessibility.
 - Remote: origin points to https://github.com/suliddin1/bookswap.git. Nothing was pushed.
 - Preparation and subsequent implementation/authorization checkpoints are local. Current checkpoints extend Azerbaijani coverage through centralized public FAQ/safety guidance and WCAG 2.2 AA remediation through the shared shell, home/catalog discovery, public listing-detail/seller-action journey, listing authoring/editing, authentication/recovery, profile/privacy requests, messages, room chat, notifications, moderation review, and the administrator dashboard, without touching the protected checkout or remote.
 
@@ -20,7 +21,7 @@ Top-level tracked product/config includes .github, app, components, docs, hooks,
 - TypeScript 5.9.3 installed under strict project settings.
 - Tailwind CSS 3.4.19; Fraunces and Manrope visual system.
 - Supabase JS 2.108.1 installed; Auth/Postgres/Storage/Realtime architecture.
-- Zod 3.25.76, Framer Motion 12.40, Lucide React 0.344.
+- Zod 3.25.76 and Lucide React 0.344. Decorative marketplace motion is CSS-only; Framer Motion is no longer shipped.
 - Vitest 4.1.8, Playwright 1.60, ESLint 8.57.
 - npm with committed package-lock.json.
 
@@ -57,8 +58,8 @@ The backend schema matches the repository migrations and generated type shape. P
 
 ## Baseline
 
-Current repository gate: lint pass; strict TypeScript pass; 38/38 unit tests; production build pass with 37 generated routes; 19/19 Playwright tests. The shared shell/home/catalog, listing detail, authoring/authentication, profile/privacy, messaging/notifications, moderation review, and administrator dashboard retain their keyboard, naming/state, contrast, target, reduced-motion, identity-stability, and constrained-reflow contracts. Administrator data, reason, feedback, and pending state are user-ID-owned; stale loads/actions cannot cross an Auth change. Named local navigation, lists, table relationships, reason/error association, contextual actions, replacement focus, a keyboard-scrollable mobile table, safe timestamp parsing, 12px essential copy, measured controls, and long-content wrapping complete the remaining accessibility slice. Fixture-backed optimized-production admin presentation passes 1440x900, 1024x768, 390x844, and 360x800 with exact base/200% widths, clean visuals, and zero console/page/unexpected-request/HTTP/hydration/overlay failures; four exact Next RSC prefetch aborts are classified separately. The known wrong-project public configuration and missing service secret remain the explicit unmocked protected-route boundary, so fixture evidence is UI/runtime-only. No backend, Auth, administrator, report, database, schema, package, provider, or external mutation was submitted. Temporary screenshots, scripts, server output, and Playwright result files are removed after evidence capture. See QA_EVIDENCE.md.
+Current repository gate: lint pass; strict TypeScript pass; 39/39 unit tests; production build pass with 37 generated routes; manifest gzip budgets pass; 20/20 Playwright tests pass with four bounded workers. Shared App Router JavaScript is 102 kB first-load / 100.1 KiB gzip. Home, catalog, listing detail, and seller storefront are 189, 191, 192, and 189 kB first-load respectively, down from 225, 225, 231, and 223 kB at this slice's untouched baseline. Persisted Supabase covers use the Next image optimizer, responsive candidates, explicit size contracts, and lazy loading; browser-only blob/data previews retain raw images. The home editorial shell is server-rendered around two small data islands that share one request; decorative Framer Motion runtime is removed. Version-controlled gzip ceilings pass at 105 KiB shared, 195 KiB home/catalog/seller, and 200 KiB listing detail. Fixture-backed optimized production passes the four required viewports on home, catalog, listing detail, and seller storefront with exact base/200% widths, responsive optimized cover requests no wider than 640px, one home listings request, and zero console/page/unexpected-request/HTTP/hydration/overlay failures. Synthetic LCP and long-task diagnostics are healthy, but home cold-stream CLS is variable and no field RUM or representative database query plans exist, so PERF-01 remains Partial and P1-015 remains in progress. The known wrong-project public configuration and missing service secret remain the explicit unmocked protected-route boundary. No backend, Auth, listing, database, schema, provider, or external mutation was submitted. Temporary screenshots, scripts, server output, and Playwright result files are removed after evidence capture. See QA_EVIDENCE.md.
 
 ## Readiness
 
-Autonomous development is active. P0-001 through P0-004, P0-006, P1-003/P1-004/P1-007/P1-008/P1-009, and P1-011 are complete; P0-005 is the only remaining P0 and is externally blocked by the missing development secret. P1-006 is implemented and directly tested but its protected route gate shares that blocker. P1-010's remaining SQL/legal work is externally blocked. The next highest-priority unblocked item is P1-015 marketplace performance: establish measured production bundle/client-boundary/image baselines and budgets before targeted optimization. P1-016 remains ongoing coverage work, and exchange/shelf/search items remain decision- or dependency-bound. The product is not complete or launch-ready.
+Autonomous development is active. P0-001 through P0-004, P0-006, P1-003/P1-004/P1-007/P1-008/P1-009, and P1-011 are complete; P0-005 is the only remaining P0 and is externally blocked by the missing development secret. P1-006 is implemented and directly tested but its protected route gate shares that blocker. P1-010's remaining SQL/legal work is externally blocked. P1-015 now has pagination, smaller marketplace client boundaries, optimized cover delivery, measured bundle baselines, enforced gzip ceilings, and four-viewport runtime evidence. Its next highest-priority unblocked sub-slice is representative catalog/seller query-plan evidence plus production-capable Web Vitals/RUM instrumentation and field evidence; synthetic lab results alone do not close the gate. P1-016 remains ongoing coverage work, and exchange/shelf/search items remain decision- or dependency-bound. The product is not complete or launch-ready.

@@ -231,7 +231,7 @@ test("public catalog meets discovery target, contrast, and reflow contracts", as
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 800 });
-  await page.goto("/listings");
+  await page.goto("/listings", { waitUntil: "domcontentloaded" });
 
   await expect(page.locator("a button")).toHaveCount(0);
   const controls = [
@@ -290,6 +290,60 @@ test("public discovery honors reduced motion", async ({ page }) => {
       .filter((duration) => typeof duration === "number" && duration > 1),
   );
   expect(longAnimations).toHaveLength(0);
+});
+
+test("marketplace covers use responsive lazy optimizer candidates", async ({
+  page,
+}) => {
+  const listingId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa01";
+  const remoteCover =
+    "https://fixture.supabase.co/storage/v1/object/public/listing-images/reader/cover.jpg";
+  const onePixelPng = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+    "base64",
+  );
+
+  await page.route("**/api/listings**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: {
+          items: [
+            {
+              id: listingId,
+              title: "Optimallaşdırılmış kitab üz qabığı",
+              author: "Sınaq müəllifi",
+              description: "Performans sınağı",
+              price: 20,
+              category: "Fiction",
+              condition: "Like new",
+              city: "Baku",
+              status: "active",
+              sellerId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+              seller: {
+                id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+                name: "Sınaq satıcısı",
+              },
+              color: "#6a3327",
+              accent: "#e6cb8a",
+              images: [remoteCover],
+            },
+          ],
+          nextCursor: null,
+        },
+      }),
+    });
+  });
+  await page.route("**/_next/image**", async (route) => {
+    await route.fulfill({ contentType: "image/png", body: onePixelPng });
+  });
+
+  await page.goto("/listings", { waitUntil: "domcontentloaded" });
+  const cover = page.locator(".book-card img").first();
+  await expect(cover).toBeVisible();
+  await expect(cover).toHaveAttribute("loading", "lazy");
+  await expect(cover).toHaveAttribute("sizes", /42vw/);
+  await expect(cover).toHaveAttribute("srcset", /_next\/image\?url=/);
 });
 
 test("listing detail exposes accessible seller actions and constrained reflow", async ({

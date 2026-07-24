@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { CatalogFallback } from "@/components/catalog-fallback";
 import { Catalog } from "@/components/catalog";
 import { LISTING_SORTS } from "@/lib/listing-pagination";
 import {
@@ -40,13 +42,15 @@ export default async function ListingsPage({
     : "newest";
 
   return (
-    <Catalog
-      initialCategory={category}
-      initialQuery={params.query?.slice(0, 200)}
-      initialCity={city}
-      initialCondition={condition}
-      initialMaxPrice={maxPrice}
-      initialSort={sort}
-    />
+    <Suspense fallback={<CatalogFallback />}>
+      <Catalog
+        initialCategory={category}
+        initialQuery={params.query?.slice(0, 200)}
+        initialCity={city}
+        initialCondition={condition}
+        initialMaxPrice={maxPrice}
+        initialSort={sort}
+      />
+    </Suspense>
   );
 }
