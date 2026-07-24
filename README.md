@@ -38,6 +38,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+WEB_VITALS_ENABLED=false
 OPENAI_API_KEY=
 RESEND_API_KEY=
 CLOUDFLARE_ACCOUNT_ID=
@@ -45,6 +46,12 @@ CLOUDFLARE_API_TOKEN=
 ```
 
 Never expose `SUPABASE_SERVICE_ROLE_KEY` or other secret keys to client components.
+
+`WEB_VITALS_ENABLED=true` must be set at build and runtime only for an
+authorized production environment. It enables privacy-minimized LCP, CLS, and
+INP events for the public marketplace route groups; it does not enable product
+analytics or an external provider. See the launch checklist for the field
+evidence gate.
 
 ## Supabase
 

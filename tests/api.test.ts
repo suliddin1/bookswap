@@ -76,12 +76,22 @@ import {
   parseChatRoomDetail,
   parseChatRoomSummaries,
 } from "../lib/chat-client";
+import {
+  classifyMarketplaceVitalRoute,
+  createWebVitalPayload,
+  rateWebVital,
+} from "../lib/web-vitals";
+import { POST as reportWebVital } from "../app/api/vitals/route";
 
 const originalOpenAIKey = process.env.OPENAI_API_KEY;
+const originalWebVitalsEnabled = process.env.WEB_VITALS_ENABLED;
 
 afterEach(() => {
   if (originalOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
   else process.env.OPENAI_API_KEY = originalOpenAIKey;
+  if (originalWebVitalsEnabled === undefined)
+    delete process.env.WEB_VITALS_ENABLED;
+  else process.env.WEB_VITALS_ENABLED = originalWebVitalsEnabled;
   vi.unstubAllGlobals();
 });
 
@@ -1433,6 +1443,193 @@ describe("marketplace input validation", () => {
     expect(packageJson.scripts["test:performance"]).toBe(
       "node scripts/check-performance-budgets.mjs",
     );
+  });
+
+  it("keeps marketplace Web Vitals grouped and free of reader identifiers", () => {
+    const listingId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const sellerId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+
+    expect(classifyMarketplaceVitalRoute("/")).toBe("home");
+    expect(classifyMarketplaceVitalRoute("/listings")).toBe("catalog");
+    expect(classifyMarketplaceVitalRoute(`/listings/${listingId}`)).toBe(
+      "listing-detail",
+    );
+    expect(classifyMarketplaceVitalRoute(`/sellers/${sellerId}`)).toBe(
+      "seller-storefront",
+    );
+    expect(classifyMarketplaceVitalRoute("/messages")).toBeNull();
+    expect(classifyMarketplaceVitalRoute("/listings/new")).toBeNull();
+    expect(
+      classifyMarketplaceVitalRoute(`/listings/${listingId}/edit`),
+    ).toBeNull();
+
+    const payload = createWebVitalPayload({
+      name: "LCP",
+      value: 1_725.25,
+      navigationType: "navigate",
+      pathname: `/listings/${listingId}`,
+    });
+    expect(payload).toEqual({
+      version: 1,
+      name: "LCP",
+      value: 1_725.25,
+      route: "listing-detail",
+      navigationType: "navigate",
+    });
+    expect(JSON.stringify(payload)).not.toContain(listingId);
+    expect(JSON.stringify(payload)).not.toContain("id");
+    expect(JSON.stringify(payload)).not.toContain("url");
+    expect(
+      createWebVitalPayload({
+        name: "FID",
+        value: 10,
+        navigationType: "navigate",
+        pathname: "/",
+      }),
+    ).toBeNull();
+    expect(
+      createWebVitalPayload({
+        name: "CLS",
+        value: Number.POSITIVE_INFINITY,
+        navigationType: "navigate",
+        pathname: "/",
+      }),
+    ).toBeNull();
+    expect(
+      createWebVitalPayload({
+        name: "INP",
+        value: 120,
+        navigationType: "unknown",
+        pathname: "/listings",
+      }),
+    ).toBeNull();
+    expect(rateWebVital("LCP", 2_500)).toBe("good");
+    expect(rateWebVital("LCP", 2_501)).toBe("needs-improvement");
+    expect(rateWebVital("CLS", 0.251)).toBe("poor");
+    expect(rateWebVital("INP", 200)).toBe("good");
+  });
+
+  it("keeps the RUM endpoint opt-in, bounded, and same-origin", async () => {
+    delete process.env.WEB_VITALS_ENABLED;
+    const log = vi.spyOn(console, "info").mockImplementation(() => {});
+    const validBody = JSON.stringify({
+      version: 1,
+      name: "LCP",
+      value: 1_725.25,
+      route: "home",
+      navigationType: "navigate",
+    });
+    const request = (body: string, headers: Record<string, string> = {}) =>
+      new Request("http://localhost:3000/api/vitals", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "http://localhost:3000",
+          "sec-fetch-site": "same-origin",
+          "x-forwarded-for": "192.0.2.10",
+          ...headers,
+        },
+        body,
+      });
+
+    expect((await reportWebVital(request(validBody))).status).toBe(204);
+    expect(log).not.toHaveBeenCalled();
+
+    process.env.WEB_VITALS_ENABLED = "true";
+    expect((await reportWebVital(request(validBody))).status).toBe(204);
+    expect(log).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(log.mock.calls[0][0])).toEqual({
+      event: "bookswap.web_vital",
+      version: 1,
+      name: "LCP",
+      value: 1_725.25,
+      route: "home",
+      navigationType: "navigate",
+      rating: "good",
+    });
+
+    const crossOrigin = request(validBody, {
+      origin: "https://tracker.example",
+      "sec-fetch-site": "cross-site",
+      "x-forwarded-for": "192.0.2.11",
+    });
+    expect((await reportWebVital(crossOrigin)).status).toBe(403);
+    const proxiedSameOrigin = new Request(
+      "http://internal-runtime:3000/api/vitals",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "https://books.example",
+          host: "internal-runtime:3000",
+          "sec-fetch-site": "same-origin",
+          "x-forwarded-host": "books.example",
+          "x-forwarded-proto": "https",
+          "x-forwarded-for": "192.0.2.14",
+        },
+        body: validBody,
+      },
+    );
+    expect((await reportWebVital(proxiedSameOrigin)).status).toBe(204);
+    expect(
+      (
+        await reportWebVital(
+          request(
+            JSON.stringify({
+              ...JSON.parse(validBody),
+              id: "reader-page-load-id",
+            }),
+            { "x-forwarded-for": "192.0.2.12" },
+          ),
+        )
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await reportWebVital(
+          request("x".repeat(1_025), {
+            "content-type": "application/json",
+            "x-forwarded-for": "192.0.2.13",
+          }),
+        )
+      ).status,
+    ).toBe(413);
+    expect(log).toHaveBeenCalledTimes(2);
+    log.mockRestore();
+  });
+
+  it("keeps RUM provider-neutral and production-gated at the shell", () => {
+    const component = readFileSync(
+      new URL("../components/web-vitals-reporter.tsx", import.meta.url),
+      "utf8",
+    );
+    const route = readFileSync(
+      new URL("../app/api/vitals/route.ts", import.meta.url),
+      "utf8",
+    );
+    const layout = readFileSync(
+      new URL("../app/layout.tsx", import.meta.url),
+      "utf8",
+    );
+    const packageJson = JSON.parse(
+      readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+    );
+
+    expect(component).toContain('from "next/web-vitals"');
+    expect(component).toContain("navigator.sendBeacon");
+    expect(component).toContain("keepalive: true");
+    expect(component).toContain("window.location.pathname");
+    expect(component).not.toContain("metric.id");
+    expect(component).not.toContain("metric.entries");
+    expect(component).not.toContain("location.search");
+    expect(route).toContain("MAX_BODY_BYTES = 1_024");
+    expect(route).toContain('assertRateLimit(request, "web-vitals"');
+    expect(route).toContain('event: "bookswap.web_vital"');
+    expect(layout).toContain(
+      'enabled={process.env.WEB_VITALS_ENABLED === "true"}',
+    );
+    expect(packageJson.dependencies["@vercel/analytics"]).toBeUndefined();
+    expect(packageJson.dependencies["@vercel/speed-insights"]).toBeUndefined();
   });
 
   it("keeps deep marketplace cursors indexable and query plans replayable", () => {

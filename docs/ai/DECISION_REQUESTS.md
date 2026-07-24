@@ -56,11 +56,15 @@ Status: Required before launch.
 
 Choose approved durable rate limiting, error tracking, logs/retention, uptime monitoring, alert destination, moderation provider, and incident owner. The current in-memory limiter and optional moderation integration are not production evidence.
 
+Performance update (2026-07-24): application-owned Web Vitals instrumentation can now emit identity-free `bookswap.web_vital` structured logs for four public marketplace route groups when explicitly enabled. This does not choose a hosting/log provider, retention period, dashboard, alert owner, or durable rate limit. Before setting `WEB_VITALS_ENABLED=true` in production, name the authorized deployment and log/metrics owner, approve retention/access, and confirm how mobile/desktop route-level p75 distributions will be queried.
+
 ## DR-009 — Product analytics and privacy
 
 Status: Required only if analytics are desired.
 
 Choose whether to collect product analytics, lawful basis/consent model, permitted events, retention, IP/device handling, and provider. Default without a decision: no non-essential tracking.
+
+The current Web Vitals contract is operational performance telemetry rather than product analytics: it excludes page-load IDs, raw URLs/queries, private routes, referrers, users/sessions, user content, device/network details, and geography. It must not be expanded into pageview, conversion, behavior, or cross-page tracking without resolving this decision.
 
 ## DR-010 — Leaked-password protection and Auth plan
 

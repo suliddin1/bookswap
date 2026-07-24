@@ -3,6 +3,7 @@ import { Fraunces, Manrope } from "next/font/google";
 import "@/app/globals.css";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { WebVitalsReporter } from "@/components/web-vitals-reporter";
 import { AZ_COPY, DOCUMENT_LANGUAGE } from "@/lib/i18n";
 
 const manrope = Manrope({
@@ -60,6 +61,9 @@ export default function RootLayout({
           {children}
         </main>
         <SiteFooter />
+        <WebVitalsReporter
+          enabled={process.env.WEB_VITALS_ENABLED === "true"}
+        />
       </body>
     </html>
   );
