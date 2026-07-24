@@ -12,17 +12,11 @@ import {
   formatLoadedBooks,
   formatReviewSummary,
 } from "@/lib/i18n";
+import {
+  parseSellerResponse,
+  type PublicSeller,
+} from "@/lib/marketplace-responses";
 import type { Listing } from "@/lib/types";
-
-type PublicSeller = {
-  id: string;
-  name: string;
-  city: string | null;
-  createdAt: string;
-  initials: string;
-  rating: number | null;
-  reviewCount: number;
-};
 
 export function SellerProfile({ id }: { id: string }) {
   const [seller, setSeller] = useState<PublicSeller | null>(null);
@@ -47,10 +41,12 @@ export function SellerProfile({ id }: { id: string }) {
       .then(async (response) => {
         const body = await response.json();
         if (!response.ok) throw new Error(AZ_COPY.seller.unavailable);
+        const page = parseSellerResponse(body);
+        if (!page) throw new Error(AZ_COPY.seller.unavailable);
         if (version !== requestVersion.current) return;
-        setSeller(body.data.seller);
-        setItems(body.data.items ?? []);
-        setNextCursor(body.data.nextCursor ?? null);
+        setSeller(page.seller);
+        setItems(page.items);
+        setNextCursor(page.nextCursor);
         setError("");
       })
       .catch((reason) => {
@@ -75,17 +71,17 @@ export function SellerProfile({ id }: { id: string }) {
       );
       const body = await response.json();
       if (!response.ok) throw new Error(AZ_COPY.seller.loadMoreUnavailable);
+      const page = parseSellerResponse(body);
+      if (!page) throw new Error(AZ_COPY.seller.loadMoreUnavailable);
       if (version !== requestVersion.current) return;
       setItems((current) => {
         const known = new Set(current.map((listing) => listing.id));
         return [
           ...current,
-          ...(body.data.items ?? []).filter(
-            (listing: Listing) => !known.has(listing.id),
-          ),
+          ...page.items.filter((listing: Listing) => !known.has(listing.id)),
         ];
       });
-      setNextCursor(body.data.nextCursor ?? null);
+      setNextCursor(page.nextCursor);
       setError("");
     } catch {
       if (version === requestVersion.current)

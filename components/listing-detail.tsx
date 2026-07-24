@@ -27,16 +27,12 @@ import {
   formatStars,
   localizeApiError,
 } from "@/lib/i18n";
+import {
+  parseListingDetailResponse,
+  type ListingReview,
+} from "@/lib/marketplace-responses";
 import type { Listing } from "@/lib/types";
 import type { FormEvent } from "react";
-
-type ListingReview = {
-  id: string;
-  rating: number;
-  comment: string;
-  created_at: string;
-  author?: { name?: string };
-};
 
 export function ListingDetail({ id }: { id: string }) {
   const [listing, setListing] = useState<
@@ -61,7 +57,10 @@ export function ListingDetail({ id }: { id: string }) {
         const body = await response.json();
         if (!response.ok)
           throw new Error(AZ_COPY.listingDetail.unavailableBody);
-        setListing(body.data);
+        const parsedListing = parseListingDetailResponse(body);
+        if (!parsedListing)
+          throw new Error(AZ_COPY.listingDetail.unavailableBody);
+        setListing(parsedListing);
       })
       .catch((reason) => {
         if (reason.name !== "AbortError")

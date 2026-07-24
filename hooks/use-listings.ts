@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AZ_COPY } from "@/lib/i18n";
+import { parseListingPageResponse } from "@/lib/marketplace-responses";
 import type { Listing } from "@/lib/types";
 
 export function useListings(
@@ -54,9 +55,11 @@ export function useListings(
       .then(async (response) => {
         const body = await response.json();
         if (!response.ok) throw new Error(AZ_COPY.global.listingsUnavailable);
+        const page = parseListingPageResponse(body);
+        if (!page) throw new Error(AZ_COPY.global.listingsUnavailable);
         if (version !== requestVersion.current) return;
-        setData(body.data?.items ?? []);
-        setNextCursor(body.data?.nextCursor ?? null);
+        setData(page.items);
+        setNextCursor(page.nextCursor);
         setError("");
       })
       .catch((reason) => {
@@ -78,17 +81,17 @@ export function useListings(
       const response = await fetch(`/api/listings?${buildParams(nextCursor)}`);
       const body = await response.json();
       if (!response.ok) throw new Error(AZ_COPY.global.loadMoreUnavailable);
+      const page = parseListingPageResponse(body);
+      if (!page) throw new Error(AZ_COPY.global.loadMoreUnavailable);
       if (version !== requestVersion.current) return;
       setData((current) => {
         const known = new Set(current.map((listing) => listing.id));
         return [
           ...current,
-          ...(body.data?.items ?? []).filter(
-            (listing: Listing) => !known.has(listing.id),
-          ),
+          ...page.items.filter((listing: Listing) => !known.has(listing.id)),
         ];
       });
-      setNextCursor(body.data?.nextCursor ?? null);
+      setNextCursor(page.nextCursor);
       setError("");
     } catch (reason) {
       if (version === requestVersion.current)

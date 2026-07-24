@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AZ_COPY } from "@/lib/i18n";
+import { parseListingPageResponse } from "@/lib/marketplace-responses";
 import type { Listing } from "@/lib/types";
 
 const cacheLifetimeMs = 30_000;
@@ -21,7 +22,9 @@ function loadHomeListings() {
     .then(async (response) => {
       const body = await response.json();
       if (!response.ok) throw new Error(AZ_COPY.global.listingsUnavailable);
-      const items = Array.isArray(body.data?.items) ? body.data.items : [];
+      const page = parseListingPageResponse(body);
+      if (!page) throw new Error(AZ_COPY.global.listingsUnavailable);
+      const items = page.items;
       cache = { items, storedAt: Date.now() };
       return items;
     })

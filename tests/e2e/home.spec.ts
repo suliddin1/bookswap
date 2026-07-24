@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { AZ_COPY } from "../../lib/i18n";
 
 async function horizontalOverflow(page: Page) {
   return page.locator("body *").evaluateAll((elements) =>
@@ -290,6 +291,127 @@ test("public discovery honors reduced motion", async ({ page }) => {
       .filter((duration) => typeof duration === "number" && duration > 1),
   );
   expect(longAnimations).toHaveLength(0);
+});
+
+test("public marketplace failures stay localized and runtime safe", async ({
+  page,
+}) => {
+  const listingId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const sellerId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  const apiRequests: string[] = [];
+  let scenario: "home" | "catalog" | "detail" | "seller" = "home";
+
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (
+      message.type() === "error" &&
+      !message.text().includes("Failed to load resource")
+    )
+      consoleErrors.push(message.text());
+  });
+  await page.route("**/api/listings**", async (route) => {
+    const url = new URL(route.request().url());
+    apiRequests.push(`${scenario}:${url.pathname}`);
+    if (scenario === "home") {
+      await route.fulfill({
+        status: 503,
+        contentType: "text/plain",
+        body: "provider stack detail must stay private",
+      });
+      return;
+    }
+    if (scenario === "catalog") {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ data: { items: {}, nextCursor: null } }),
+      });
+      return;
+    }
+    if (url.pathname === `/api/listings/${listingId}`) {
+      await route.fulfill({
+        contentType: "application/json",
+        body: "{invalid-json",
+      });
+      return;
+    }
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ data: { items: [], nextCursor: null } }),
+    });
+  });
+  await page.route("**/api/sellers/**", async (route) => {
+    apiRequests.push(`${scenario}:${new URL(route.request().url()).pathname}`);
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: { seller: { id: sellerId }, items: [], nextCursor: null },
+      }),
+    });
+  });
+
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: AZ_COPY.home.featuredEmptyTitle }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(AZ_COPY.global.listingsUnavailable, { exact: true }),
+  ).toBeVisible();
+
+  scenario = "catalog";
+  await page.goto("/listings");
+  await expect(
+    page.getByRole("heading", { name: AZ_COPY.catalog.emptyTitle }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(AZ_COPY.global.listingsUnavailable, { exact: true }),
+  ).toBeVisible();
+
+  scenario = "detail";
+  await page.goto(`/listings/${listingId}`);
+  await expect(
+    page.getByRole("heading", {
+      name: AZ_COPY.listingDetail.unavailableTitle,
+      level: 1,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(AZ_COPY.listingDetail.unavailableBody, { exact: true }),
+  ).toBeVisible();
+
+  scenario = "seller";
+  await page.goto(`/sellers/${sellerId}`);
+  await expect(
+    page.getByRole("heading", {
+      name: AZ_COPY.seller.unavailableTitle,
+      level: 1,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(AZ_COPY.seller.unavailable, { exact: true }),
+  ).toBeVisible();
+
+  const bodyText = await page.locator("body").innerText();
+  expect(bodyText).not.toContain("provider stack detail");
+  expect(bodyText).not.toContain("invalid-json");
+  expect(bodyText).not.toContain("Unexpected token");
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+  expect(apiRequests.sort()).toEqual(
+    [
+      "home:/api/listings",
+      "catalog:/api/listings",
+      `detail:/api/listings/${listingId}`,
+      "detail:/api/listings",
+      `seller:/api/sellers/${sellerId}`,
+    ].sort(),
+  );
+
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
 });
 
 test("marketplace covers use responsive lazy optimizer candidates", async ({

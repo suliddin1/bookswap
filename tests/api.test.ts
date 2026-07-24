@@ -81,6 +81,11 @@ import {
   createWebVitalPayload,
   rateWebVital,
 } from "../lib/web-vitals";
+import {
+  parseListingDetailResponse,
+  parseListingPageResponse,
+  parseSellerResponse,
+} from "../lib/marketplace-responses";
 import { POST as reportWebVital } from "../app/api/vitals/route";
 
 const originalOpenAIKey = process.env.OPENAI_API_KEY;
@@ -96,6 +101,82 @@ afterEach(() => {
 });
 
 describe("marketplace input validation", () => {
+  it("rejects malformed public marketplace success responses", () => {
+    const listing = {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      title: "Sınaq kitabı",
+      author: "Sınaq müəllifi",
+      description: "Etibarlı cavab sınağı",
+      price: 12.5,
+      images: ["/icon.svg"],
+      category: "Fiction",
+      condition: "Very good",
+      city: "Baku",
+      status: "active",
+      sellerId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      seller: {
+        id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        name: "Sınaq satıcısı",
+      },
+    };
+    const page = {
+      data: { items: [listing], nextCursor: "opaque-cursor" },
+    };
+    const detail = {
+      data: {
+        ...listing,
+        reviews: [
+          {
+            id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+            rating: 5,
+            comment: "Əla kitabdır.",
+            created_at: "2026-07-24T10:00:00.000Z",
+            author: { name: "Oxucu" },
+          },
+        ],
+      },
+    };
+    const seller = {
+      data: {
+        seller: {
+          id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          name: "Sınaq satıcısı",
+          city: "Baku",
+          createdAt: "2026-07-24T10:00:00.000Z",
+          initials: "SS",
+          rating: 5,
+          reviewCount: 1,
+        },
+        items: [listing],
+        nextCursor: null,
+      },
+    };
+
+    expect(parseListingPageResponse(page)).toEqual(page.data);
+    expect(parseListingDetailResponse(detail)).toEqual(detail.data);
+    expect(parseSellerResponse(seller)).toEqual(seller.data);
+
+    expect(
+      parseListingPageResponse({ data: { items: {}, nextCursor: null } }),
+    ).toBeNull();
+    expect(
+      parseListingDetailResponse({
+        data: {
+          ...detail.data,
+          reviews: [{ ...detail.data.reviews[0], rating: 9 }],
+        },
+      }),
+    ).toBeNull();
+    expect(
+      parseSellerResponse({
+        data: {
+          ...seller.data,
+          seller: { ...seller.data.seller, createdAt: "not-a-date" },
+        },
+      }),
+    ).toBeNull();
+  });
+
   it("uses one Azerbaijani locale contract for public marketplace labels", () => {
     expect(DOCUMENT_LANGUAGE).toBe("az");
     expect(APP_LOCALE).toBe("az-AZ");
