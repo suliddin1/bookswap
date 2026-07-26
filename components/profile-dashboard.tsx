@@ -18,6 +18,7 @@ import { BookCard } from "@/components/book-card";
 import { EmptyState } from "@/components/empty-state";
 import { useAuth } from "@/hooks/use-auth";
 import {
+  parseListingDeletionResponse,
   parseListingMutationResponse,
   parseProfileDashboardResponse,
   parseProfileResponse,
@@ -52,10 +53,69 @@ export function ProfileDashboard() {
     "name" | "city" | null
   >(null);
   const [busyListingId, setBusyListingId] = useState<string | null>(null);
+  const userIdRef = useRef(userId);
+  const dataRef = useRef(data);
+  const dataOwnerIdRef = useRef(dataOwnerId);
+  const listingMutationSequenceRef = useRef(0);
+  const activeListingMutationRef = useRef<{
+    requestId: number;
+    ownerId: string;
+    listingId: string;
+  } | null>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const loadErrorRef = useRef<HTMLDivElement>(null);
   const feedbackRef = useRef<HTMLParagraphElement>(null);
   const profileSavedRef = useRef<HTMLParagraphElement>(null);
+  userIdRef.current = userId;
+  dataRef.current = data;
+  dataOwnerIdRef.current = dataOwnerId;
+
+  function beginListingMutation(listingId: string) {
+    const ownerId = userId;
+    if (
+      !ownerId ||
+      userIdRef.current !== ownerId ||
+      dataOwnerIdRef.current !== ownerId ||
+      !dataRef.current?.listings.some((listing) => listing.id === listingId) ||
+      activeListingMutationRef.current
+    )
+      return null;
+    const context = {
+      requestId: ++listingMutationSequenceRef.current,
+      ownerId,
+      listingId,
+    };
+    activeListingMutationRef.current = context;
+    setBusyListingId(listingId);
+    setError("");
+    setNotice("");
+    return context;
+  }
+
+  function isCurrentListingMutation(context: {
+    requestId: number;
+    ownerId: string;
+    listingId: string;
+  }) {
+    const activeMutation = activeListingMutationRef.current;
+    return (
+      activeMutation?.requestId === context.requestId &&
+      activeMutation.ownerId === context.ownerId &&
+      activeMutation.listingId === context.listingId &&
+      userIdRef.current === context.ownerId &&
+      dataOwnerIdRef.current === context.ownerId
+    );
+  }
+
+  function finishListingMutation(context: {
+    requestId: number;
+    ownerId: string;
+    listingId: string;
+  }) {
+    if (!isCurrentListingMutation(context)) return;
+    activeListingMutationRef.current = null;
+    setBusyListingId(null);
+  }
 
   function selectTab(id: TabId) {
     setTab(id);
@@ -83,10 +143,10 @@ export function ProfileDashboard() {
   }
 
   async function removeListing(id: string) {
+    if (activeListingMutationRef.current) return;
     if (!window.confirm(AZ_COPY.profile.deleteConfirm)) return;
-    setBusyListingId(id);
-    setError("");
-    setNotice("");
+    const context = beginListingMutation(id);
+    if (!context) return;
     try {
       const response = await authFetch(`/api/listings/${id}`, {
         method: "DELETE",
@@ -96,6 +156,13 @@ export function ProfileDashboard() {
         throw new Error(
           localizeApiError(body.code, AZ_COPY.profile.deleteFailed),
         );
+      const deletion = parseListingDeletionResponse(body, id);
+      if (!deletion) throw new Error(AZ_COPY.profile.deleteFailed);
+      if (
+        !isCurrentListingMutation(context) ||
+        !dataRef.current?.listings.some((item) => item.id === id)
+      )
+        return;
       setData((current) =>
         current
           ? {
@@ -105,21 +172,21 @@ export function ProfileDashboard() {
           : current,
       );
       setNotice(
-        body.imageCleanupPending
+        deletion.imageCleanupPending
           ? AZ_COPY.profile.deleteCleanupPending
           : AZ_COPY.profile.deleteComplete,
       );
     } catch {
-      setError(AZ_COPY.profile.deleteFailed);
+      if (isCurrentListingMutation(context))
+        setError(AZ_COPY.profile.deleteFailed);
     } finally {
-      setBusyListingId(null);
+      finishListingMutation(context);
     }
   }
 
   async function setListingStatus(id: string, status: "active" | "sold") {
-    setBusyListingId(id);
-    setError("");
-    setNotice("");
+    const context = beginListingMutation(id);
+    if (!context) return;
     try {
       const response = await authFetch(`/api/listings/${id}`, {
         method: "PATCH",
@@ -131,23 +198,33 @@ export function ProfileDashboard() {
         throw new Error(
           localizeApiError(body.code, AZ_COPY.profile.statusFailed),
         );
-      const parsedListing = parseListingMutationResponse(body);
-      if (!parsedListing) throw new Error(AZ_COPY.profile.statusFailed);
+      const mutation = parseListingMutationResponse(body, {
+        listingId: id,
+        ownerId: context.ownerId,
+        status,
+      });
+      if (!mutation) throw new Error(AZ_COPY.profile.statusFailed);
+      if (
+        !isCurrentListingMutation(context) ||
+        !dataRef.current?.listings.some((item) => item.id === id)
+      )
+        return;
       setData((current) =>
         current
           ? {
               ...current,
               listings: current.listings.map((item) =>
-                item.id === id ? parsedListing : item,
+                item.id === id ? mutation.listing : item,
               ),
             }
           : current,
       );
       setNotice(AZ_COPY.profile.statusUpdated);
     } catch {
-      setError(AZ_COPY.profile.statusFailed);
+      if (isCurrentListingMutation(context))
+        setError(AZ_COPY.profile.statusFailed);
     } finally {
-      setBusyListingId(null);
+      finishListingMutation(context);
     }
   }
 
@@ -208,6 +285,9 @@ export function ProfileDashboard() {
   }
 
   useEffect(() => {
+    listingMutationSequenceRef.current += 1;
+    activeListingMutationRef.current = null;
+    setBusyListingId(null);
     if (!userId) {
       setData(null);
       setDataOwnerId(null);
@@ -326,6 +406,7 @@ export function ProfileDashboard() {
   const sold = dashboardData.listings.filter(
     (item) => item.status === "sold",
   ).length;
+  const listingMutationBusy = busyListingId !== null;
 
   return (
     <div className="container-shell py-10 md:py-14">
@@ -486,11 +567,11 @@ export function ProfileDashboard() {
                             {nextStatus ? (
                               <button
                                 type="button"
-                                disabled={listingBusy}
+                                aria-disabled={listingMutationBusy}
                                 onClick={() =>
                                   setListingStatus(listing.id, nextStatus)
                                 }
-                                className="btn-secondary !min-h-11 min-w-0 flex-[1_1_9rem] !border-[#95866f] !px-3 !text-xs disabled:opacity-50"
+                                className="btn-secondary !min-h-11 min-w-0 flex-[1_1_9rem] !border-[#95866f] !px-3 !text-xs aria-disabled:opacity-50"
                               >
                                 <Check size={12} /> {statusAction}
                               </button>
@@ -501,9 +582,9 @@ export function ProfileDashboard() {
                             )}
                             <button
                               type="button"
-                              disabled={listingBusy}
+                              aria-disabled={listingMutationBusy}
                               onClick={() => removeListing(listing.id)}
-                              className="grid h-11 w-11 shrink-0 place-items-center rounded border border-red-700 bg-red-50 text-red-700 disabled:opacity-50"
+                              className="grid h-11 w-11 shrink-0 place-items-center rounded border border-red-700 bg-red-50 text-red-700 aria-disabled:opacity-50"
                               aria-label={`${AZ_COPY.profile.deleteListing}: ${listing.title}`}
                             >
                               <Trash2 size={13} />

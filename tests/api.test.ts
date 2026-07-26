@@ -88,6 +88,7 @@ import {
 } from "../lib/marketplace-responses";
 import {
   parseFavoriteListingsResponse,
+  parseListingDeletionResponse,
   parseListingMutationResponse,
   parsePrivacyRequestListResponse,
   parsePrivacyRequestResponse,
@@ -400,6 +401,7 @@ describe("marketplace input validation", () => {
       condition: "Good",
       city: "Baku",
       status: "active",
+      sellerId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
       seller: {
         id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         name: "Sınaq oxucusu",
@@ -422,7 +424,26 @@ describe("marketplace input validation", () => {
     expect(parseFavoriteListingsResponse({ data: [listing] })).toEqual([
       listing,
     ]);
-    expect(parseListingMutationResponse({ data: listing })).toEqual(listing);
+    expect(
+      parseListingMutationResponse(
+        { data: listing, imageCleanupPending: false },
+        {
+          listingId: listing.id,
+          ownerId: listing.sellerId,
+          status: "active",
+        },
+      ),
+    ).toEqual({ listing, imageCleanupPending: false });
+    expect(
+      parseListingDeletionResponse(
+        {
+          listingId: listing.id,
+          deleted: true,
+          imageCleanupPending: false,
+        },
+        listing.id,
+      ),
+    ).toEqual({ imageCleanupPending: false });
     expect(parsePrivacyRequestListResponse({ data: [privacyItem] })).toEqual([
       privacyItem,
     ]);
@@ -449,6 +470,82 @@ describe("marketplace input validation", () => {
         data: { ...privacyItem, status: "provider-status" },
       }),
     ).toBeNull();
+    const mutationExpectation = {
+      listingId: listing.id,
+      ownerId: listing.sellerId,
+      status: "active" as const,
+    };
+    expect(
+      parseListingMutationResponse(
+        {
+          data: { ...listing, id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd" },
+          imageCleanupPending: false,
+        },
+        mutationExpectation,
+      ),
+    ).toBeNull();
+    expect(
+      parseListingMutationResponse(
+        {
+          data: { ...listing, status: "sold" },
+          imageCleanupPending: false,
+        },
+        mutationExpectation,
+      ),
+    ).toBeNull();
+    expect(
+      parseListingMutationResponse(
+        {
+          data: {
+            ...listing,
+            sellerId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          },
+          imageCleanupPending: false,
+        },
+        mutationExpectation,
+      ),
+    ).toBeNull();
+    expect(
+      parseListingMutationResponse(
+        { data: listing, imageCleanupPending: "false" },
+        mutationExpectation,
+      ),
+    ).toBeNull();
+    expect(
+      parseListingDeletionResponse(
+        {
+          listingId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+          deleted: true,
+          imageCleanupPending: false,
+        },
+        listing.id,
+      ),
+    ).toBeNull();
+    expect(
+      parseListingDeletionResponse(
+        {
+          listingId: listing.id,
+          deleted: "true",
+          imageCleanupPending: false,
+        },
+        listing.id,
+      ),
+    ).toBeNull();
+    expect(
+      parseListingDeletionResponse(
+        {
+          listingId: listing.id,
+          deleted: true,
+          imageCleanupPending: "false",
+        },
+        listing.id,
+      ),
+    ).toBeNull();
+    const listingRoute = readFileSync(
+      new URL("../app/api/listings/[id]/route.ts", import.meta.url),
+      "utf8",
+    );
+    expect(listingRoute).toContain("listingId: id");
   });
 
   it("rejects malformed listing authoring and image success responses", async () => {

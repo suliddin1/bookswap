@@ -120,6 +120,38 @@ export function parseFavoriteListingsResponse(
   return isRecord(value) ? parseListingArray(value.data) : null;
 }
 
-export function parseListingMutationResponse(value: unknown): Listing | null {
-  return isRecord(value) ? parseListing(value.data) : null;
+export function parseListingMutationResponse(
+  value: unknown,
+  expected: {
+    listingId: string;
+    ownerId: string;
+    status: "active" | "sold";
+  },
+): { listing: Listing; imageCleanupPending: boolean } | null {
+  if (!isRecord(value) || typeof value.imageCleanupPending !== "boolean")
+    return null;
+  const listing = parseListing(value.data);
+  if (
+    !listing ||
+    listing.id !== expected.listingId ||
+    listing.status !== expected.status ||
+    listing.sellerId !== expected.ownerId ||
+    listing.seller.id !== expected.ownerId
+  )
+    return null;
+  return { listing, imageCleanupPending: value.imageCleanupPending };
+}
+
+export function parseListingDeletionResponse(
+  value: unknown,
+  expectedListingId: string,
+): { imageCleanupPending: boolean } | null {
+  if (
+    !isRecord(value) ||
+    value.listingId !== expectedListingId ||
+    value.deleted !== true ||
+    typeof value.imageCleanupPending !== "boolean"
+  )
+    return null;
+  return { imageCleanupPending: value.imageCleanupPending };
 }

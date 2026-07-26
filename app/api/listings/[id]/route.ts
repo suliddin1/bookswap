@@ -192,6 +192,7 @@ export async function DELETE(
       );
     const cleanup = await drainListingImageCleanupJobs(supabase, user.id, id);
     return Response.json({
+      listingId: id,
       deleted: true,
       imageCleanupPending: cleanup.pending > 0,
     });

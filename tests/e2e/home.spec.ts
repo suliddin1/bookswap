@@ -1210,6 +1210,119 @@ test("profile and privacy controls expose keyboard focus and 200% reflow", async
   expect(await horizontalOverflow(page)).toEqual([]);
 });
 
+test("profile listing mutations reject cross-resource and malformed acknowledgements", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await installAuthenticatedUiFixture(page);
+  const ownerId = "11111111-1111-4111-8111-111111111111";
+  const listingId = "22222222-2222-4222-8222-222222222222";
+  const wrongListingId = "33333333-3333-4333-8333-333333333333";
+  const listing = {
+    id: listingId,
+    title: "Kabinet sərhədi kitabı",
+    author: "Sınaq müəllifi",
+    description: "Profil elan əməliyyatı üçün etibarlı sınaq təsviri.",
+    price: 17.5,
+    images: ["/icon.svg"],
+    category: "Fiction",
+    condition: "Very good",
+    city: "Baku",
+    status: "active",
+    sellerId: ownerId,
+    seller: { id: ownerId, name: "Sınaq oxucusu" },
+  };
+  const statusRequests: string[] = [];
+  const deleteRequests: string[] = [];
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  let releaseStatus!: () => void;
+  const statusGate = new Promise<void>((resolve) => {
+    releaseStatus = resolve;
+  });
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  page.on("dialog", (dialog) => void dialog.accept());
+  await page.route("**/api/profile", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: {
+          profile: { name: "Sınaq oxucusu", city: "Baku", phone: null },
+          favoriteCount: 0,
+          listings: [listing],
+        },
+      }),
+    });
+  });
+  await page.route(`**/api/listings/${listingId}`, async (route) => {
+    const method = route.request().method();
+    if (method === "PATCH") {
+      statusRequests.push(route.request().postData() ?? "");
+      await statusGate;
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: { ...listing, id: wrongListingId, status: "sold" },
+          imageCleanupPending: false,
+          diagnostic: "private status provider detail",
+        }),
+      });
+      return;
+    }
+    if (method === "DELETE") {
+      deleteRequests.push(route.request().url());
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          listingId,
+          deleted: true,
+          imageCleanupPending: "false",
+          diagnostic: "private cleanup provider detail",
+        }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.goto("/profile");
+  await expect(page.getByText(listing.title, { exact: true })).toBeVisible();
+  const statusButton = page.getByRole("button", { name: "Satılıb işarələ" });
+  await statusButton.click();
+  await expect(statusButton).toBeFocused();
+  await expect(statusButton).toHaveAttribute("aria-disabled", "true");
+  await statusButton.evaluate((element) => (element as HTMLElement).click());
+  await expect.poll(() => statusRequests.length).toBe(1);
+  releaseStatus();
+  const feedback = page.locator("#profile-dashboard-feedback");
+  await expect(feedback).toHaveText(
+    "Elanın vəziyyətini dəyişmək mümkün olmadı.",
+  );
+  await expect(feedback).toBeFocused();
+  expect(statusRequests).toEqual([JSON.stringify({ status: "sold" })]);
+  await expect(statusButton).toHaveAttribute("aria-disabled", "false");
+  await expect(page.getByText(listing.title, { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/profile$/);
+
+  await page
+    .getByRole("button", { name: `Elanı sil: ${listing.title}` })
+    .click();
+  await expect(feedback).toHaveText("Elanı silmək mümkün olmadı.");
+  await expect(feedback).toBeFocused();
+  expect(deleteRequests).toHaveLength(1);
+  await expect(page.getByText(listing.title, { exact: true })).toBeVisible();
+  await expect(page.getByText(/təmizləmə növbəsindədir/i)).toHaveCount(0);
+  await expect(page.getByText(/private .* provider detail/i)).toHaveCount(0);
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
 test("private account failures reject malformed success responses", async ({
   page,
 }) => {
