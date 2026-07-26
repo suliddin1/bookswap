@@ -245,6 +245,8 @@ export const AZ_COPY = {
     author: "Müəllif:",
     save: "Kitabı seçilmişlərə əlavə et",
     remove: "Kitabı seçilmişlərdən çıxar",
+    favoriteStateUnavailable: "Seçilmiş vəziyyətini yoxlamaq mümkün olmadı.",
+    favoriteFailed: "Seçilmişləri yeniləmək mümkün olmadı.",
     condition: "Vəziyyəti",
     category: "Kateqoriya",
     location: "Məkan",

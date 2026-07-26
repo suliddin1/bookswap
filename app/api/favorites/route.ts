@@ -34,7 +34,10 @@ export async function GET(request: Request) {
         .maybeSingle();
       if (error) throw error;
       return Response.json({
-        data: { saved: isFavoriteListingVisible(data?.listing) },
+        data: {
+          listingId: input.listingId,
+          saved: isFavoriteListingVisible(data?.listing),
+        },
       });
     }
     const { data, error } = await supabase
@@ -77,7 +80,7 @@ export async function POST(request: Request) {
       .upsert({ user_id: user.id, listing_id: listingId });
     if (error?.code === "23514") throw listingUnavailable();
     if (error) throw error;
-    return Response.json({ saved: true });
+    return Response.json({ data: { listingId, saved: true } });
   } catch (error) {
     return apiError(error, 500);
   }
@@ -94,7 +97,7 @@ export async function DELETE(request: Request) {
       .eq("user_id", user.id)
       .eq("listing_id", listingId);
     if (error) throw error;
-    return Response.json({ saved: false });
+    return Response.json({ data: { listingId, saved: false } });
   } catch (error) {
     return apiError(error, 500);
   }

@@ -8,11 +8,12 @@ export async function POST(request: Request) {
     const user = await requireUser(request);
     const input = reportInput.parse(await request.json());
     const supabase = requireSupabaseAdmin();
-    const { data: listing } = await supabase
+    const { data: listing, error: listingError } = await supabase
       .from("listings")
       .select("id,seller_id")
       .eq("id", input.listingId)
       .maybeSingle();
+    if (listingError) throw listingError;
     if (!listing)
       throw new ApiError("Elan tapılmadı.", 404, "LISTING_NOT_FOUND");
     if (listing.seller_id === user.id)
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
         listing_id: input.listingId,
         reason: input.reason,
       })
-      .select("id,status,created_at")
+      .select("id,reporter_id,listing_id,status,created_at")
       .single();
     if (error?.code === "23505")
       throw new ApiError(
@@ -39,6 +40,6 @@ export async function POST(request: Request) {
     if (error) throw error;
     return Response.json({ data }, { status: 201 });
   } catch (error) {
-    return apiError(error, 400);
+    return apiError(error, 500);
   }
 }

@@ -1,31 +1,11 @@
 import { parseListing } from "./marketplace-responses";
 import type { Listing } from "./types";
+import { isResponseRecord as isRecord } from "./client-responses";
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
+export { getResponseErrorCode, readResponseJson } from "./client-responses";
 
 function isNonNegativeInteger(value: unknown): value is number {
   return Number.isInteger(value) && Number(value) >= 0;
-}
-
-export async function readResponseJson(response: Response): Promise<unknown> {
-  try {
-    return await response.json();
-  } catch (error) {
-    if (
-      error &&
-      typeof error === "object" &&
-      "name" in error &&
-      error.name === "AbortError"
-    )
-      throw error;
-    return null;
-  }
-}
-
-export function getResponseErrorCode(value: unknown): unknown {
-  return isRecord(value) ? value.code : undefined;
 }
 
 export function parseListingDataResponse(

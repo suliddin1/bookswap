@@ -590,6 +590,299 @@ test("listing detail exposes accessible seller actions and constrained reflow", 
   expect(await horizontalOverflow(page)).toEqual([]);
 });
 
+test("listing detail rejects cross-resource action acknowledgements without false success", async ({
+  page,
+}) => {
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const sellerId = "22222222-2222-4222-8222-222222222222";
+  const otherId = "33333333-3333-4333-8333-333333333333";
+  const activeListingId = "44444444-4444-4444-8444-444444444444";
+  const soldListingId = "55555555-5555-4555-8555-555555555555";
+  const actionRequests: Array<{
+    method: string;
+    path: string;
+    body: unknown;
+  }> = [];
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  await page.setViewportSize({ width: 320, height: 800 });
+  await installAuthenticatedUiFixture(page);
+
+  const listingData = (listingId: string, status: "active" | "sold") => ({
+    id: listingId,
+    title:
+      status === "active"
+        ? "Cavab sərhədi sınaq kitabı"
+        : "Satılmış cavab sərhədi kitabı",
+    author: "Sınaq müəllifi",
+    description:
+      "Autentifikasiya olunmuş əməliyyatların cavab sərhədini yoxlayan təsvir.",
+    price: 18,
+    images: ["/icon.svg"],
+    category: "Fiction",
+    condition: "Good",
+    city: "Baku",
+    status,
+    sellerId,
+    seller: {
+      id: sellerId,
+      name: "Sınaq satıcısı",
+      initials: "SS",
+      city: "Baku",
+    },
+    reviews: [],
+  });
+
+  await page.route("**/api/listings**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === `/api/listings/${activeListingId}`) {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ data: listingData(activeListingId, "active") }),
+      });
+      return;
+    }
+    if (url.pathname === `/api/listings/${soldListingId}`) {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ data: listingData(soldListingId, "sold") }),
+      });
+      return;
+    }
+    if (url.pathname === "/api/listings") {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ data: { items: [], nextCursor: null } }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+  await page.route("**/api/favorites**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const body = request.postDataJSON?.() ?? null;
+    actionRequests.push({
+      method: request.method(),
+      path: url.pathname,
+      body,
+    });
+    const listingId = url.searchParams.get("listingId");
+    if (request.method() === "GET" && listingId === activeListingId) {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: { listingId: activeListingId, saved: false },
+        }),
+      });
+      return;
+    }
+    if (request.method() === "GET" && listingId === soldListingId) {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: { listingId: soldListingId, saved: "false" },
+          diagnostic: "provider-secret-detail",
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: { listingId: otherId, saved: true },
+        diagnostic: "provider-secret-detail",
+      }),
+    });
+  });
+  await page.route("**/api/chat/rooms", async (route) => {
+    actionRequests.push({
+      method: route.request().method(),
+      path: new URL(route.request().url()).pathname,
+      body: route.request().postDataJSON(),
+    });
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: {
+          id: "66666666-6666-4666-8666-666666666666",
+          listing_id: activeListingId,
+          buyer_id: userId,
+          seller_id: otherId,
+        },
+        diagnostic: "provider-secret-detail",
+      }),
+    });
+  });
+  await page.route("**/api/reports", async (route) => {
+    actionRequests.push({
+      method: route.request().method(),
+      path: new URL(route.request().url()).pathname,
+      body: route.request().postDataJSON(),
+    });
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: {
+          id: "77777777-7777-4777-8777-777777777777",
+          listing_id: activeListingId,
+          reporter_id: otherId,
+          status: "open",
+          created_at: "2026-07-26T10:00:00.000Z",
+        },
+        diagnostic: "provider-secret-detail",
+      }),
+    });
+  });
+  await page.route("**/api/review", async (route) => {
+    actionRequests.push({
+      method: route.request().method(),
+      path: new URL(route.request().url()).pathname,
+      body: route.request().postDataJSON(),
+    });
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: {
+          id: "88888888-8888-4888-8888-888888888888",
+          listing_id: otherId,
+          author_id: userId,
+          rating: 4,
+          comment: "Sərhəd sınağı rəyi",
+          created_at: "2026-07-26T10:00:00.000Z",
+        },
+        diagnostic: "provider-secret-detail",
+      }),
+    });
+  });
+
+  await page.goto(`/listings/${activeListingId}`);
+  await expect(
+    page.getByRole("heading", { name: "Cavab sərhədi sınaq kitabı" }),
+  ).toBeVisible();
+  const favorite = page.getByRole("button", {
+    name: AZ_COPY.listingDetail.save,
+  });
+  await expect(favorite).toBeEnabled();
+  await favorite.click();
+  await expect(favorite).toBeFocused();
+  await expect(favorite).toHaveAttribute("aria-pressed", "false");
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: AZ_COPY.listingDetail.favoriteFailed }),
+  ).toBeVisible();
+
+  const messageSeller = page.getByRole("button", {
+    name: AZ_COPY.listingDetail.messageSeller,
+  });
+  await messageSeller.click();
+  await expect(messageSeller).toBeFocused();
+  await expect(
+    page.getByRole("status").filter({ hasText: AZ_COPY.chat.startFailed }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/listings/${activeListingId}$`));
+
+  await page.locator("summary").click();
+  const reportReason = page.getByLabel(AZ_COPY.listingDetail.reportReason);
+  const reportText = "Yanlış resursa bağlı şikayət cavabı sınağıdır.";
+  await reportReason.fill(reportText);
+  const reportButton = page.getByRole("button", {
+    name: AZ_COPY.listingDetail.reportAction,
+  });
+  await reportButton.click();
+  await expect(reportButton).toBeFocused();
+  await expect(reportReason).toHaveValue(reportText);
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: AZ_COPY.listingDetail.reportFailed }),
+  ).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(
+    AZ_COPY.listingDetail.reportReceived,
+  );
+
+  await page.goto(`/listings/${soldListingId}`);
+  await expect(
+    page.getByRole("heading", { name: "Satılmış cavab sərhədi kitabı" }),
+  ).toBeVisible();
+  const unavailableFavorite = page.getByRole("button", {
+    name: AZ_COPY.listingDetail.save,
+  });
+  await expect(unavailableFavorite).toBeDisabled();
+  await expect(unavailableFavorite).toHaveAttribute("aria-pressed", "false");
+  await expect(
+    page.getByRole("status").filter({
+      hasText: AZ_COPY.listingDetail.favoriteStateUnavailable,
+    }),
+  ).toBeVisible();
+
+  await page.getByLabel(AZ_COPY.listingDetail.rating).selectOption("4");
+  const reviewComment = page.getByLabel(AZ_COPY.listingDetail.comment);
+  await reviewComment.fill("  Sərhəd sınağı rəyi  ");
+  const reviewButton = page.getByRole("button", {
+    name: AZ_COPY.listingDetail.publishReview,
+  });
+  await reviewButton.click();
+  await expect(reviewButton).toBeFocused();
+  await expect(reviewComment).toHaveValue("  Sərhəd sınağı rəyi  ");
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: AZ_COPY.listingDetail.reviewFailed }),
+  ).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(
+    AZ_COPY.listingDetail.reviewPublished,
+  );
+  await expect(
+    page.locator("article").filter({ hasText: "Sərhəd sınağı rəyi" }),
+  ).toHaveCount(0);
+
+  await expect(page.locator("body")).not.toContainText(
+    "provider-secret-detail",
+  );
+  expect(actionRequests).toEqual([
+    { method: "GET", path: "/api/favorites", body: null },
+    {
+      method: "POST",
+      path: "/api/favorites",
+      body: { listingId: activeListingId },
+    },
+    {
+      method: "POST",
+      path: "/api/chat/rooms",
+      body: { listingId: activeListingId },
+    },
+    {
+      method: "POST",
+      path: "/api/reports",
+      body: { listingId: activeListingId, reason: reportText },
+    },
+    { method: "GET", path: "/api/favorites", body: null },
+    {
+      method: "POST",
+      path: "/api/review",
+      body: {
+        listingId: soldListingId,
+        rating: 4,
+        comment: "Sərhəd sınağı rəyi",
+      },
+    },
+  ]);
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
 test("safety and user rights guidance is publicly reachable", async ({
   page,
 }) => {

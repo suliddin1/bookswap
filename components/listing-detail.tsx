@@ -11,13 +11,14 @@ import {
   ShieldCheck,
   Star,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BookCard } from "@/components/book-card";
 import { BookCover } from "@/components/book-cover";
 import { EmptyState } from "@/components/empty-state";
 import { useAuth } from "@/hooks/use-auth";
 import { useListings } from "@/hooks/use-listings";
-import { authFetch } from "@/lib/client-api";
+import { authFetch, LocalizedClientError } from "@/lib/client-api";
+import { getResponseErrorCode, readResponseJson } from "@/lib/client-responses";
 import {
   AZ_COPY,
   formatAzn,
@@ -31,51 +32,181 @@ import {
   parseListingDetailResponse,
   type ListingReview,
 } from "@/lib/marketplace-responses";
+import {
+  parseFavoriteLookupResponse,
+  parseFavoriteMutationResponse,
+  parseReportCreationResponse,
+  parseReviewCreationResponse,
+  parseRoomCreationResponse,
+} from "@/lib/listing-detail-action-responses";
 import type { Listing } from "@/lib/types";
 import type { FormEvent } from "react";
 
+type DetailListing = Listing & { reviews?: ListingReview[] };
+type FavoriteState = "anonymous" | "loading" | "ready" | "unavailable";
+
+function isAbortError(error: unknown) {
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    "name" in error &&
+    error.name === "AbortError"
+  );
+}
+
+function actionFailure(error: unknown, fallback: string) {
+  return error instanceof LocalizedClientError ? error.message : fallback;
+}
+
 export function ListingDetail({ id }: { id: string }) {
-  const [listing, setListing] = useState<
-    (Listing & { reviews?: ListingReview[] }) | null
-  >(null);
-  const [error, setError] = useState("");
+  const [listingResult, setListingResult] = useState<{
+    resourceId: string;
+    data: DetailListing;
+  } | null>(null);
+  const [errorResult, setErrorResult] = useState<{
+    resourceId: string;
+    message: string;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [favoriteState, setFavoriteState] = useState<FavoriteState>("loading");
+  const [favoriteBusy, setFavoriteBusy] = useState(false);
+  const [favoriteStatus, setFavoriteStatus] = useState("");
+  const [messageStatus, setMessageStatus] = useState("");
   const [selectedImage, setSelectedImage] = useState(0);
   const [reportReason, setReportReason] = useState("");
   const [reportStatus, setReportStatus] = useState("");
   const [rating, setRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewStatus, setReviewStatus] = useState("");
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { data } = useListings();
+  const userId = user?.id ?? null;
+  const contextKey = `${id}:${userId ?? "anonymous"}`;
+  const [actionStateContext, setActionStateContext] = useState(contextKey);
+  const contextKeyRef = useRef(contextKey);
+  const favoriteLookupRequest = useRef(0);
+  const favoriteMutationRequest = useRef(0);
+  const messageRequest = useRef(0);
+  const reportRequest = useRef(0);
+  const reviewRequest = useRef(0);
+  contextKeyRef.current = contextKey;
+
+  const listing = listingResult?.resourceId === id ? listingResult.data : null;
+  const error = errorResult?.resourceId === id ? errorResult.message : "";
+  const actionContextReady = actionStateContext === contextKey;
+  const currentBusy = actionContextReady ? busy : false;
+  const currentSaved = actionContextReady ? saved : false;
+  const currentFavoriteBusy = actionContextReady ? favoriteBusy : false;
+  const currentFavoriteState = actionContextReady ? favoriteState : "loading";
+  const currentFavoriteStatus = actionContextReady ? favoriteStatus : "";
+  const currentMessageStatus = actionContextReady ? messageStatus : "";
+  const currentReportReason = actionContextReady ? reportReason : "";
+  const currentReportStatus = actionContextReady ? reportStatus : "";
+  const currentRating = actionContextReady ? rating : 5;
+  const currentReviewComment = actionContextReady ? reviewComment : "";
+  const currentReviewStatus = actionContextReady ? reviewStatus : "";
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`/api/listings/${id}`, { signal: controller.signal })
-      .then(async (response) => {
-        const body = await response.json();
+    setErrorResult(null);
+    setSelectedImage(0);
+    async function loadListing() {
+      try {
+        const response = await fetch(`/api/listings/${id}`, {
+          signal: controller.signal,
+        });
+        const body = await readResponseJson(response);
         if (!response.ok)
           throw new Error(AZ_COPY.listingDetail.unavailableBody);
-        const parsedListing = parseListingDetailResponse(body);
+        const parsedListing = parseListingDetailResponse(body, id);
         if (!parsedListing)
           throw new Error(AZ_COPY.listingDetail.unavailableBody);
-        setListing(parsedListing);
-      })
-      .catch((reason) => {
-        if (reason.name !== "AbortError")
-          setError(AZ_COPY.listingDetail.unavailableBody);
-      });
+        setListingResult({ resourceId: id, data: parsedListing });
+      } catch (reason) {
+        if (!isAbortError(reason))
+          setErrorResult({
+            resourceId: id,
+            message: AZ_COPY.listingDetail.unavailableBody,
+          });
+      }
+    }
+    void loadListing();
     return () => controller.abort();
   }, [id]);
 
   useEffect(() => {
-    if (!user) return;
-    authFetch(`/api/favorites?listingId=${encodeURIComponent(id)}`)
-      .then((response) => response.json())
-      .then((body) => setSaved(Boolean(body.data?.saved)))
-      .catch(() => undefined);
-  }, [id, user]);
+    messageRequest.current += 1;
+    favoriteMutationRequest.current += 1;
+    reportRequest.current += 1;
+    reviewRequest.current += 1;
+    setBusy(false);
+    setFavoriteBusy(false);
+    setMessageStatus("");
+    setReportReason("");
+    setReportStatus("");
+    setRating(5);
+    setReviewComment("");
+    setReviewStatus("");
+    setActionStateContext(contextKey);
+  }, [contextKey]);
+
+  useEffect(() => {
+    const requestId = ++favoriteLookupRequest.current;
+    const controller = new AbortController();
+    setSaved(false);
+    setFavoriteStatus("");
+    if (authLoading) {
+      setFavoriteState("loading");
+      return () => controller.abort();
+    }
+    if (!userId) {
+      setFavoriteState("anonymous");
+      return () => controller.abort();
+    }
+    setFavoriteState("loading");
+    async function loadFavorite() {
+      try {
+        const response = await authFetch(
+          `/api/favorites?listingId=${encodeURIComponent(id)}`,
+          { signal: controller.signal },
+        );
+        const body = await readResponseJson(response);
+        if (!response.ok)
+          throw new LocalizedClientError(
+            localizeApiError(
+              getResponseErrorCode(body),
+              AZ_COPY.listingDetail.favoriteStateUnavailable,
+            ),
+          );
+        const parsed = parseFavoriteLookupResponse(body, id);
+        if (!parsed) throw new Error();
+        if (
+          contextKeyRef.current === contextKey &&
+          favoriteLookupRequest.current === requestId
+        ) {
+          setSaved(parsed.saved);
+          setFavoriteState("ready");
+        }
+      } catch (reason) {
+        if (isAbortError(reason)) return;
+        if (
+          contextKeyRef.current === contextKey &&
+          favoriteLookupRequest.current === requestId
+        ) {
+          setFavoriteState("unavailable");
+          setFavoriteStatus(
+            actionFailure(
+              reason,
+              AZ_COPY.listingDetail.favoriteStateUnavailable,
+            ),
+          );
+        }
+      }
+    }
+    void loadFavorite();
+    return () => controller.abort();
+  }, [authLoading, contextKey, id, userId]);
 
   const displayedListing = useMemo(() => {
     if (!listing?.images?.length) return listing;
@@ -87,100 +218,241 @@ export function ListingDetail({ id }: { id: string }) {
   }, [listing, selectedImage]);
 
   async function messageSeller() {
-    if (!listing?.sellerId) return;
+    if (authLoading || currentBusy || !actionContextReady || !listing?.sellerId)
+      return;
+    if (!userId) {
+      window.location.href = "/login";
+      return;
+    }
+    const currentListing = listing;
+    const sellerId = listing.sellerId;
+    const requestContext = contextKey;
+    const requestId = ++messageRequest.current;
     setBusy(true);
+    setMessageStatus("");
     try {
       const response = await authFetch("/api/chat/rooms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listingId: listing.id }),
+        body: JSON.stringify({ listingId: currentListing.id }),
       });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error);
-      window.location.href = `/chat/${body.data.id}`;
-    } catch {
-      window.location.href = "/login";
+      const body = await readResponseJson(response);
+      if (!response.ok)
+        throw new LocalizedClientError(
+          localizeApiError(
+            getResponseErrorCode(body),
+            AZ_COPY.chat.startFailed,
+          ),
+        );
+      const room = parseRoomCreationResponse(body, {
+        listingId: currentListing.id,
+        buyerId: userId,
+        sellerId,
+      });
+      if (!room) throw new Error();
+      if (
+        contextKeyRef.current === requestContext &&
+        messageRequest.current === requestId
+      )
+        window.location.href = `/chat/${encodeURIComponent(room.id)}`;
+    } catch (reason) {
+      if (
+        contextKeyRef.current === requestContext &&
+        messageRequest.current === requestId
+      )
+        setMessageStatus(actionFailure(reason, AZ_COPY.chat.startFailed));
     } finally {
-      setBusy(false);
+      if (
+        contextKeyRef.current === requestContext &&
+        messageRequest.current === requestId
+      )
+        setBusy(false);
     }
   }
 
   async function toggleFavorite() {
-    if (!listing) return;
+    if (authLoading || !actionContextReady || !listing) return;
+    if (!userId) {
+      window.location.href = "/login";
+      return;
+    }
+    if (currentFavoriteState !== "ready" || currentFavoriteBusy) return;
+    const currentListing = listing;
+    const requestContext = contextKey;
+    const requestId = ++favoriteMutationRequest.current;
+    const expectedSaved = !currentSaved;
+    setFavoriteBusy(true);
+    setFavoriteStatus("");
     try {
       const response = await authFetch("/api/favorites", {
-        method: saved ? "DELETE" : "POST",
+        method: expectedSaved ? "POST" : "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listingId: listing.id }),
+        body: JSON.stringify({ listingId: currentListing.id }),
       });
-      if (!response.ok) throw new Error();
-      setSaved(!saved);
-    } catch {
-      window.location.href = "/login";
+      const body = await readResponseJson(response);
+      if (!response.ok)
+        throw new LocalizedClientError(
+          localizeApiError(
+            getResponseErrorCode(body),
+            AZ_COPY.listingDetail.favoriteFailed,
+          ),
+        );
+      const parsed = parseFavoriteMutationResponse(
+        body,
+        currentListing.id,
+        expectedSaved,
+      );
+      if (!parsed) throw new Error();
+      if (
+        contextKeyRef.current === requestContext &&
+        favoriteMutationRequest.current === requestId
+      )
+        setSaved(parsed.saved);
+    } catch (reason) {
+      if (
+        contextKeyRef.current === requestContext &&
+        favoriteMutationRequest.current === requestId
+      )
+        setFavoriteStatus(
+          actionFailure(reason, AZ_COPY.listingDetail.favoriteFailed),
+        );
+    } finally {
+      if (
+        contextKeyRef.current === requestContext &&
+        favoriteMutationRequest.current === requestId
+      )
+        setFavoriteBusy(false);
     }
   }
 
   async function submitReport(event: FormEvent) {
     event.preventDefault();
-    if (!listing) return;
+    if (
+      !listing ||
+      !actionContextReady ||
+      currentReportStatus === AZ_COPY.listingDetail.sending
+    )
+      return;
     if (!user) {
       setReportStatus(localizeApiError("AUTH_REQUIRED", ""));
       return;
     }
+    const currentListing = listing;
+    const requestContext = contextKey;
+    const requestId = ++reportRequest.current;
     setReportStatus(AZ_COPY.listingDetail.sending);
     try {
       const response = await authFetch("/api/reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listingId: listing.id, reason: reportReason }),
+        body: JSON.stringify({
+          listingId: currentListing.id,
+          reason: currentReportReason,
+        }),
       });
-      const body = await response.json();
-      if (!response.ok) {
-        setReportStatus(
-          localizeApiError(body.code, AZ_COPY.listingDetail.reportFailed),
+      const body = await readResponseJson(response);
+      if (!response.ok)
+        throw new LocalizedClientError(
+          localizeApiError(
+            getResponseErrorCode(body),
+            AZ_COPY.listingDetail.reportFailed,
+          ),
         );
-        return;
+      const report = parseReportCreationResponse(body, {
+        listingId: currentListing.id,
+        reporterId: user.id,
+      });
+      if (!report) throw new Error();
+      if (
+        contextKeyRef.current === requestContext &&
+        reportRequest.current === requestId
+      ) {
+        setReportStatus(AZ_COPY.listingDetail.reportReceived);
+        setReportReason("");
       }
-      setReportStatus(AZ_COPY.listingDetail.reportReceived);
-      setReportReason("");
-    } catch {
-      setReportStatus(AZ_COPY.listingDetail.reportFailed);
+    } catch (reason) {
+      if (
+        contextKeyRef.current === requestContext &&
+        reportRequest.current === requestId
+      )
+        setReportStatus(
+          actionFailure(reason, AZ_COPY.listingDetail.reportFailed),
+        );
     }
   }
 
   async function submitReview(event: FormEvent) {
     event.preventDefault();
-    if (!listing) return;
+    if (
+      !listing ||
+      !actionContextReady ||
+      currentReviewStatus === AZ_COPY.listingDetail.sending
+    )
+      return;
     if (!user) {
       setReviewStatus(localizeApiError("AUTH_REQUIRED", ""));
       return;
     }
+    const currentListing = listing;
+    const expectedComment = currentReviewComment.trim();
+    const requestContext = contextKey;
+    const requestId = ++reviewRequest.current;
     setReviewStatus(AZ_COPY.listingDetail.sending);
     try {
       const response = await authFetch("/api/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          listingId: listing.id,
-          rating,
-          comment: reviewComment,
+          listingId: currentListing.id,
+          rating: currentRating,
+          comment: expectedComment,
         }),
       });
-      const body = await response.json();
-      if (!response.ok) {
-        setReviewStatus(
-          localizeApiError(body.code, AZ_COPY.listingDetail.reviewFailed),
+      const body = await readResponseJson(response);
+      if (!response.ok)
+        throw new LocalizedClientError(
+          localizeApiError(
+            getResponseErrorCode(body),
+            AZ_COPY.listingDetail.reviewFailed,
+          ),
         );
-        return;
-      }
-      setListing({
-        ...listing,
-        reviews: [...(listing.reviews ?? []), body.data],
+      const review = parseReviewCreationResponse(body, {
+        listingId: currentListing.id,
+        authorId: user.id,
+        rating: currentRating,
+        comment: expectedComment,
       });
-      setReviewComment("");
-      setReviewStatus(AZ_COPY.listingDetail.reviewPublished);
-    } catch {
-      setReviewStatus(AZ_COPY.listingDetail.reviewFailed);
+      if (
+        !review ||
+        currentListing.reviews?.some((item) => item.id === review.id)
+      )
+        throw new Error();
+      if (
+        contextKeyRef.current === requestContext &&
+        reviewRequest.current === requestId
+      ) {
+        setListingResult((current) =>
+          current?.resourceId === currentListing.id
+            ? {
+                resourceId: current.resourceId,
+                data: {
+                  ...current.data,
+                  reviews: [...(current.data.reviews ?? []), review],
+                },
+              }
+            : current,
+        );
+        setReviewComment("");
+        setReviewStatus(AZ_COPY.listingDetail.reviewPublished);
+      }
+    } catch (reason) {
+      if (
+        contextKeyRef.current === requestContext &&
+        reviewRequest.current === requestId
+      )
+        setReviewStatus(
+          actionFailure(reason, AZ_COPY.listingDetail.reviewFailed),
+        );
     }
   }
 
@@ -216,8 +488,8 @@ export function ListingDetail({ id }: { id: string }) {
     );
 
   const ownListing = user?.id === listing.sellerId;
-  const reviewBusy = reviewStatus === AZ_COPY.listingDetail.sending;
-  const reportBusy = reportStatus === AZ_COPY.listingDetail.sending;
+  const reviewBusy = currentReviewStatus === AZ_COPY.listingDetail.sending;
+  const reportBusy = currentReportStatus === AZ_COPY.listingDetail.sending;
 
   return (
     <div className="container-shell py-10 md:py-14">
@@ -290,17 +562,40 @@ export function ListingDetail({ id }: { id: string }) {
             <button
               type="button"
               aria-label={
-                saved
+                currentSaved
                   ? AZ_COPY.listingDetail.remove
                   : AZ_COPY.listingDetail.save
               }
-              aria-pressed={saved}
+              aria-pressed={currentSaved}
+              aria-busy={
+                currentFavoriteBusy ||
+                (Boolean(userId) && currentFavoriteState === "loading")
+              }
+              aria-describedby={
+                currentFavoriteStatus ? "favorite-status" : undefined
+              }
+              disabled={
+                authLoading ||
+                !actionContextReady ||
+                (Boolean(userId) && currentFavoriteState !== "ready")
+              }
+              aria-disabled={currentFavoriteBusy}
               onClick={toggleFavorite}
               className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-line bg-[#fffaf0] text-orange"
             >
-              <Heart size={17} fill={saved ? "currentColor" : "none"} />
+              <Heart size={17} fill={currentSaved ? "currentColor" : "none"} />
             </button>
           </div>
+          {currentFavoriteStatus && (
+            <p
+              id="favorite-status"
+              role="status"
+              aria-atomic="true"
+              className="mt-3 text-xs text-muted"
+            >
+              {currentFavoriteStatus}
+            </p>
+          )}
           <div className="mt-8 flex min-w-0 flex-wrap items-end gap-3 border-b border-line pb-8">
             <strong className="display max-w-full text-5xl text-orange">
               {formatAzn(listing.price)}
@@ -384,19 +679,33 @@ export function ListingDetail({ id }: { id: string }) {
           ) : listing.status === "active" ? (
             <button
               type="button"
-              disabled={busy}
-              aria-busy={busy}
+              disabled={authLoading || !actionContextReady}
+              aria-disabled={currentBusy}
+              aria-busy={currentBusy}
+              aria-describedby={
+                currentMessageStatus ? "message-status" : undefined
+              }
               onClick={messageSeller}
               className="btn-primary mt-5 w-full"
             >
               <MessageCircle size={15} />{" "}
-              {busy
+              {currentBusy
                 ? AZ_COPY.listingDetail.openingConversation
                 : AZ_COPY.listingDetail.messageSeller}
             </button>
           ) : (
             <p className="mt-5 rounded-xl bg-[#eee3c8] p-4 text-center text-sm font-bold">
               {AZ_COPY.listingDetail.soldNotice}
+            </p>
+          )}
+          {currentMessageStatus && (
+            <p
+              id="message-status"
+              role="status"
+              aria-atomic="true"
+              className="mt-3 text-xs text-muted"
+            >
+              {currentMessageStatus}
             </p>
           )}
         </section>
@@ -440,7 +749,7 @@ export function ListingDetail({ id }: { id: string }) {
           <form
             onSubmit={submitReview}
             className="card min-w-0 p-6"
-            aria-describedby={reviewStatus ? "review-status" : undefined}
+            aria-describedby={currentReviewStatus ? "review-status" : undefined}
           >
             <h3 className="display break-words text-2xl font-semibold">
               {AZ_COPY.listingDetail.reviewTitle}
@@ -451,8 +760,10 @@ export function ListingDetail({ id }: { id: string }) {
               </span>
               <select
                 className="input"
-                value={rating}
-                onChange={(event) => setRating(Number(event.target.value))}
+                value={currentRating}
+                onChange={(event) => {
+                  if (actionContextReady) setRating(Number(event.target.value));
+                }}
               >
                 {[5, 4, 3, 2, 1].map((value) => (
                   <option key={value} value={value}>
@@ -470,23 +781,25 @@ export function ListingDetail({ id }: { id: string }) {
                 minLength={3}
                 maxLength={1000}
                 className="input min-h-[110px] py-3"
-                value={reviewComment}
-                onChange={(event) => setReviewComment(event.target.value)}
+                value={currentReviewComment}
+                onChange={(event) => {
+                  if (actionContextReady) setReviewComment(event.target.value);
+                }}
               />
             </label>
-            {reviewStatus && (
+            {currentReviewStatus && (
               <p
                 id="review-status"
                 role="status"
                 aria-atomic="true"
                 className="mt-3 text-xs text-muted"
               >
-                {reviewStatus}
+                {currentReviewStatus}
               </p>
             )}
             <button
               type="submit"
-              disabled={reviewBusy}
+              aria-disabled={reviewBusy}
               aria-busy={reviewBusy}
               className="btn-primary mt-4"
             >
@@ -520,7 +833,7 @@ export function ListingDetail({ id }: { id: string }) {
           <form
             onSubmit={submitReport}
             className="mt-4 max-w-xl"
-            aria-describedby={reportStatus ? "report-status" : undefined}
+            aria-describedby={currentReportStatus ? "report-status" : undefined}
           >
             <label className="block">
               <span className="mb-2 block text-xs font-bold uppercase">
@@ -532,23 +845,25 @@ export function ListingDetail({ id }: { id: string }) {
                 maxLength={500}
                 className="input min-h-[100px] py-3 placeholder:text-muted"
                 placeholder={AZ_COPY.listingDetail.reportPlaceholder}
-                value={reportReason}
-                onChange={(event) => setReportReason(event.target.value)}
+                value={currentReportReason}
+                onChange={(event) => {
+                  if (actionContextReady) setReportReason(event.target.value);
+                }}
               />
             </label>
-            {reportStatus && (
+            {currentReportStatus && (
               <p
                 id="report-status"
                 role="status"
                 aria-atomic="true"
                 className="mt-2 text-xs text-muted"
               >
-                {reportStatus}
+                {currentReportStatus}
               </p>
             )}
             <button
               type="submit"
-              disabled={reportBusy}
+              aria-disabled={reportBusy}
               aria-busy={reportBusy}
               className="btn-secondary mt-3"
             >

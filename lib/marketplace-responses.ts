@@ -138,8 +138,15 @@ export function parseListingPageResponse(value: unknown): {
 
 export function parseListingDetailResponse(
   value: unknown,
+  expectedId?: string,
 ): (Listing & { reviews?: ListingReview[] }) | null {
   if (!isRecord(value) || !isRecord(value.data) || !isListing(value.data))
+    return null;
+  if (expectedId !== undefined && value.data.id !== expectedId) return null;
+  if (
+    typeof value.data.sellerId !== "string" ||
+    value.data.sellerId !== value.data.seller.id
+  )
     return null;
   const reviews = (value.data as Record<string, unknown>).reviews;
   if (

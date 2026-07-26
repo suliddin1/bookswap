@@ -102,6 +102,13 @@ import {
   parseListingUploadResponse,
   readResponseJson,
 } from "../lib/listing-authoring-responses";
+import {
+  parseFavoriteLookupResponse,
+  parseFavoriteMutationResponse,
+  parseReportCreationResponse,
+  parseReviewCreationResponse,
+  parseRoomCreationResponse,
+} from "../lib/listing-detail-action-responses";
 import { POST as reportWebVital } from "../app/api/vitals/route";
 
 const originalOpenAIKey = process.env.OPENAI_API_KEY;
@@ -169,7 +176,7 @@ describe("marketplace input validation", () => {
     };
 
     expect(parseListingPageResponse(page)).toEqual(page.data);
-    expect(parseListingDetailResponse(detail)).toEqual(detail.data);
+    expect(parseListingDetailResponse(detail, listing.id)).toEqual(detail.data);
     expect(parseSellerResponse(seller)).toEqual(seller.data);
 
     expect(
@@ -184,6 +191,20 @@ describe("marketplace input validation", () => {
       }),
     ).toBeNull();
     expect(
+      parseListingDetailResponse(
+        detail,
+        "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      ),
+    ).toBeNull();
+    expect(
+      parseListingDetailResponse({
+        data: {
+          ...detail.data,
+          sellerId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        },
+      }),
+    ).toBeNull();
+    expect(
       parseSellerResponse({
         data: {
           ...seller.data,
@@ -191,6 +212,181 @@ describe("marketplace input validation", () => {
         },
       }),
     ).toBeNull();
+  });
+
+  it("binds listing-detail action responses to the requested resource and user", () => {
+    const listingId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const otherListingId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const buyerId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+    const sellerId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    const otherUserId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    const roomId = "11111111-1111-4111-8111-111111111111";
+    const reportId = "22222222-2222-4222-8222-222222222222";
+    const reviewId = "33333333-3333-4333-8333-333333333333";
+    const createdAt = "2026-07-26T10:00:00.000Z";
+
+    expect(
+      parseFavoriteLookupResponse(
+        { data: { listingId, saved: false } },
+        listingId,
+      ),
+    ).toEqual({ saved: false });
+    expect(
+      parseFavoriteLookupResponse(
+        { data: { listingId, saved: "false" } },
+        listingId,
+      ),
+    ).toBeNull();
+    expect(
+      parseFavoriteLookupResponse(
+        { data: { listingId: otherListingId, saved: false } },
+        listingId,
+      ),
+    ).toBeNull();
+
+    expect(
+      parseFavoriteMutationResponse(
+        { data: { listingId, saved: true } },
+        listingId,
+        true,
+      ),
+    ).toEqual({ saved: true });
+    expect(
+      parseFavoriteMutationResponse({ saved: true }, listingId, true),
+    ).toBeNull();
+    expect(
+      parseFavoriteMutationResponse(
+        { data: { listingId, saved: false } },
+        listingId,
+        true,
+      ),
+    ).toBeNull();
+    expect(
+      parseFavoriteMutationResponse(
+        { data: { listingId: otherListingId, saved: true } },
+        listingId,
+        true,
+      ),
+    ).toBeNull();
+
+    const room = {
+      data: {
+        id: roomId,
+        listing_id: listingId,
+        buyer_id: buyerId,
+        seller_id: sellerId,
+      },
+    };
+    const expectedRoom = { listingId, buyerId, sellerId };
+    expect(parseRoomCreationResponse(room, expectedRoom)).toEqual({
+      id: roomId,
+    });
+    expect(
+      parseRoomCreationResponse(
+        { data: { ...room.data, id: "not-a-room" } },
+        expectedRoom,
+      ),
+    ).toBeNull();
+    for (const mismatch of [
+      { listing_id: otherListingId },
+      { buyer_id: otherUserId },
+      { seller_id: otherUserId },
+    ]) {
+      expect(
+        parseRoomCreationResponse(
+          { data: { ...room.data, ...mismatch } },
+          expectedRoom,
+        ),
+      ).toBeNull();
+    }
+
+    const report = {
+      data: {
+        id: reportId,
+        listing_id: listingId,
+        reporter_id: buyerId,
+        status: "open",
+        created_at: createdAt,
+      },
+    };
+    const expectedReport = { listingId, reporterId: buyerId };
+    expect(parseReportCreationResponse(report, expectedReport)).toEqual({
+      id: reportId,
+    });
+    for (const mismatch of [
+      { listing_id: otherListingId },
+      { reporter_id: otherUserId },
+      { status: "resolved" },
+      { created_at: "not-a-date" },
+    ]) {
+      expect(
+        parseReportCreationResponse(
+          { data: { ...report.data, ...mismatch } },
+          expectedReport,
+        ),
+      ).toBeNull();
+    }
+
+    const expectedReview = {
+      listingId,
+      authorId: buyerId,
+      rating: 4,
+      comment: "Etibarlı rəy",
+    };
+    const review = {
+      data: {
+        id: reviewId,
+        listing_id: listingId,
+        author_id: buyerId,
+        rating: 4,
+        comment: "Etibarlı rəy",
+        created_at: createdAt,
+      },
+    };
+    expect(parseReviewCreationResponse(review, expectedReview)).toEqual({
+      id: reviewId,
+      rating: 4,
+      comment: "Etibarlı rəy",
+      created_at: createdAt,
+    });
+    for (const mismatch of [
+      { id: "not-a-review" },
+      { listing_id: otherListingId },
+      { author_id: otherUserId },
+      { rating: 5 },
+      { comment: "Başqa rəy" },
+      { created_at: "not-a-date" },
+    ]) {
+      expect(
+        parseReviewCreationResponse(
+          { data: { ...review.data, ...mismatch } },
+          expectedReview,
+        ),
+      ).toBeNull();
+    }
+
+    const favoriteRoute = readFileSync(
+      new URL("../app/api/favorites/route.ts", import.meta.url),
+      "utf8",
+    );
+    const reportRoute = readFileSync(
+      new URL("../app/api/reports/route.ts", import.meta.url),
+      "utf8",
+    );
+    const reviewRoute = readFileSync(
+      new URL("../app/api/review/route.ts", import.meta.url),
+      "utf8",
+    );
+    expect(favoriteRoute).toContain("data: { listingId, saved: true }");
+    expect(favoriteRoute).toContain("data: { listingId, saved: false }");
+    expect(reportRoute).toContain(
+      '.select("id,reporter_id,listing_id,status,created_at")',
+    );
+    expect(reportRoute).toContain("if (listingError) throw listingError");
+    expect(reviewRoute).toContain(
+      '.select("id,listing_id,author_id,rating,comment,created_at")',
+    );
+    expect(reviewRoute).toContain("if (roomError) throw roomError");
   });
 
   it("rejects malformed private account success responses", () => {
