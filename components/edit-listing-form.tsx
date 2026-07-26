@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Check, ImagePlus, X } from "lucide-react";
-import { authFetch } from "@/lib/client-api";
+import { authFetch, LocalizedClientError } from "@/lib/client-api";
 import type { Listing } from "@/lib/types";
 import { EmptyState } from "@/components/empty-state";
 import {
@@ -24,6 +24,12 @@ import {
   formatCondition,
   localizeApiError,
 } from "@/lib/i18n";
+import {
+  getResponseErrorCode,
+  parseListingDataResponse,
+  parseListingUpdateResponse,
+  readResponseJson,
+} from "@/lib/listing-authoring-responses";
 import type { ChangeEvent, FormEvent } from "react";
 
 export function EditListingForm({ id }: { id: string }) {
@@ -35,23 +41,33 @@ export function EditListingForm({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   const [cleanupPending, setCleanupPending] = useState(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const loadErrorRef = useRef<HTMLDivElement>(null);
   const hasLoadedListing = listing !== null;
 
   useEffect(() => {
-    if (error && hasLoadedListing) errorRef.current?.focus();
+    if (!error) return;
+    if (hasLoadedListing) errorRef.current?.focus();
+    else loadErrorRef.current?.focus();
   }, [error, hasLoadedListing]);
 
   useEffect(() => {
     const controller = new AbortController();
     fetch(`/api/listings/${id}`, { signal: controller.signal })
       .then(async (response) => {
-        const body = await response.json();
+        const body = await readResponseJson(response);
         if (!response.ok)
-          throw new Error(AZ_COPY.listingForm.editUnavailableBody);
-        setListing(body.data);
+          throw new LocalizedClientError(
+            AZ_COPY.listingForm.editUnavailableBody,
+          );
+        const nextListing = parseListingDataResponse(body, id);
+        if (!nextListing)
+          throw new LocalizedClientError(
+            AZ_COPY.listingForm.editUnavailableBody,
+          );
+        setListing(nextListing);
       })
       .catch((reason) => {
-        if (reason.name !== "AbortError")
+        if (!(reason instanceof Error && reason.name === "AbortError"))
           setError(AZ_COPY.listingForm.editUnavailableBody);
       });
     return () => controller.abort();
@@ -113,18 +129,24 @@ export function EditListingForm({ id }: { id: string }) {
           images: [...existingImages, ...uploadedImages],
         }),
       });
-      const body = await response.json();
+      const body = await readResponseJson(response);
       if (!response.ok)
-        throw new Error(
-          localizeApiError(body.code, AZ_COPY.listingForm.saveFailed),
+        throw new LocalizedClientError(
+          localizeApiError(
+            getResponseErrorCode(body),
+            AZ_COPY.listingForm.saveFailed,
+          ),
         );
-      setListing(body.data);
+      const update = parseListingUpdateResponse(body, id);
+      if (!update)
+        throw new LocalizedClientError(AZ_COPY.listingForm.saveFailed);
+      setListing(update.listing);
       setFiles([]);
-      setCleanupPending(Boolean(body.imageCleanupPending));
+      setCleanupPending(update.imageCleanupPending);
       setSaved(true);
     } catch (reason) {
       let message =
-        reason instanceof Error
+        reason instanceof LocalizedClientError
           ? reason.message
           : AZ_COPY.listingForm.saveFailed;
       if (uploadedImages.length) {
@@ -132,8 +154,7 @@ export function EditListingForm({ id }: { id: string }) {
           const cleanup = await cleanupUploadedListingImages(uploadedImages);
           setCleanupPending(cleanup.cleanupPending);
         } catch {
-          message += ` ${AZ_COPY.listingForm.cleanupQueued}`;
-          setCleanupPending(true);
+          message += ` ${AZ_COPY.listingForm.cleanupFailed}`;
         }
       }
       setError(message);
@@ -145,13 +166,15 @@ export function EditListingForm({ id }: { id: string }) {
   if (error && !listing)
     return (
       <div className="container-shell py-16">
-        <EmptyState
-          title={AZ_COPY.listingForm.editUnavailableTitle}
-          body={error}
-          action={AZ_COPY.listingForm.myShelf}
-          href="/profile"
-          headingLevel="h1"
-        />
+        <div ref={loadErrorRef} role="alert" tabIndex={-1}>
+          <EmptyState
+            title={AZ_COPY.listingForm.editUnavailableTitle}
+            body={error}
+            action={AZ_COPY.listingForm.myShelf}
+            href="/profile"
+            headingLevel="h1"
+          />
+        </div>
       </div>
     );
   if (!listing)

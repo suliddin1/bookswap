@@ -372,8 +372,6 @@ export const AZ_COPY = {
     myShelf: "Kitab rəfim",
     browseBooks: "Kitablara bax",
     publishFailed: "Elanı yayımlamaq mümkün olmadı.",
-    cleanupQueued:
-      "Yüklənmiş şəkillər təhlükəsiz təmizləmə növbəsinə əlavə edildi.",
     invalidImageCount: "1–5 şəkil seç.",
     invalidImageFile:
       "Hər şəkil JPEG, PNG və ya WebP formatında və ən çoxu 5 MB olmalıdır.",

@@ -10,7 +10,7 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
-import { authFetch } from "@/lib/client-api";
+import { authFetch, LocalizedClientError } from "@/lib/client-api";
 import { BookCover } from "@/components/book-cover";
 import type { Listing } from "@/lib/types";
 import {
@@ -23,6 +23,11 @@ import {
   uploadListingImages,
   validateListingImageFiles,
 } from "@/lib/client-listing-images";
+import {
+  getResponseErrorCode,
+  parseListingDataResponse,
+  readResponseJson,
+} from "@/lib/listing-authoring-responses";
 import {
   AZ_COPY,
   formatAzn,
@@ -184,23 +189,28 @@ export function ListingWizard() {
           images: uploadedImages,
         }),
       });
-      const body = await response.json();
+      const body = await readResponseJson(response);
       if (!response.ok)
-        throw new Error(
-          localizeApiError(body.code, AZ_COPY.listingForm.publishFailed),
+        throw new LocalizedClientError(
+          localizeApiError(
+            getResponseErrorCode(body),
+            AZ_COPY.listingForm.publishFailed,
+          ),
         );
+      if (!parseListingDataResponse(body))
+        throw new LocalizedClientError(AZ_COPY.listingForm.publishFailed);
       setComplete(true);
       setFiles([]);
     } catch (reason) {
       let message =
-        reason instanceof Error
+        reason instanceof LocalizedClientError
           ? reason.message
           : AZ_COPY.listingForm.publishFailed;
       if (uploadedImages.length) {
         try {
           await cleanupUploadedListingImages(uploadedImages);
         } catch {
-          message += ` ${AZ_COPY.listingForm.cleanupQueued}`;
+          message += ` ${AZ_COPY.listingForm.cleanupFailed}`;
         }
       }
       setError(message);

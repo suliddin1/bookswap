@@ -1613,6 +1613,203 @@ test("listing editing exposes named loading, photos, targets, and reflow", async
   expect(await horizontalOverflow(page)).toEqual([]);
 });
 
+test("listing authoring failures reject malformed success responses", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await installAuthenticatedUiFixture(page);
+
+  const listingId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const otherListingId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const sellerId = "11111111-1111-4111-8111-111111111111";
+  const uploadedUrl =
+    "https://fixture.supabase.co/storage/v1/object/public/listing-images/11111111-1111-4111-8111-111111111111/book.png";
+  const validListing = {
+    id: listingId,
+    title: "Cavab sərhədi kitabı",
+    author: "Sınaq müəllifi",
+    description: "Elan cavab sərhədini yoxlamaq üçün kifayət qədər təsvir.",
+    price: 18,
+    images: ["/icon.svg"],
+    category: "Fiction",
+    condition: "Very good",
+    city: "Baku",
+    status: "active",
+    sellerId,
+    seller: { id: sellerId, name: "Sınaq oxucusu" },
+  };
+  let scenario:
+    | "upload-invalid-json"
+    | "create-malformed"
+    | "edit-load-wrong-id"
+    | "edit-save-wrong-id" = "upload-invalid-json";
+  let uploadPosts = 0;
+  let listingPosts = 0;
+  let cleanupDeletes = 0;
+  let editPatches = 0;
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+
+  await page.route("**/api/upload", async (route) => {
+    if (route.request().method() === "DELETE") {
+      cleanupDeletes += 1;
+      await route.fulfill({
+        contentType: "application/json",
+        body: "provider cleanup parser diagnostic",
+      });
+      return;
+    }
+    uploadPosts += 1;
+    if (scenario === "upload-invalid-json") {
+      await route.fulfill({
+        contentType: "application/json",
+        body: "provider upload parser diagnostic",
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({ data: [uploadedUrl] }),
+    });
+  });
+  await page.route("**/api/listings", async (route) => {
+    listingPosts += 1;
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: { id: listingId },
+        diagnostic: "provider create detail",
+      }),
+    });
+  });
+  await page.route(`**/api/listings/${listingId}`, async (route) => {
+    if (route.request().method() === "PATCH") {
+      editPatches += 1;
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: { ...validListing, id: otherListingId },
+          imageCleanupPending: false,
+          diagnostic: "provider update detail",
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data:
+          scenario === "edit-load-wrong-id"
+            ? { ...validListing, id: otherListingId }
+            : validListing,
+        diagnostic: "provider load detail",
+      }),
+    });
+  });
+
+  async function prepareListingForPublication() {
+    await page.goto("/listings/new");
+    await page.getByLabel(AZ_COPY.listingForm.bookTitle).fill("Sınaq kitabı");
+    await page.getByLabel(AZ_COPY.listingForm.author).fill("Sınaq müəllifi");
+    await page
+      .getByLabel(AZ_COPY.listingForm.description)
+      .fill("Kitabın vəziyyəti haqqında kifayət qədər ətraflı sınaq qeydi.");
+    await page
+      .getByRole("button", { name: AZ_COPY.listingForm.continue })
+      .click();
+    await page
+      .getByRole("button", { name: AZ_COPY.listingForm.continue })
+      .click();
+    await page.locator('input[type="file"]').setInputFiles({
+      name: "book.png",
+      mimeType: "image/png",
+      buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+    });
+    await page.getByLabel(AZ_COPY.listingForm.price).fill("18");
+    await page
+      .getByRole("button", { name: AZ_COPY.listingForm.continue })
+      .click();
+    await page
+      .getByRole("button", { name: AZ_COPY.listingForm.publish })
+      .click();
+  }
+
+  await prepareListingForPublication();
+  const uploadError = page.locator("#listing-form-error");
+  await expect(uploadError).toHaveText(AZ_COPY.listingForm.uploadFailed);
+  await expect(uploadError).toBeFocused();
+  await expect(page.locator("body")).not.toContainText(
+    "provider upload parser diagnostic",
+  );
+  expect({ uploadPosts, listingPosts, cleanupDeletes }).toEqual({
+    uploadPosts: 1,
+    listingPosts: 0,
+    cleanupDeletes: 0,
+  });
+
+  scenario = "create-malformed";
+  await prepareListingForPublication();
+  const createError = page.locator("#listing-form-error");
+  await expect(createError).toContainText(AZ_COPY.listingForm.publishFailed);
+  await expect(createError).toContainText(AZ_COPY.listingForm.cleanupFailed);
+  await expect(createError).toBeFocused();
+  await expect(
+    page.getByRole("heading", { name: AZ_COPY.listingForm.publishedTitle }),
+  ).toHaveCount(0);
+  await expect(page.locator("body")).not.toContainText(
+    "provider create detail",
+  );
+  await expect(page.locator("body")).not.toContainText(
+    "provider cleanup parser diagnostic",
+  );
+  expect({ uploadPosts, listingPosts, cleanupDeletes }).toEqual({
+    uploadPosts: 2,
+    listingPosts: 1,
+    cleanupDeletes: 1,
+  });
+
+  scenario = "edit-load-wrong-id";
+  await page.goto(`/listings/${listingId}/edit`);
+  const loadError = page
+    .getByRole("alert")
+    .filter({ hasText: AZ_COPY.listingForm.editUnavailableBody });
+  await expect(loadError).toContainText(
+    AZ_COPY.listingForm.editUnavailableBody,
+  );
+  await expect(loadError).toBeFocused();
+  await expect(page.locator("body")).not.toContainText("provider load detail");
+
+  scenario = "edit-save-wrong-id";
+  await page.goto(`/listings/${listingId}/edit`);
+  await expect(
+    page.getByRole("heading", { name: AZ_COPY.listingForm.editTitle }),
+  ).toBeVisible();
+  await page.getByLabel(AZ_COPY.listingForm.bookTitle).fill("Dəyişmiş başlıq");
+  await page.getByRole("button", { name: AZ_COPY.listingForm.save }).click();
+  const saveError = page.locator("#edit-listing-error");
+  await expect(saveError).toHaveText(AZ_COPY.listingForm.saveFailed);
+  await expect(saveError).toBeFocused();
+  await expect(
+    page.getByText(AZ_COPY.listingForm.saved, { exact: true }),
+  ).toHaveCount(0);
+  await expect(page.locator("body")).not.toContainText(
+    "provider update detail",
+  );
+  expect(editPatches).toBe(1);
+
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
 test("authentication modes and password validation are Azerbaijani", async ({
   page,
 }) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -31,7 +31,9 @@ export function PrivacyRequestForm() {
   const [busy, setBusy] = useState(false);
   const detailsRef = useRef<HTMLTextAreaElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
-  const loadErrorRef = useRef<HTMLParagraphElement>(null);
+  const focusLoadError = useCallback((element: HTMLParagraphElement | null) => {
+    element?.focus();
+  }, []);
 
   useEffect(() => {
     if (!userId) {
@@ -71,10 +73,6 @@ export function PrivacyRequestForm() {
       controller.abort();
     };
   }, [userId]);
-
-  useEffect(() => {
-    if (loaded && loadError) loadErrorRef.current?.focus();
-  }, [loadError, loaded]);
 
   useEffect(() => {
     if (status && !busy && !detailsInvalid) statusRef.current?.focus();
@@ -237,7 +235,7 @@ export function PrivacyRequestForm() {
           </p>
         ) : loadError ? (
           <p
-            ref={loadErrorRef}
+            ref={focusLoadError}
             role="alert"
             tabIndex={-1}
             className="mt-2 text-xs leading-5 text-red-700"

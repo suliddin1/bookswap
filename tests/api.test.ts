@@ -94,6 +94,14 @@ import {
   parseProfileDashboardResponse,
   parseProfileResponse,
 } from "../lib/account-responses";
+import {
+  getResponseErrorCode,
+  parseListingCleanupResponse,
+  parseListingDataResponse,
+  parseListingUpdateResponse,
+  parseListingUploadResponse,
+  readResponseJson,
+} from "../lib/listing-authoring-responses";
 import { POST as reportWebVital } from "../app/api/vitals/route";
 
 const originalOpenAIKey = process.env.OPENAI_API_KEY;
@@ -245,6 +253,104 @@ describe("marketplace input validation", () => {
         data: { ...privacyItem, status: "provider-status" },
       }),
     ).toBeNull();
+  });
+
+  it("rejects malformed listing authoring and image success responses", async () => {
+    const listing = {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      title: "Elan cavab sınağı",
+      author: "Sınaq müəllifi",
+      description: "Elan yaratma cavabının etibarlı təsviri.",
+      price: 15,
+      images: [
+        "https://fixture.supabase.co/storage/v1/object/public/listing-images/owner/book.png",
+      ],
+      category: "Fiction",
+      condition: "Very good",
+      city: "Baku",
+      status: "active",
+      seller: {
+        id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        name: "Sınaq satıcısı",
+      },
+    };
+    const uploadUrls = [listing.images[0]];
+
+    expect(parseListingDataResponse({ data: listing })).toEqual(listing);
+    expect(
+      parseListingDataResponse(
+        { data: listing },
+        "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      ),
+    ).toBeNull();
+    expect(
+      parseListingUpdateResponse({
+        data: listing,
+        imageCleanupPending: false,
+      }),
+    ).toEqual({ listing, imageCleanupPending: false });
+    expect(
+      parseListingUpdateResponse(
+        { data: listing, imageCleanupPending: false },
+        "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      ),
+    ).toBeNull();
+    expect(parseListingUploadResponse({ data: uploadUrls }, 1)).toEqual(
+      uploadUrls,
+    );
+    expect(
+      parseListingCleanupResponse(
+        { accepted: 1, referenced: 0, cleanupPending: false },
+        1,
+      ),
+    ).toEqual({ cleanupPending: false });
+    expect(getResponseErrorCode({ code: "AUTH_REQUIRED" })).toBe(
+      "AUTH_REQUIRED",
+    );
+
+    expect(parseListingDataResponse({ data: { id: listing.id } })).toBeNull();
+    expect(
+      parseListingUpdateResponse({
+        data: listing,
+        imageCleanupPending: "false",
+      }),
+    ).toBeNull();
+    expect(parseListingUploadResponse({ data: {} }, 1)).toBeNull();
+    expect(parseListingUploadResponse({ data: uploadUrls }, 2)).toBeNull();
+    expect(
+      parseListingUploadResponse({ data: ["javascript:alert(1)"] }, 1),
+    ).toBeNull();
+    expect(parseListingUploadResponse({ data: ["/icon.svg"] }, 1)).toBeNull();
+    expect(
+      parseListingUploadResponse({ data: [uploadUrls[0], uploadUrls[0]] }, 2),
+    ).toBeNull();
+    expect(
+      parseListingCleanupResponse(
+        { accepted: 0, referenced: 0, cleanupPending: "yes" },
+        1,
+      ),
+    ).toBeNull();
+    expect(
+      parseListingCleanupResponse(
+        { accepted: 2, referenced: 0, cleanupPending: false },
+        1,
+      ),
+    ).toBeNull();
+    expect(
+      await readResponseJson(
+        new Response("provider parser diagnostic", {
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    ).toBeNull();
+    const abortError = Object.assign(new Error("aborted"), {
+      name: "AbortError",
+    });
+    await expect(
+      readResponseJson({
+        json: vi.fn().mockRejectedValue(abortError),
+      } as unknown as Response),
+    ).rejects.toBe(abortError);
   });
 
   it("uses one Azerbaijani locale contract for public marketplace labels", () => {
