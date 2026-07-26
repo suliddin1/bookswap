@@ -227,6 +227,7 @@ export const AZ_COPY = {
   listingCard: {
     save: "Elanı seçilmişlərə əlavə et",
     remove: "Elanı seçilmişlərdən çıxar",
+    favoriteFailed: "Seçilmişləri yeniləmək mümkün olmadı.",
     sold: "Satılıb",
     cover: "üz qabığı",
   },

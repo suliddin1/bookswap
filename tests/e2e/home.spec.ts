@@ -468,6 +468,105 @@ test("marketplace covers use responsive lazy optimizer candidates", async ({
   await expect(cover).toHaveAttribute("srcset", /_next\/image\?url=/);
 });
 
+test("shared listing-card favorite failures stay context bound", async ({
+  page,
+}) => {
+  const listingId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const otherListingId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const favoriteRequests: Array<{ method: string; body: unknown }> = [];
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  let releaseFavorite!: () => void;
+  const favoriteResponseHeld = new Promise<void>((resolve) => {
+    releaseFavorite = resolve;
+  });
+
+  await page.setViewportSize({ width: 320, height: 800 });
+  await installAuthenticatedUiFixture(page);
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  await page.route("**/api/listings**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: {
+          items: [
+            {
+              id: listingId,
+              title: "Kart cavab sərhədi sınağı",
+              author: "Sınaq müəllifi",
+              description: "Yanlış resurs cavabı vəziyyəti dəyişməməlidir.",
+              price: 18.5,
+              category: "Fiction",
+              condition: "Very good",
+              city: "Baku",
+              status: "active",
+              sellerId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+              seller: {
+                id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+                name: "Sınaq satıcısı",
+              },
+              images: [],
+            },
+          ],
+          nextCursor: null,
+        },
+      }),
+    });
+  });
+  await page.route("**/api/favorites", async (route) => {
+    const request = route.request();
+    favoriteRequests.push({
+      method: request.method(),
+      body: request.postDataJSON(),
+    });
+    await favoriteResponseHeld;
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: { listingId: otherListingId, saved: true },
+        diagnostic: "provider-secret-detail",
+      }),
+    });
+  });
+
+  await page.goto("/listings", { waitUntil: "domcontentloaded" });
+  await expect(
+    page.getByRole("heading", { name: "Kart cavab sərhədi sınağı" }),
+  ).toBeVisible();
+  const favorite = page.getByRole("button", {
+    name: AZ_COPY.listingCard.save,
+  });
+  await expect(favorite).toHaveAttribute("aria-pressed", "false");
+  await favorite.click();
+  await expect(favorite).toBeFocused();
+  await expect(favorite).toHaveAttribute("aria-busy", "true");
+  await favorite.dispatchEvent("click");
+  await expect.poll(() => favoriteRequests.length).toBe(1);
+  releaseFavorite();
+
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: AZ_COPY.listingCard.favoriteFailed }),
+  ).toBeVisible();
+  await expect(favorite).toBeFocused();
+  await expect(favorite).toHaveAttribute("aria-pressed", "false");
+  await expect(favorite).toHaveAttribute("aria-busy", "false");
+  await expect(page).toHaveURL(/\/listings$/);
+  await expect(page.locator("body")).not.toContainText(
+    "provider-secret-detail",
+  );
+  expect(favoriteRequests).toEqual([{ method: "POST", body: { listingId } }]);
+  expect(await horizontalOverflow(page)).toEqual([]);
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
 test("listing detail exposes accessible seller actions and constrained reflow", async ({
   page,
 }) => {

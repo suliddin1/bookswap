@@ -3,6 +3,13 @@ import { AZ_COPY, localizeApiError } from "@/lib/i18n";
 
 export class LocalizedClientError extends Error {
   override name = "LocalizedClientError";
+
+  constructor(
+    message: string,
+    readonly code?: string,
+  ) {
+    super(message);
+  }
 }
 
 export async function authFetch(
@@ -16,6 +23,7 @@ export async function authFetch(
   if (!data.session?.access_token)
     throw new LocalizedClientError(
       localizeApiError("AUTH_REQUIRED", AZ_COPY.auth.failed),
+      "AUTH_REQUIRED",
     );
   return fetch(input, {
     ...init,
