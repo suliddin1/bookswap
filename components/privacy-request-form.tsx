@@ -5,9 +5,10 @@ import { EmptyState } from "@/components/empty-state";
 import { useAuth } from "@/hooks/use-auth";
 import {
   parsePrivacyRequestListResponse,
-  parsePrivacyRequestResponse,
+  parsePrivacyRequestSubmissionResponse,
   PRIVACY_REQUEST_TYPES,
   type PrivacyRequestItem,
+  type PrivacyRequestType,
 } from "@/lib/account-responses";
 import { authFetch } from "@/lib/client-api";
 import {
@@ -31,11 +32,65 @@ export function PrivacyRequestForm() {
   const [busy, setBusy] = useState(false);
   const detailsRef = useRef<HTMLTextAreaElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
+  const userIdRef = useRef(userId);
+  const submissionSequenceRef = useRef(0);
+  const activeSubmissionRef = useRef<{
+    requestId: number;
+    ownerId: string;
+    controller: AbortController;
+  } | null>(null);
   const focusLoadError = useCallback((element: HTMLParagraphElement | null) => {
     element?.focus();
   }, []);
+  userIdRef.current = userId;
+
+  function beginSubmission() {
+    const ownerId = userId;
+    if (
+      !ownerId ||
+      userIdRef.current !== ownerId ||
+      activeSubmissionRef.current
+    )
+      return null;
+    const context = {
+      requestId: ++submissionSequenceRef.current,
+      ownerId,
+      controller: new AbortController(),
+    };
+    activeSubmissionRef.current = context;
+    setBusy(true);
+    setDetailsInvalid(false);
+    setStatusIsError(false);
+    setStatus(AZ_COPY.privacyRequests.sending);
+    return context;
+  }
+
+  function isCurrentSubmission(context: {
+    requestId: number;
+    ownerId: string;
+  }) {
+    const activeSubmission = activeSubmissionRef.current;
+    return (
+      activeSubmission?.requestId === context.requestId &&
+      activeSubmission.ownerId === context.ownerId &&
+      userIdRef.current === context.ownerId
+    );
+  }
+
+  function finishSubmission(context: { requestId: number; ownerId: string }) {
+    if (!isCurrentSubmission(context)) return;
+    activeSubmissionRef.current = null;
+    setBusy(false);
+  }
 
   useEffect(() => {
+    submissionSequenceRef.current += 1;
+    activeSubmissionRef.current?.controller.abort();
+    activeSubmissionRef.current = null;
+    setBusy(false);
+    setStatus("");
+    setStatusIsError(false);
+    setDetailsInvalid(false);
     if (!userId) {
       setItems([]);
       setLoaded(false);
@@ -58,7 +113,14 @@ export function PrivacyRequestForm() {
           );
         const parsedItems = parsePrivacyRequestListResponse(body);
         if (!parsedItems) throw new Error(AZ_COPY.privacyRequests.loadFailed);
-        if (active) setItems(parsedItems);
+        if (active)
+          setItems((current) => [
+            ...current.filter(
+              (item) =>
+                !parsedItems.some((parsedItem) => parsedItem.id === item.id),
+            ),
+            ...parsedItems,
+          ]);
       })
       .catch((reason) => {
         if (active && reason?.name !== "AbortError")
@@ -71,6 +133,11 @@ export function PrivacyRequestForm() {
     return () => {
       active = false;
       controller.abort();
+      const activeSubmission = activeSubmissionRef.current;
+      if (activeSubmission?.ownerId === userId) {
+        activeSubmission.controller.abort();
+        activeSubmissionRef.current = null;
+      }
     };
   }, [userId]);
 
@@ -80,7 +147,7 @@ export function PrivacyRequestForm() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy) return;
+    if (activeSubmissionRef.current) return;
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     const details = String(form.get("details") ?? "").trim();
@@ -92,35 +159,52 @@ export function PrivacyRequestForm() {
       return;
     }
 
-    setBusy(true);
-    setDetailsInvalid(false);
-    setStatusIsError(false);
-    setStatus(AZ_COPY.privacyRequests.sending);
+    const type = PRIVACY_REQUEST_TYPES.find(
+      (candidate): candidate is PrivacyRequestType =>
+        candidate === form.get("type"),
+    );
+    if (!type) {
+      setStatusIsError(true);
+      setStatus(AZ_COPY.privacyRequests.failed);
+      return;
+    }
+    const context = beginSubmission();
+    if (!context) return;
     try {
       const response = await authFetch("/api/privacy-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: form.get("type"),
-          details: form.get("details"),
+          type,
+          details,
         }),
+        signal: context.controller.signal,
       });
       const body = await response.json();
       if (!response.ok)
         throw new Error(
           localizeApiError(body.code, AZ_COPY.privacyRequests.failed),
         );
-      const parsedItem = parsePrivacyRequestResponse(body);
+      const parsedItem = parsePrivacyRequestSubmissionResponse(body, {
+        userId: context.ownerId,
+        type,
+      });
       if (!parsedItem) throw new Error(AZ_COPY.privacyRequests.failed);
-      setItems((current) => [parsedItem, ...current]);
+      if (!isCurrentSubmission(context)) return;
+      setItems((current) => [
+        parsedItem,
+        ...current.filter((item) => item.id !== parsedItem.id),
+      ]);
       formElement.reset();
       setDetailsInvalid(false);
       setStatus(AZ_COPY.privacyRequests.submitted);
     } catch {
-      setStatusIsError(true);
-      setStatus(AZ_COPY.privacyRequests.failed);
+      if (isCurrentSubmission(context)) {
+        setStatusIsError(true);
+        setStatus(AZ_COPY.privacyRequests.failed);
+      }
     } finally {
-      setBusy(false);
+      finishSubmission(context);
     }
   }
 
@@ -151,6 +235,7 @@ export function PrivacyRequestForm() {
   return (
     <div className="mt-5">
       <form
+        key={userId}
         onSubmit={submit}
         noValidate
         className="card grid min-w-0 gap-4 p-4 sm:p-6"
@@ -212,8 +297,8 @@ export function PrivacyRequestForm() {
         )}
         <button
           type="submit"
-          disabled={busy}
-          className="btn-primary disabled:opacity-50"
+          aria-disabled={busy}
+          className="btn-primary aria-disabled:opacity-50"
         >
           {busy
             ? AZ_COPY.privacyRequests.sending

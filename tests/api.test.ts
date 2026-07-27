@@ -91,9 +91,9 @@ import {
   parseListingDeletionResponse,
   parseListingMutationResponse,
   parsePrivacyRequestListResponse,
-  parsePrivacyRequestResponse,
+  parsePrivacyRequestSubmissionResponse,
   parseProfileDashboardResponse,
-  parseProfileResponse,
+  parseProfileSaveResponse,
 } from "../lib/account-responses";
 import {
   getResponseErrorCode,
@@ -408,6 +408,7 @@ describe("marketplace input validation", () => {
       },
     };
     const profile = { name: "Sınaq oxucusu", phone: null, city: "Baku" };
+    const userId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
     const privacyItem = {
       id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
       type: "access",
@@ -420,7 +421,12 @@ describe("marketplace input validation", () => {
         data: { profile, listings: [listing], favoriteCount: 2 },
       }),
     ).toEqual({ profile, listings: [listing], favoriteCount: 2 });
-    expect(parseProfileResponse({ data: profile })).toEqual(profile);
+    expect(
+      parseProfileSaveResponse(
+        { requesterId: userId, data: profile },
+        { userId, profile },
+      ),
+    ).toEqual(profile);
     expect(parseFavoriteListingsResponse({ data: [listing] })).toEqual([
       listing,
     ]);
@@ -447,9 +453,12 @@ describe("marketplace input validation", () => {
     expect(parsePrivacyRequestListResponse({ data: [privacyItem] })).toEqual([
       privacyItem,
     ]);
-    expect(parsePrivacyRequestResponse({ data: privacyItem })).toEqual(
-      privacyItem,
-    );
+    expect(
+      parsePrivacyRequestSubmissionResponse(
+        { requesterId: userId, data: privacyItem },
+        { userId, type: "access" },
+      ),
+    ).toEqual(privacyItem);
 
     expect(
       parseProfileDashboardResponse({
@@ -457,7 +466,25 @@ describe("marketplace input validation", () => {
       }),
     ).toBeNull();
     expect(
-      parseProfileResponse({ data: { ...profile, phone: 994 } }),
+      parseProfileSaveResponse(
+        { requesterId: userId, data: { ...profile, phone: 994 } },
+        { userId, profile },
+      ),
+    ).toBeNull();
+    expect(
+      parseProfileSaveResponse(
+        {
+          requesterId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          data: profile,
+        },
+        { userId, profile },
+      ),
+    ).toBeNull();
+    expect(
+      parseProfileSaveResponse(
+        { requesterId: userId, data: { ...profile, city: "Ganja" } },
+        { userId, profile },
+      ),
     ).toBeNull();
     expect(parseFavoriteListingsResponse({ data: {} })).toBeNull();
     expect(
@@ -466,9 +493,34 @@ describe("marketplace input validation", () => {
       }),
     ).toBeNull();
     expect(
-      parsePrivacyRequestResponse({
-        data: { ...privacyItem, status: "provider-status" },
-      }),
+      parsePrivacyRequestSubmissionResponse(
+        {
+          requesterId: userId,
+          data: {
+            ...privacyItem,
+            status: "provider-status",
+          },
+        },
+        { userId, type: "access" },
+      ),
+    ).toBeNull();
+    expect(
+      parsePrivacyRequestSubmissionResponse(
+        {
+          requesterId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          data: privacyItem,
+        },
+        { userId, type: "access" },
+      ),
+    ).toBeNull();
+    expect(
+      parsePrivacyRequestSubmissionResponse(
+        {
+          requesterId: userId,
+          data: { ...privacyItem, type: "correction" },
+        },
+        { userId, type: "access" },
+      ),
     ).toBeNull();
     const mutationExpectation = {
       listingId: listing.id,
@@ -1188,6 +1240,7 @@ describe("marketplace input validation", () => {
     expect(profileRoute.match(/\.select\("name,phone,city"\)/g)).toHaveLength(
       2,
     );
+    expect(profileRoute).toContain("requesterId: user.id");
     expect(profileRoute).toContain(
       "if (listingsResult.error) throw listingsResult.error",
     );
@@ -1196,6 +1249,7 @@ describe("marketplace input validation", () => {
     );
     expect(profileRoute.match(/apiError\(error, 500\)/g)).toHaveLength(2);
     expect(privacyRoute.match(/apiError\(error, 500\)/g)).toHaveLength(2);
+    expect(privacyRoute).toContain("requesterId: user.id");
     expect(
       privacyRequestInput.parse({
         type: "appeal",

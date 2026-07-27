@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       .select("id,type,status,created_at")
       .single();
     if (error) throw error;
-    return Response.json({ data }, { status: 201 });
+    return Response.json({ requesterId: user.id, data }, { status: 201 });
   } catch (error) {
     return apiError(error, 500);
   }

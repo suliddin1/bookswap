@@ -10,6 +10,8 @@ export const PRIVACY_REQUEST_TYPES = [
   "appeal",
 ] as const;
 
+export type PrivacyRequestType = (typeof PRIVACY_REQUEST_TYPES)[number];
+
 const privacyRequestStatuses = [
   "open",
   "in_progress",
@@ -31,7 +33,7 @@ export type ProfileDashboardData = {
 
 export type PrivacyRequestItem = {
   id: string;
-  type: (typeof PRIVACY_REQUEST_TYPES)[number];
+  type: PrivacyRequestType;
   status: (typeof privacyRequestStatuses)[number];
   created_at: string;
 };
@@ -94,8 +96,21 @@ export function parseProfileDashboardResponse(
   return { profile, listings, favoriteCount: Number(favoriteCount) };
 }
 
-export function parseProfileResponse(value: unknown): ProfileRecord | null {
-  return isRecord(value) ? parseProfileRecord(value.data) : null;
+export function parseProfileSaveResponse(
+  value: unknown,
+  expected: { userId: string; profile: ProfileRecord },
+): ProfileRecord | null {
+  if (!isRecord(value) || !isRecord(value.data)) return null;
+  const profile = parseProfileRecord(value.data);
+  if (
+    !profile ||
+    value.requesterId !== expected.userId ||
+    profile.name !== expected.profile.name ||
+    profile.phone !== expected.profile.phone ||
+    profile.city !== expected.profile.city
+  )
+    return null;
+  return profile;
 }
 
 export function parsePrivacyRequestListResponse(
@@ -108,10 +123,20 @@ export function parsePrivacyRequestListResponse(
     : null;
 }
 
-export function parsePrivacyRequestResponse(
+export function parsePrivacyRequestSubmissionResponse(
   value: unknown,
+  expected: { userId: string; type: PrivacyRequestType },
 ): PrivacyRequestItem | null {
-  return isRecord(value) ? parsePrivacyRequestItem(value.data) : null;
+  if (!isRecord(value) || !isRecord(value.data)) return null;
+  const item = parsePrivacyRequestItem(value.data);
+  if (
+    !item ||
+    value.requesterId !== expected.userId ||
+    item.type !== expected.type ||
+    item.status !== "open"
+  )
+    return null;
+  return item;
 }
 
 export function parseFavoriteListingsResponse(

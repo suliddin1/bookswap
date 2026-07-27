@@ -1059,7 +1059,8 @@ test("profile and privacy controls expose keyboard focus and 200% reflow", async
       await route.fulfill({
         contentType: "application/json",
         body: JSON.stringify({
-          data: { name: "Yenilənmiş oxucu", city: "Baku", phone: null },
+          requesterId: "11111111-1111-4111-8111-111111111111",
+          data: { name: "Yenilənmiş oxucu", city: "Bakı", phone: null },
         }),
       });
       return;
@@ -1099,6 +1100,7 @@ test("profile and privacy controls expose keyboard focus and 200% reflow", async
       await route.fulfill({
         contentType: "application/json",
         body: JSON.stringify({
+          requesterId: "11111111-1111-4111-8111-111111111111",
           data: {
             id: "44444444-4444-4444-8444-444444444444",
             type: "access",
@@ -1208,6 +1210,183 @@ test("profile and privacy controls expose keyboard focus and 200% reflow", async
   expect(await horizontalOverflow(page)).toEqual([]);
   await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
   expect(await horizontalOverflow(page)).toEqual([]);
+});
+
+test("profile save and privacy submission reject cross-identity acknowledgements", async ({
+  page,
+}) => {
+  await installAuthenticatedUiFixture(page);
+  const ownerId = "11111111-1111-4111-8111-111111111111";
+  const wrongOwnerId = "99999999-9999-4999-8999-999999999999";
+  const profileRequests: Array<Record<string, unknown>> = [];
+  const privacyRequests: Array<Record<string, unknown>> = [];
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  let releaseProfile!: () => void;
+  let releasePrivacy!: () => void;
+  const firstProfileGate = new Promise<void>((resolve) => {
+    releaseProfile = resolve;
+  });
+  const firstPrivacyGate = new Promise<void>((resolve) => {
+    releasePrivacy = resolve;
+  });
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+
+  await page.route("**/api/profile", async (route) => {
+    if (route.request().method() === "PATCH") {
+      const submitted = JSON.parse(
+        route.request().postData() ?? "{}",
+      ) as Record<string, unknown>;
+      profileRequests.push(submitted);
+      if (profileRequests.length === 1) await firstProfileGate;
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          requesterId: wrongOwnerId,
+          data: submitted,
+          diagnostic: "private profile provider detail",
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: {
+          profile: { name: "Sınaq oxucusu", city: "Baku", phone: null },
+          favoriteCount: 0,
+          listings: [],
+        },
+      }),
+    });
+  });
+  await page.route("**/api/privacy-requests", async (route) => {
+    if (route.request().method() === "POST") {
+      const submitted = JSON.parse(
+        route.request().postData() ?? "{}",
+      ) as Record<string, unknown>;
+      privacyRequests.push(submitted);
+      if (privacyRequests.length === 1) await firstPrivacyGate;
+      await route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({
+          requesterId: wrongOwnerId,
+          data: {
+            id: "44444444-4444-4444-8444-444444444444",
+            type: submitted.type,
+            status: "open",
+            created_at: "2026-07-27T10:00:00.000Z",
+          },
+          diagnostic: "private privacy provider detail",
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ data: [] }),
+    });
+  });
+
+  const viewports = [
+    { width: 1440, height: 900 },
+    { width: 1024, height: 768 },
+    { width: 390, height: 844 },
+    { width: 360, height: 800 },
+  ];
+
+  for (let index = 0; index < viewports.length; index += 1) {
+    const viewport = viewports[index];
+    await page.setViewportSize(viewport);
+    await page.goto("/profile");
+    await page.getByRole("tab", { name: AZ_COPY.profile.tabs.profile }).click();
+    const nameInput = page.getByLabel(AZ_COPY.profile.name, { exact: true });
+    const submittedName = `Sınaq oxucusu ${index + 1}`;
+    await nameInput.fill(submittedName);
+    const saveButton = page
+      .locator("form")
+      .filter({ has: nameInput })
+      .locator('button[type="submit"]');
+    await saveButton.click();
+    if (index === 0) {
+      await expect(saveButton).toBeFocused();
+      await expect(saveButton).toHaveAttribute("aria-disabled", "true");
+      await saveButton.evaluate((element) => (element as HTMLElement).click());
+      await expect.poll(() => profileRequests.length).toBe(1);
+      releaseProfile();
+    }
+    const profileFeedback = page.locator("#profile-dashboard-feedback");
+    await expect(profileFeedback).toHaveText(AZ_COPY.profile.profileSaveFailed);
+    await expect(profileFeedback).toBeFocused();
+    await expect(nameInput).toHaveValue(submittedName);
+    await expect(page.getByText(AZ_COPY.profile.profileSaved)).toHaveCount(0);
+    await expect(page.locator("body")).not.toContainText(
+      "private profile provider detail",
+    );
+    await expect(saveButton).toHaveAttribute("aria-disabled", "false");
+    expect(await horizontalOverflow(page)).toEqual([]);
+    await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+    expect(await horizontalOverflow(page)).toEqual([]);
+
+    await page.goto("/user-rights");
+    const details = page.getByLabel(AZ_COPY.privacyRequests.details);
+    const submittedDetails = `Şəxsi məlumat sorğusu ${index + 1} üçün kifayət qədər ətraflı mətn.`;
+    await details.fill(submittedDetails);
+    const submitButton = page
+      .locator("form")
+      .filter({ has: details })
+      .locator('button[type="submit"]');
+    await submitButton.click();
+    if (index === 0) {
+      await expect(submitButton).toBeFocused();
+      await expect(submitButton).toHaveAttribute("aria-disabled", "true");
+      await submitButton.evaluate((element) =>
+        (element as HTMLElement).click(),
+      );
+      await expect.poll(() => privacyRequests.length).toBe(1);
+      releasePrivacy();
+    }
+    const privacyFeedback = page
+      .locator('p[role="alert"]')
+      .filter({ hasText: AZ_COPY.privacyRequests.failed });
+    await expect(privacyFeedback).toBeFocused();
+    await expect(details).toHaveValue(submittedDetails);
+    await expect(page.getByText(AZ_COPY.privacyRequests.submitted)).toHaveCount(
+      0,
+    );
+    await expect(page.locator("body")).not.toContainText(
+      "private privacy provider detail",
+    );
+    await expect(submitButton).toHaveAttribute("aria-disabled", "false");
+    expect(await horizontalOverflow(page)).toEqual([]);
+    await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+    expect(await horizontalOverflow(page)).toEqual([]);
+  }
+
+  expect(profileRequests).toHaveLength(viewports.length);
+  expect(privacyRequests).toHaveLength(viewports.length);
+  for (let index = 0; index < profileRequests.length; index += 1) {
+    const request = profileRequests[index];
+    expect(request).toEqual({
+      name: `Sınaq oxucusu ${index + 1}`,
+      city: "Bakı",
+      phone: null,
+    });
+  }
+  for (let index = 0; index < privacyRequests.length; index += 1) {
+    const request = privacyRequests[index];
+    expect(request).toEqual({
+      type: "access",
+      details: `Şəxsi məlumat sorğusu ${index + 1} üçün kifayət qədər ətraflı mətn.`,
+    });
+  }
+  expect(ownerId).not.toBe(wrongOwnerId);
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
 });
 
 test("profile listing mutations reject cross-resource and malformed acknowledgements", async ({

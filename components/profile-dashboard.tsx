@@ -21,8 +21,9 @@ import {
   parseListingDeletionResponse,
   parseListingMutationResponse,
   parseProfileDashboardResponse,
-  parseProfileResponse,
+  parseProfileSaveResponse,
   type ProfileDashboardData,
+  type ProfileRecord,
 } from "@/lib/account-responses";
 import { authFetch } from "@/lib/client-api";
 import { AZ_COPY, formatCity, localizeApiError } from "@/lib/i18n";
@@ -56,6 +57,12 @@ export function ProfileDashboard() {
   const userIdRef = useRef(userId);
   const dataRef = useRef(data);
   const dataOwnerIdRef = useRef(dataOwnerId);
+  const profileSaveSequenceRef = useRef(0);
+  const activeProfileSaveRef = useRef<{
+    requestId: number;
+    ownerId: string;
+    controller: AbortController;
+  } | null>(null);
   const listingMutationSequenceRef = useRef(0);
   const activeListingMutationRef = useRef<{
     requestId: number;
@@ -69,6 +76,49 @@ export function ProfileDashboard() {
   userIdRef.current = userId;
   dataRef.current = data;
   dataOwnerIdRef.current = dataOwnerId;
+
+  function beginProfileSave() {
+    const ownerId = userId;
+    if (
+      !ownerId ||
+      userIdRef.current !== ownerId ||
+      dataOwnerIdRef.current !== ownerId ||
+      !dataRef.current ||
+      activeProfileSaveRef.current
+    )
+      return null;
+    const context = {
+      requestId: ++profileSaveSequenceRef.current,
+      ownerId,
+      controller: new AbortController(),
+    };
+    activeProfileSaveRef.current = context;
+    setProfileBusy(true);
+    setProfileSaved(false);
+    setInvalidProfileField(null);
+    setError("");
+    setNotice("");
+    return context;
+  }
+
+  function isCurrentProfileSave(context: {
+    requestId: number;
+    ownerId: string;
+  }) {
+    const activeSave = activeProfileSaveRef.current;
+    return (
+      activeSave?.requestId === context.requestId &&
+      activeSave.ownerId === context.ownerId &&
+      userIdRef.current === context.ownerId &&
+      dataOwnerIdRef.current === context.ownerId
+    );
+  }
+
+  function finishProfileSave(context: { requestId: number; ownerId: string }) {
+    if (!isCurrentProfileSave(context)) return;
+    activeProfileSaveRef.current = null;
+    setProfileBusy(false);
+  }
 
   function beginListingMutation(listingId: string) {
     const ownerId = userId;
@@ -230,7 +280,7 @@ export function ProfileDashboard() {
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!dashboardData || profileBusy) return;
+    if (!dashboardData || activeProfileSaveRef.current) return;
     const formElement = event.currentTarget;
     const form = new FormData(event.currentTarget);
     const name = String(form.get("name") ?? "").trim();
@@ -252,39 +302,45 @@ export function ProfileDashboard() {
       return;
     }
 
-    setProfileBusy(true);
-    setProfileSaved(false);
-    setInvalidProfileField(null);
-    setError("");
-    setNotice("");
+    const phone = String(form.get("phone") ?? "").trim() || null;
+    const expectedProfile: ProfileRecord = { name, city, phone };
+    const context = beginProfileSave();
+    if (!context) return;
     try {
       const response = await authFetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: form.get("name"),
-          city: form.get("city"),
-          phone: form.get("phone") || null,
-        }),
+        body: JSON.stringify(expectedProfile),
+        signal: context.controller.signal,
       });
       const body = await response.json();
       if (!response.ok)
         throw new Error(
           localizeApiError(body.code, AZ_COPY.profile.profileSaveFailed),
         );
-      const parsedProfile = parseProfileResponse(body);
+      const parsedProfile = parseProfileSaveResponse(body, {
+        userId: context.ownerId,
+        profile: expectedProfile,
+      });
       if (!parsedProfile) throw new Error(AZ_COPY.profile.profileSaveFailed);
-      setData({ ...dashboardData, profile: parsedProfile });
-      setDataOwnerId(userId ?? null);
+      if (!isCurrentProfileSave(context)) return;
+      setData((current) =>
+        current ? { ...current, profile: parsedProfile } : current,
+      );
       setProfileSaved(true);
     } catch {
-      setError(AZ_COPY.profile.profileSaveFailed);
+      if (isCurrentProfileSave(context))
+        setError(AZ_COPY.profile.profileSaveFailed);
     } finally {
-      setProfileBusy(false);
+      finishProfileSave(context);
     }
   }
 
   useEffect(() => {
+    profileSaveSequenceRef.current += 1;
+    activeProfileSaveRef.current?.controller.abort();
+    activeProfileSaveRef.current = null;
+    setProfileBusy(false);
     listingMutationSequenceRef.current += 1;
     activeListingMutationRef.current = null;
     setBusyListingId(null);
@@ -324,6 +380,11 @@ export function ProfileDashboard() {
     return () => {
       active = false;
       controller.abort();
+      const activeProfileSave = activeProfileSaveRef.current;
+      if (activeProfileSave?.ownerId === userId) {
+        activeProfileSave.controller.abort();
+        activeProfileSaveRef.current = null;
+      }
     };
   }, [userId]);
 
@@ -761,8 +822,8 @@ export function ProfileDashboard() {
                   )}
                   <button
                     type="submit"
-                    disabled={profileBusy}
-                    className="btn-primary disabled:opacity-50"
+                    aria-disabled={profileBusy}
+                    className="btn-primary aria-disabled:opacity-50"
                   >
                     {profileBusy
                       ? AZ_COPY.profile.savingProfile

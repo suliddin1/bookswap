@@ -56,7 +56,7 @@ export async function PATCH(request: Request) {
       .select("name,phone,city")
       .single();
     if (error) throw error;
-    return Response.json({ data });
+    return Response.json({ requesterId: user.id, data });
   } catch (error) {
     return apiError(error, 500);
   }
