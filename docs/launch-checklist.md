@@ -67,6 +67,17 @@ Vercel rollback restores application code/config version; it does not reverse da
 - Public production smoke and real-backend authorization matrix pass; production data is not used as test fixtures.
 - After representative traffic, evaluate mobile/desktop p75 LCP, CLS, and INP. Synthetic budget tests do not replace field evidence.
 
+## Observed production gate — 28 July 2026
+
+- Confirmed separate production Supabase project `bookswap` (`lnhublqrtkdrrafghvki`, `eu-central-1`, active/healthy, PostgreSQL 17.6) and Vercel project `bookswap` (`prj_jK49lo72xejgNwD89stuffs8uu6a`). The current published bundle embeds that project ref.
+- Production contains one Auth account/profile and therefore is not a disposable target. Repository migration count is 22; production history has 2 legacy entries and only 8 public launch tables.
+- Supabase organization plan is Free. No encrypted logical export, Storage copy, isolated restore, downloadable provider backup, or PITR evidence was available. This fails the pre-migration gate.
+- `listing-images` has the intended public/5 MiB/JPEG-PNG-WebP bucket settings, but production has not reached the service-only Storage mutation policy state.
+- Hosted Auth URL/provider/session/MFA settings and Vercel Production variable values/scopes were not readable through the available connectors. Leaked-password protection is observably disabled.
+- The existing Vercel production deployment is `dpl_3YJ15xSUXwLvT82Q2ZDc8E9BRR7f` from old source SHA `941b0c75...`; it remains available on Vercel aliases. No deployment exists for `cf126c3...`, Git remains disconnected, and no custom domain was observed.
+- The repository requires a production `OPENAI_API_KEY` for fail-closed listing/chat moderation. Notification email remains disabled because no `notify` Edge Function is deployed; its placeholder sender must never be published.
+- The gate stopped before every production mutation. Follow DR-006 and DR-007 in `docs/ai/DECISION_REQUESTS.md`; do not deploy until backup/restore, migration baseline, Auth, Storage, variables, canonical domain, operational ownership, and legal facts are complete.
+
 ## Failed release and incident recovery
 
 - Contain: disable affected feature or roll back application; preserve audit/log evidence.

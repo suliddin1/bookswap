@@ -682,3 +682,41 @@ Browser coverage includes mobile navigation, keyboard entry/focus, reduced motio
 - The suite used temporary seller, buyer, unrelated, banned, moderator-normal, admin, and stale identities and cleaned its fixtures. Keys stayed in ignored local files and were not printed or committed.
 - No production Supabase/Vercel project, data, domain, backup/restore, Auth paid control, MFA enforcement, CAPTCHA, provider alert, deployment, field performance, or production smoke was configured or verified.
 - Legal pages are structured Azerbaijani drafts; operator/contact/jurisdiction/age/retention/effective-date facts and counsel approval remain external launch blockers.
+
+## 2026-07-28 — Production infrastructure gate (authoritative current evidence)
+
+No production write, migration, fixture, Auth/Storage/environment setting change, Git reconnection, or deployment occurred. The gate stopped before irreversible work.
+
+### Production identity and live-state evidence
+
+- Supabase project `bookswap`, ref `lnhublqrtkdrrafghvki`, region `eu-central-1`, status active/healthy, PostgreSQL 17.6; separate from guarded development ref `uibatsbzjswmtdvdrlxj`.
+- Current Vercel production deployment `dpl_3YJ15xSUXwLvT82Q2ZDc8E9BRR7f` is READY, target `production`, source SHA `941b0c75c0a952c3d68d4a0dee4a1fad541107e4`. Its deployed client bundle embeds `lnhublqrtkdrrafghvki`, confirming the intended production pairing without exposing a key.
+- Vercel aliases: `bookswap-fawn.vercel.app`, `bookswap-suliddin1s-projects.vercel.app`, `bookswap-git-main-suliddin1s-projects.vercel.app`. The public alias returns the old English 24-page release. No deployment exists for merged SHA `cf126c3c4a408007eacf7d337f485be69e23517c`; Git remains disconnected.
+- Production migration history: 2 legacy entries. Repository: 22 immutable files. Production currently has 8 public RLS tables, 23 public indexes, 28 public constraints, one Auth identity/profile, zero listings/messages/reviews/favorites/reports/notifications/Storage objects, and the expected `listing-images` bucket limits. No row content or identity PII was read.
+- Production Security Advisor: one warning, leaked-password protection disabled. Performance Advisor reports legacy per-row `auth.uid()` policy warnings plus unused-index information. These are superseded by unapplied repository migrations, not evidence the launch schema is present.
+- Organization plan: Free. No provider backup/PITR, encrypted logical export, Storage copy, or successful isolated restore was evidenced. Production migration execution was therefore prohibited by the repository gate.
+- No Supabase Edge Function is deployed in production or development. Optional notification email is not enabled.
+- Vercel seven-day grouped runtime query returned no runtime error clusters and one production HTTP 200 log. Alert recipients, retention, uptime monitoring, and incident ownership remain unverified.
+
+### Fresh repository validation
+
+```text
+npm.cmd run format:check                 PASS — all matched files use Prettier
+npm.cmd run lint                         PASS — zero warnings
+npm.cmd run typecheck                    PASS — strict TypeScript, zero diagnostics
+npm.cmd test                             PASS — 3 files, 61/61 tests
+npm.cmd run test:database:static         PASS — 22 migrations
+npm.cmd run test:dependencies            PASS — 7 patched package locations
+npm.cmd run test:secrets                 PASS — 189 repository files
+npm.cmd run test:env -- --authorization  PASS — guarded development identity and key roles
+npm.cmd run test:authorization           PASS — real development backend, 10/10; fixtures cleaned
+npm.cmd run build                        PASS — Next 15.5.21, 40/40 pages
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 28/28
+```
+
+The first authorization invocation was blocked by sandbox network access before fixture creation; the authorized network rerun passed 10/10. `npm.cmd audit --audit-level=high` could not reach the registry in the sandbox, and the external retry was denied because transmitting the dependency tree to npm lacked separate payload authorization. The local patched-version baseline passed; no live advisory pass is claimed. Supabase CLI, Docker, Podman, and `psql` remain unavailable, so no local reset or isolated restore dry run was possible on this workstation.
+
+### Gate result
+
+**FAILED SAFELY / NO DEPLOYMENT.** Required blockers are migration-history reconciliation, encrypted backup plus isolated restore, hosted Auth/MFA/redirect verification, production variable scope/role verification, required OpenAI moderation credentials, canonical domain, alert/incident ownership, post-deploy smoke/authorization evidence, and separate legal placeholder completion. The old production deployment remains unchanged and is the application rollback candidate only; no database rollback was needed.

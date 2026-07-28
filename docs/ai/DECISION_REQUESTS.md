@@ -50,22 +50,44 @@ Supabase leaked-password protection is a paid-plan option. Choose one:
 
 No homemade leaked-password database is permitted. Optional CAPTCHA should be enabled only for high-risk anonymous Auth flows after provider, privacy basis, keys, and accessibility fallback are approved; the repository does not claim CAPTCHA is enabled.
 
+Observed 28 July 2026: production project `bookswap` (`lnhublqrtkdrrafghvki`) is active and reports leaked-password protection disabled. All other hosted Auth settings remain unverified. In Supabase Dashboard, open **Authentication > URL Configuration**, **Sign In / Providers > Email**, **Sessions**, **Rate Limits**, and **Attack Protection**; record settings without copying secrets. Set the production Site URL to the approved HTTPS canonical origin and permit only exact production callback paths needed for `/profile` and `/reset-password`. Remove localhost/preview redirects from production unless an owner records a narrow reason. Enforce MFA for every administrator before public launch.
+
 ## DR-004 — Production operations ownership
 
-Status: production/deployment-only.
+Status: production/deployment-only. The production Supabase identity is now known: `bookswap`, ref `lnhublqrtkdrrafghvki`, region `eu-central-1`. The Vercel project is `bookswap` (`prj_jK49lo72xejgNwD89stuffs8uu6a`). Ownership, recovery, domain, alert, and release decisions remain open.
 
 Name the production Supabase/Vercel projects, domain, region/data-residency decision, deployment approver, incident commander, on-call/alert destination, log owner/retention, backup retention, restore target, support/privacy mailbox owners, moderation SLA, and secret-rotation owner. Verify backups and restore in production; repository procedures are not proof that either is enabled.
 
-## DR-005 — Optional provider credentials
+## DR-005 — Required moderation and optional provider credentials
 
-Status: production/deployment-only unless the feature is enabled.
+Status: production/deployment-only. Automated moderation is already required by launch-critical listing and chat mutations and fails closed when unavailable.
 
 - Choose and configure a real error-monitoring/log destination, or retain provider-neutral structured platform logs.
-- Provide moderation credentials only if external automated moderation is approved; local rules remain available and provider failure stays fail-closed for protected content.
+- Approve the OpenAI moderation processor/privacy terms and place a production-only `OPENAI_API_KEY` in Vercel Production. Without it, listing creation/publication and message sending return a stable 503; local rules can reject but do not approve content.
 - Provide Resend credentials only if notification email is enabled and templates/privacy/retention are approved.
 - Enable `WEB_VITALS_ENABLED=true` only after log access, retention, alert queries, and privacy scope are approved.
 
 No fake DSN, token, or API key may be committed.
+
+## DR-006 — Production migration baseline and recovery approval
+
+Status: launch-blocking production decision.
+
+Production records two legacy migrations (`bookswap_initial_schema`, `production_hardening`) while the repository has 22 immutable migration files. Production also contains one Auth account/profile. Before any schema write:
+
+1. In Supabase **Database > Backups**, record the actual available recovery options; do not claim Free-plan recovery that is not displayed.
+2. Create an encrypted logical export with the Supabase CLI/`pg_dump`, plus a separate `listing-images` object inventory/copy, and store both outside the project account.
+3. Restore into an isolated non-production project and run `supabase/tests/launch_readiness.sql`, row/count/integrity checks, and `npm.cmd run test:authorization`; delete only disposable restore-test fixtures.
+4. Compare the production baseline schema with the repository's first three migrations. Only after exact equivalence is reviewed, repair the migration-history baseline for `202606140001`, `202606140002`, and `202606150001`; never rerun their table/type creation blindly.
+5. Approve and record the remaining ordered migration range, maintenance window, forward-fix owner, previous Vercel production deployment, and data-loss tolerance.
+
+No production reset is permitted.
+
+## DR-007 — Controlled production release approval
+
+Status: blocked until DR-002 through DR-006 are resolved.
+
+In Vercel **bookswap > Settings > Environment Variables**, verify by name only that Production has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`, and `OPENAI_API_KEY`. Confirm the two Supabase keys belong to `lnhublqrtkdrrafghvki`, keep the service role server-only, and do not reuse development values. Leave Git disconnected. After migrations/Auth/Storage/recovery/alerts and all repository gates pass, authorize one explicit deployment of `cf126c3c4a408007eacf7d337f485be69e23517c` or a reviewed successor through the controlled Vercel deployment tool. Record deployment ID/URL and retain `dpl_3YJ15xSUXwLvT82Q2ZDc8E9BRR7f` as the application rollback candidate, noting that an app rollback does not reverse database changes.
 
 ## Resolved product decisions
 

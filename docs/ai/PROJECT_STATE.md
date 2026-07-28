@@ -4,15 +4,15 @@ Updated: 28 July 2026
 
 ## Current verdict
 
-**Conditionally non-deployment ready.** All identified safe repository-side launch-critical work is implemented, and the guarded real development authorization matrix passes. The remaining non-deployment launch blocker is owner/counsel-supplied legal facts and approval. Deployment/production operations remain separate and unverified.
+**Not production-ready; conditionally non-deployment ready.** All identified safe repository-side launch-critical work is implemented, and the guarded real development authorization matrix passes. The remaining non-deployment launch blocker is owner/counsel-supplied legal facts and approval. The production gate was inspected on 28 July 2026 and failed before migration or deployment because backup/restore evidence, migration-history reconciliation, hosted Auth settings, required environment values, moderation credentials, operational ownership, and post-deploy verification are incomplete.
 
 ## Authoritative workspace and Git baseline
 
 - Writable repository: `C:\Users\Lenovo\Documents\2HandedBook`
 - Source restored from: `D:\Codex Projects\2HandedBook` (D was read-only and is not modified)
-- Branch: `autonomous/bookswap-product`
+- Branch: `autonomous/bookswap-product` (the merged tree is identical to `origin/main`; production-gate evidence is being prepared as a follow-up PR)
 - Continuation baseline: `5e36c584ca12780226f8b18ae7876335a0bbe82f`
-- Integration baseline: fetched `origin/main` at `941b0c75c0a952c3d68d4a0dee4a1fad541107e4`
+- Merged `main`: `cf126c3c4a408007eacf7d337f485be69e23517c` (PR #1 squash merge; GitHub Actions passed)
 - Readiness history: inspect `git log --oneline 5e36c58..HEAD`
 
 ## Launch product scope
@@ -49,6 +49,21 @@ Automated exchange matching, wanted-title matching, reader shelves, social readi
 - Generated TypeScript type for `consume_rate_limit`: matches `lib/database.types.ts`
 
 Local `supabase db reset` remains unexecuted on this workstation because Docker/Podman and `psql` are absent. `supabase/config.toml`, corrected seed ordering, and `supabase/tests/launch_readiness.sql` are prepared. The actual migrations were nevertheless executed successfully on the authorized empty development backend.
+
+## Observed production infrastructure gate
+
+- Intended production Supabase project: `bookswap`, ref `lnhublqrtkdrrafghvki`, `eu-central-1`, active/healthy, PostgreSQL 17.6. It is separate from `bookswap-development`.
+- The currently published Vercel production bundle embeds that production ref, which corroborates the environment classification without exposing a key. It is the old deployment `dpl_3YJ15xSUXwLvT82Q2ZDc8E9BRR7f` from source SHA `941b0c75c0a952c3d68d4a0dee4a1fad541107e4`; no deployment exists for merged SHA `cf126c3...`.
+- Current production aliases are Vercel-managed only: `bookswap-fawn.vercel.app`, `bookswap-suliddin1s-projects.vercel.app`, and `bookswap-git-main-suliddin1s-projects.vercel.app`. No custom launch domain was observed. Vercel Git remains disconnected.
+- Production database migration history contains 2 legacy entries while the repository contains 22 ordered migrations. The production schema has 8 public RLS tables rather than the 13-table launch schema. Migration baselining must be reconciled before applying the remaining additive migrations.
+- Production is not empty: one Auth identity and one matching public profile exist. No production fixture was created, inspected, changed, or removed.
+- The `listing-images` bucket exists as public-read with the expected 5 MiB JPEG/PNG/WebP limits, but production still has two Storage object policies rather than the launch architecture's service-only mutation posture.
+- Production Security Advisor reports leaked-password protection disabled. Hosted Site URL, redirect allow-list, confirmation, password/session settings, admin MFA, network/SSL controls, and Auth email delivery were not available through the current read-only connector and are not claimed verified.
+- The Supabase organization is on the Free plan. No downloadable backup, PITR, encrypted logical export, Storage-object copy, or successful isolated restore was evidenced. Because production contains an account, no migration was attempted.
+- Required Vercel Production variable names are `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`, and `OPENAI_API_KEY`. `WEB_VITALS_ENABLED` is opt-in. Notification email additionally requires a deployed `notify` Edge Function and its own `RESEND_API_KEY`; neither project currently has that function deployed.
+- `OPENAI_API_KEY` is launch-critical in the current architecture: listing and chat moderation fail closed when the provider is unavailable. Production variable scopes/roles were not readable through the available platform connector, so completeness is not claimed.
+- Vercel had no grouped runtime errors in the prior seven days and one observed production 200 response. This is not alerting, retention, uptime, or incident-ownership evidence.
+- Deployment gate result: **failed safely**. No migration, Auth/Storage setting change, environment mutation, Git reconnection, production deployment, production authorization fixture, or rollback was performed.
 
 ## Validation snapshot
 
