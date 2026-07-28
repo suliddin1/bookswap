@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
+
+vi.mock("@/lib/rate-limit", async () => {
+  const actual =
+    await vi.importActual<typeof import("@/lib/rate-limit")>(
+      "@/lib/rate-limit",
+    );
+  return { ...actual, assertRateLimit: vi.fn().mockResolvedValue(true) };
+});
 import {
   ApiError,
   apiError,
@@ -892,6 +900,7 @@ describe("marketplace input validation", () => {
     const sources = [
       "../lib/api.ts",
       "../lib/auth.ts",
+      "../lib/auth-response.ts",
       "../lib/notify.ts",
       "../lib/listing-images.ts",
       "../lib/listing-pagination.ts",
@@ -931,11 +940,14 @@ describe("marketplace input validation", () => {
       readFileSync(new URL("../lib/api.ts", import.meta.url), "utf8"),
     ).not.toContain("error.message");
     expect(
+      readFileSync(new URL("../lib/auth-response.ts", import.meta.url), "utf8"),
+    ).toContain("localizeAuthError");
+    expect(
       readFileSync(
         new URL("../app/api/auth/[action]/route.ts", import.meta.url),
         "utf8",
       ),
-    ).toContain("localizeAuthError");
+    ).toContain("localizedAuthResponse");
   });
 
   it("accepts only complete administrator dashboard response shapes", () => {
@@ -1247,8 +1259,12 @@ describe("marketplace input validation", () => {
     expect(profileRoute).toContain(
       "if (favoritesResult.error) throw favoritesResult.error",
     );
-    expect(profileRoute.match(/apiError\(error, 500\)/g)).toHaveLength(2);
-    expect(privacyRoute.match(/apiError\(error, 500\)/g)).toHaveLength(2);
+    expect(profileRoute.match(/apiError\(error, 500, request\)/g)).toHaveLength(
+      2,
+    );
+    expect(privacyRoute.match(/apiError\(error, 500, request\)/g)).toHaveLength(
+      2,
+    );
     expect(privacyRoute).toContain("requesterId: user.id");
     expect(
       privacyRequestInput.parse({
@@ -2143,6 +2159,8 @@ describe("marketplace input validation", () => {
     expect((await reportWebVital(request(validBody))).status).toBe(204);
     expect(log).toHaveBeenCalledTimes(1);
     expect(JSON.parse(log.mock.calls[0][0])).toEqual({
+      timestamp: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+      level: "info",
       event: "bookswap.web_vital",
       version: 1,
       name: "LCP",
@@ -2228,7 +2246,7 @@ describe("marketplace input validation", () => {
     expect(component).not.toContain("location.search");
     expect(route).toContain("MAX_BODY_BYTES = 1_024");
     expect(route).toContain('assertRateLimit(request, "web-vitals"');
-    expect(route).toContain('event: "bookswap.web_vital"');
+    expect(route).toContain('logServerEvent("info", "bookswap.web_vital"');
     expect(layout).toContain(
       'enabled={process.env.WEB_VITALS_ENABLED === "true"}',
     );

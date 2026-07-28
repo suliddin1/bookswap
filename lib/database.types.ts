@@ -492,6 +492,19 @@ export type Database = {
         };
         Returns: PublicListingPageRow[];
       };
+      consume_rate_limit: {
+        Args: {
+          p_scope: string;
+          p_key_hash: string;
+          p_limit: number;
+          p_window_seconds: number;
+        };
+        Returns: {
+          allowed: boolean;
+          remaining: number;
+          retry_after_seconds: number;
+        }[];
+      };
       seller_listings_page: {
         Args: {
           p_seller_id: string;

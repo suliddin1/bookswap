@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { WebVitalsReporter } from "@/components/web-vitals-reporter";
 import { AZ_COPY, DOCUMENT_LANGUAGE } from "@/lib/i18n";
+import { getSiteUrl } from "@/lib/site-url";
 
 const manrope = Manrope({
   subsets: ["latin", "latin-ext"],
@@ -16,9 +17,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  ),
+  metadataBase: getSiteUrl(),
   title: {
     default: AZ_COPY.metadata.title,
     template: "%s | BookSwap",

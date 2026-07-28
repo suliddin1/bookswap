@@ -1,4 +1,4 @@
-import { ApiError, apiError, assertRateLimit, listingInput } from "@/lib/api";
+import { ApiError, apiError, listingInput } from "@/lib/api";
 import { randomUUID } from "node:crypto";
 import {
   assertModerationApproved,
@@ -8,6 +8,8 @@ import {
 import { requireSupabaseAdmin, requireSupabaseClient } from "@/lib/supabase";
 import { assertOwnedListingImages } from "@/lib/security";
 import { requireUser } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
+import { logServerError } from "@/lib/server-log";
 import { normalizeListing } from "@/lib/listings";
 import {
   drainListingImageCleanupJobs,
@@ -84,7 +86,7 @@ export async function GET(request: Request) {
       p_cursor_id: cursor?.id ?? null,
       p_limit: limit + 1,
     });
-    if (error) return apiError(error, 500);
+    if (error) return apiError(error, 500, request);
     const rows = data ?? [];
     const pageRows = rows.slice(0, limit);
     const last = pageRows.at(-1);
@@ -98,7 +100,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    return apiError(error, 503);
+    return apiError(error, 503, request);
   }
 }
 
@@ -107,8 +109,12 @@ export async function POST(request: Request) {
   let submittedImages: string[] = [];
   let supabase: ReturnType<typeof requireSupabaseAdmin> | null = null;
   try {
-    assertRateLimit(request, "create-listing", 10, 60_000);
     const user = await requireUser(request);
+    await assertRateLimit(request, "create-listing", {
+      actorId: user.id,
+      limit: 10,
+      windowMs: 60_000,
+    });
     ownerId = user.id;
     const input = listingInput.parse(await request.json());
     submittedImages = input.images;
@@ -158,12 +164,12 @@ export async function POST(request: Request) {
         await queueListingImageCleanup(supabase, ownerId, submittedImages);
         await drainListingImageCleanupJobs(supabase, ownerId);
       } catch (cleanupError) {
-        console.error(
-          "Could not compensate failed listing creation",
-          cleanupError,
-        );
+        logServerError("listing.create_cleanup_failed", cleanupError, {
+          method: request.method,
+          path: "/api/listings",
+        });
       }
     }
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }

@@ -38,6 +38,8 @@ export const AZ_COPY = {
     rights: "Hüquqlarınız",
     privacy: "Məxfilik bildirişi",
     terms: "İstifadə şərtləri",
+    marketplaceRules: "Kitab bazarı qaydaları",
+    moderationAppeals: "Moderasiya etirazları",
     userRights: "İstifadəçi hüquqları",
     copyright: "© 2026 BookSwap",
   },
@@ -420,8 +422,8 @@ export const AZ_COPY = {
     email: "E-poçt ünvanı",
     emailPlaceholder: "oxucu@example.com",
     password: "Parol",
-    passwordPlaceholder: "Ən azı 8 simvol",
-    passwordHint: "Ən azı 8 simvoldan istifadə et.",
+    passwordPlaceholder: "Ən azı 12 simvol",
+    passwordHint: "Yeni parol üçün ən azı 12 simvoldan istifadə et.",
     busy: "Gözləyin...",
     createAccount: "Hesab yarat",
     sendReset: "Bərpa keçidini göndər",
@@ -438,7 +440,8 @@ export const AZ_COPY = {
     failed: "Giriş əməliyyatını tamamlamaq mümkün olmadı.",
     invalidCredentials: "E-poçt ünvanı və ya parol yanlışdır.",
     emailNotConfirmed: "Daxil olmazdan əvvəl e-poçt ünvanını təsdiqlə.",
-    accountExists: "Bu e-poçt ünvanı ilə hesab artıq mövcuddur.",
+    accountExists:
+      "Əgər bu e-poçt ünvanı hesabla əlaqəlidirsə, növbəti addımlar göndəriləcək.",
     signupDisabled: "Yeni hesab yaradılması hazırda əlçatan deyil.",
     invalidEmail: "Etibarlı e-poçt ünvanı daxil et.",
     weakPassword: "Daha güclü parol seç.",
@@ -464,7 +467,7 @@ export const AZ_COPY = {
     title: "Yeni parol seç.",
     newPassword: "Yeni parol",
     confirmPassword: "Parolu təkrar et",
-    minLength: "Ən azı 8 simvoldan istifadə et.",
+    minLength: "Ən azı 12 simvoldan istifadə et.",
     mismatch: "Parollar eyni deyil.",
     updating: "Yenilənir...",
     update: "Parolu yenilə",
@@ -629,6 +632,8 @@ export const AZ_COPY = {
     internalError:
       "Əməliyyatı tamamlamaq mümkün olmadı. Bir az sonra yenidən cəhd et.",
     rateLimited: "Həddən çox sorğu göndərildi. Bir az sonra yenidən cəhd et.",
+    rateLimitUnavailable:
+      "Təhlükəsizlik yoxlaması hazırda əlçatan deyil. Bir az sonra yenidən cəhd et.",
     uniqueImages: "Elan şəkilləri təkrarlanmamalıdır.",
     textOrImageRequired: "Mətn və ya şəkil tələb olunur.",
     authActionNotFound: "Bu giriş əməliyyatı tapılmadı.",
@@ -916,6 +921,8 @@ const apiErrorLabels: Record<string, string> = {
   PROFILE_UNAVAILABLE: "Hesab profilin əlçatan deyil.",
   ACCOUNT_SUSPENDED: "Hesabın dayandırılıb.",
   RATE_LIMITED: AZ_COPY.api.rateLimited,
+  RATE_LIMIT_UNAVAILABLE: AZ_COPY.api.rateLimitUnavailable,
+  AUTH_UNAVAILABLE: AZ_COPY.auth.configurationUnavailable,
   VALIDATION_ERROR: AZ_COPY.api.invalidData,
   BAD_REQUEST: AZ_COPY.api.badRequest,
   INTERNAL_ERROR: AZ_COPY.api.internalError,
@@ -933,6 +940,7 @@ const apiErrorLabels: Record<string, string> = {
   ROOM_NOT_FOUND: AZ_COPY.chat.unavailableBody,
   ROOM_FORBIDDEN: AZ_COPY.chat.unavailableBody,
   REPORT_EXISTS: "Bu elan üçün artıq açıq şikayətin var.",
+  PRIVACY_REQUEST_EXISTS: "Bu növ üzrə artıq açıq məxfilik müraciətin var.",
   REVIEW_NOT_ALLOWED: "Yalnız tamamlanmış alışın alıcısı rəy yaza bilər.",
   INVALID_IMAGE_COUNT: AZ_COPY.listingForm.invalidImageCount,
   INVALID_IMAGE_FILE: AZ_COPY.listingForm.invalidImageFile,
@@ -967,7 +975,7 @@ const authErrorLabels: Record<string, string> = {
   same_password: AZ_COPY.auth.samePassword,
 };
 
-const numberFormatter = new Intl.NumberFormat("en-US", {
+const numberFormatter = new Intl.NumberFormat("az-AZ", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 2,
 });

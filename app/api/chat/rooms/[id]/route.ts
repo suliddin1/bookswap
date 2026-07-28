@@ -1,5 +1,6 @@
 import { ApiError, apiError, resourceId } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { markChatRoomRead } from "@/lib/chat";
 import { normalizeListing } from "@/lib/listings";
 import { requireSupabaseAdmin } from "@/lib/supabase";
@@ -26,8 +27,9 @@ export async function GET(
       .from("messages")
       .select("id,room_id,sender_id,text,created_at")
       .eq("room_id", id)
-      .order("created_at")
-      .order("id");
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(100);
     if (messagesError) throw messagesError;
     const { data: readState, error: readStateError } = await supabase
       .from("chat_room_reads")
@@ -40,14 +42,14 @@ export async function GET(
       data: {
         ...room,
         listing: normalizeListing(room.listing),
-        messages: messages ?? [],
+        messages: (messages ?? []).reverse(),
         currentUserId: user.id,
         unreadCount: Number(readState?.unread_count ?? 0),
         lastReadAt: readState?.last_read_at ?? null,
       },
     });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }
 
@@ -58,10 +60,16 @@ export async function PATCH(
   try {
     const user = await requireUser(request);
     const id = resourceId.parse((await params).id);
+    await assertRateLimit(request, "chat:mark-read", {
+      actorId: user.id,
+      resourceId: id,
+      limit: 60,
+      windowMs: 60_000,
+    });
     const supabase = requireSupabaseAdmin();
     await markChatRoomRead(supabase, id, user.id);
     return Response.json({ updated: true });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }

@@ -1,5 +1,6 @@
 import { apiError } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 
 export async function GET(request: Request) {
@@ -15,13 +16,18 @@ export async function GET(request: Request) {
     if (error) throw error;
     return Response.json({ data: data ?? [] });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }
 
 export async function PATCH(request: Request) {
   try {
     const user = await requireUser(request);
+    await assertRateLimit(request, "notifications:read", {
+      actorId: user.id,
+      limit: 30,
+      windowMs: 60_000,
+    });
     const supabase = requireSupabaseAdmin();
     const { error } = await supabase
       .from("notifications")
@@ -31,6 +37,6 @@ export async function PATCH(request: Request) {
     if (error) throw error;
     return Response.json({ updated: true });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }

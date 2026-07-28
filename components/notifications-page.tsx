@@ -80,21 +80,17 @@ export function NotificationsPage() {
     notificationData && notificationData.ownerId === userId
       ? notificationData.items
       : null;
-  const [loadFailedForUserId, setLoadFailedForUserId] = useState<
-    string | null
-  >(null);
-  const loadFailed = Boolean(
-    userId && loadFailedForUserId === userId,
+  const [loadFailedForUserId, setLoadFailedForUserId] = useState<string | null>(
+    null,
   );
+  const loadFailed = Boolean(userId && loadFailedForUserId === userId);
   const [feedback, setFeedback] = useState<{
     ownerId: string;
     message: string;
     isError: boolean;
   } | null>(null);
   const visibleFeedback = feedback?.ownerId === userId ? feedback : null;
-  const [markingForUserId, setMarkingForUserId] = useState<string | null>(
-    null,
-  );
+  const [markingForUserId, setMarkingForUserId] = useState<string | null>(null);
   const marking = Boolean(userId && markingForUserId === userId);
   const feedbackRef = useRef<HTMLParagraphElement>(null);
   const loadErrorRef = useRef<HTMLDivElement>(null);

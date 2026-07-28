@@ -1,6 +1,7 @@
 import { requireSupabaseAdmin } from "@/lib/supabase";
-import { ApiError, apiError, assertRateLimit, roomInput } from "@/lib/api";
+import { ApiError, apiError, roomInput } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { normalizeListing } from "@/lib/listings";
 
 export async function GET(request: Request) {
@@ -32,16 +33,21 @@ export async function GET(request: Request) {
       }),
     });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }
 
 export async function POST(request: Request) {
   try {
-    assertRateLimit(request, "open-room", 20, 60_000);
-    const input = roomInput.parse(await request.json());
-    const supabase = requireSupabaseAdmin();
     const user = await requireUser(request);
+    const input = roomInput.parse(await request.json());
+    await assertRateLimit(request, "open-room", {
+      actorId: user.id,
+      resourceId: input.listingId,
+      limit: 20,
+      windowMs: 60_000,
+    });
+    const supabase = requireSupabaseAdmin();
     const { data: listing, error: listingError } = await supabase
       .from("listings")
       .select(
@@ -76,6 +82,6 @@ export async function POST(request: Request) {
     if (error) throw error;
     return Response.json({ data }, { status: 201 });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }

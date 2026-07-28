@@ -2,10 +2,14 @@ import { spawn, spawnSync } from "node:child_process";
 import { platform } from "node:os";
 
 const node = process.execPath;
-const server = spawn(node, ["node_modules/next/dist/bin/next", "start", "-H", "127.0.0.1"], {
-  detached: platform() !== "win32",
-  stdio: "ignore",
-});
+const server = spawn(
+  node,
+  ["node_modules/next/dist/bin/next", "start", "-H", "127.0.0.1"],
+  {
+    detached: platform() !== "win32",
+    stdio: "ignore",
+  },
+);
 
 async function waitForServer() {
   for (let attempt = 0; attempt < 60; attempt += 1) {
@@ -22,7 +26,9 @@ async function waitForServer() {
 
 function stopServer() {
   if (platform() === "win32") {
-    spawnSync("taskkill", ["/pid", String(server.pid), "/T", "/F"], { stdio: "ignore" });
+    spawnSync("taskkill", ["/pid", String(server.pid), "/T", "/F"], {
+      stdio: "ignore",
+    });
   } else {
     try {
       process.kill(-server.pid, "SIGTERM");
@@ -35,8 +41,12 @@ function stopServer() {
 let exitCode = 1;
 try {
   await waitForServer();
-  const test = spawn(node, ["node_modules/@playwright/test/cli.js", "test"], { stdio: "inherit" });
-  exitCode = await new Promise((resolve) => test.on("exit", (code) => resolve(code ?? 1)));
+  const test = spawn(node, ["node_modules/@playwright/test/cli.js", "test"], {
+    stdio: "inherit",
+  });
+  exitCode = await new Promise((resolve) =>
+    test.on("exit", (code) => resolve(code ?? 1)),
+  );
 } finally {
   stopServer();
 }

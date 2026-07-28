@@ -1,6 +1,7 @@
 import { adminModerationInput, apiError } from "@/lib/api";
 import { throwAdminActionError } from "@/lib/admin-actions";
 import { requireAdmin } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { sendOptionalNotificationEmail } from "@/lib/notify";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 import { AZ_COPY } from "@/lib/i18n";
@@ -11,6 +12,12 @@ export async function POST(request: Request) {
     const { listingId, action, reason } = adminModerationInput.parse(
       await request.json(),
     );
+    await assertRateLimit(request, "admin:moderate", {
+      actorId: admin.id,
+      resourceId: listingId,
+      limit: 20,
+      windowMs: 60_000,
+    });
     const supabase = requireSupabaseAdmin();
     const { data, error } = await supabase.rpc("admin_moderate_listing", {
       p_actor_id: admin.id,
@@ -47,6 +54,6 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }

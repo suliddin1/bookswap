@@ -1,4 +1,4 @@
-import { apiError, assertRateLimit, moderationInput } from "@/lib/api";
+import { apiError, moderationInput } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { randomUUID } from "node:crypto";
 import {
@@ -6,12 +6,17 @@ import {
   moderateAndRecordText,
 } from "@/lib/moderation";
 import { requireUser } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   try {
-    assertRateLimit(request, "moderate", 15, 60_000);
     const user = await requireUser(request);
+    await assertRateLimit(request, "moderate", {
+      actorId: user.id,
+      limit: 15,
+      windowMs: 60_000,
+    });
     const supabase = requireSupabaseAdmin();
     const { text, imageUrl } = moderationInput.parse(await request.json());
     const requestId = randomUUID();
@@ -43,6 +48,6 @@ export async function POST(request: Request) {
       );
     return Response.json({ text: textResult, image: imageResult });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }

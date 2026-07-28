@@ -1,13 +1,19 @@
-import { ApiError, apiError, assertRateLimit, reviewInput } from "@/lib/api";
+import { ApiError, apiError, reviewInput } from "@/lib/api";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 import { requireUser } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
-    assertRateLimit(request, "create-review", 10, 60_000);
-    const input = reviewInput.parse(await request.json());
-    const supabase = requireSupabaseAdmin();
     const user = await requireUser(request);
+    const input = reviewInput.parse(await request.json());
+    await assertRateLimit(request, "create-review", {
+      actorId: user.id,
+      resourceId: input.listingId,
+      limit: 10,
+      windowMs: 60_000,
+    });
+    const supabase = requireSupabaseAdmin();
     const { data: room, error: roomError } = await supabase
       .from("chat_rooms")
       .select("buyer_id,listing:listings!inner(status)")
@@ -37,6 +43,6 @@ export async function POST(request: Request) {
     if (error) throw error;
     return Response.json({ data }, { status: 201 });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }

@@ -1,10 +1,7 @@
-import {
-  ApiError,
-  apiError,
-  assertRateLimit,
-  listingImageCleanupInput,
-} from "@/lib/api";
+import { ApiError, apiError, listingImageCleanupInput } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
+import { logServerError } from "@/lib/server-log";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 import {
   assertOwnedListingImages,
@@ -18,9 +15,13 @@ export async function POST(request: Request) {
   let ownerId = "";
   let supabase: ReturnType<typeof requireSupabaseAdmin> | null = null;
   try {
-    assertRateLimit(request, "upload", 10, 60_000);
     const user = await requireUser(request);
     ownerId = user.id;
+    await assertRateLimit(request, "upload", {
+      actorId: user.id,
+      limit: 10,
+      windowMs: 60_000,
+    });
     const form = await request.formData();
     const files = form
       .getAll("images")
@@ -77,19 +78,26 @@ export async function POST(request: Request) {
         try {
           await queueListingImageCleanup(supabase, ownerId, uploadedUrls);
         } catch (queueError) {
-          console.error("Could not preserve failed upload cleanup", queueError);
+          logServerError("upload.cleanup_queue_failed", queueError, {
+            method: request.method,
+            path: "/api/upload",
+          });
         }
       }
     }
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }
 
 export async function DELETE(request: Request) {
   try {
-    assertRateLimit(request, "cleanup-upload", 20, 60_000);
     const user = await requireUser(request);
     const input = listingImageCleanupInput.parse(await request.json());
+    await assertRateLimit(request, "cleanup-upload", {
+      actorId: user.id,
+      limit: 20,
+      windowMs: 60_000,
+    });
     assertOwnedListingImages(input.images, user.id);
     const supabase = requireSupabaseAdmin();
     const { data: referencedListings, error: referenceError } = await supabase
@@ -114,7 +122,7 @@ export async function DELETE(request: Request) {
       cleanupPending: cleanup.pending > 0,
     });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }
 

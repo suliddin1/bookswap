@@ -1025,6 +1025,42 @@ test("safety and user rights guidance is publicly reachable", async ({
   expect(privacyRequests).toHaveLength(0);
 });
 
+test("legal drafts and moderation appeal path are publicly reachable", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  const routes = [
+    { path: "/terms", heading: /İstifadə şərtləri/i },
+    { path: "/privacy", heading: /Məxfilik bildirişi/i },
+    { path: "/marketplace-rules", heading: /Kitab bazarı qaydaları/i },
+    {
+      path: "/moderation-appeals",
+      heading: /Moderasiya qərarına etiraz/i,
+    },
+  ];
+
+  for (const route of routes) {
+    await page.goto(route.path);
+    await expect(page.locator("html")).toHaveAttribute("lang", "az");
+    await expect(
+      page.getByRole("heading", { level: 1, name: route.heading }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Kitab bazarı qaydaları" }).last(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Moderasiya etirazları" }).last(),
+    ).toBeVisible();
+    expect(await horizontalOverflow(page)).toEqual([]);
+  }
+
+  await expect(
+    page.getByText(/şifrə, təsdiq kodu, kart məlumatı/i),
+  ).toBeVisible();
+  await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
+});
+
 test("profile exposes a localized private sign-in state", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const profileRequests: string[] = [];
@@ -2543,8 +2579,8 @@ test("authentication modes and password validation are Azerbaijani", async ({
   expect(await horizontalOverflow(page)).toEqual([]);
 
   await page.goto("/reset-password");
-  await page.getByLabel("Yeni parol").fill("abcdefgh");
-  await page.getByLabel("Parolu təkrar et").fill("abcdEFGH");
+  await page.getByLabel("Yeni parol").fill("abcdefgh1234");
+  await page.getByLabel("Parolu təkrar et").fill("abcdEFGH5678");
   await page.getByRole("button", { name: "Parolu yenilə" }).click();
   await expect(
     page.getByText("Parollar eyni deyil.", { exact: true }),
@@ -2570,7 +2606,7 @@ test("responses include baseline security headers", async ({ request }) => {
   );
 });
 
-test("direct API validation errors are Azerbaijani and keep machine codes", async ({
+test("direct API validation and authentication errors keep Azerbaijani machine codes", async ({
   request,
 }) => {
   const invalidFilter = await request.get(
@@ -2592,15 +2628,11 @@ test("direct API validation errors are Azerbaijani and keep machine codes", asyn
   const invalidReview = await request.post("/api/review", {
     data: { listingId: "provider detail" },
   });
-  expect(invalidReview.status()).toBe(422);
+  expect(invalidReview.status()).toBe(401);
   const invalidReviewBody = (await invalidReview.json()) as {
     error: string;
     code: string;
-    details: Record<string, string[]>;
   };
-  expect(invalidReviewBody.error).toBe("Sorğudakı məlumatlar etibarlı deyil.");
-  expect(invalidReviewBody.code).toBe("VALIDATION_ERROR");
-  expect(new Set(Object.values(invalidReviewBody.details).flat())).toEqual(
-    new Set(["Bu sahədəki məlumatı yoxla."]),
-  );
+  expect(invalidReviewBody.error).toBe("Davam etmək üçün daxil ol.");
+  expect(invalidReviewBody.code).toBe("AUTH_REQUIRED");
 });

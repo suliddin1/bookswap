@@ -61,7 +61,12 @@ export function createWebVitalPayload(input: {
     return null;
   }
 
-  const base = { version: 1 as const, value: input.value, route, navigationType };
+  const base = {
+    version: 1 as const,
+    value: input.value,
+    route,
+    navigationType,
+  };
   if (input.name === "CLS" && input.value <= 10) {
     return { ...base, name: "CLS" };
   }

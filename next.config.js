@@ -26,6 +26,10 @@ const nextConfig = {
           },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
           {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains",
+          },
+          {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
@@ -41,6 +45,12 @@ const nextConfig = {
               "upgrade-insecure-requests",
             ].join("; "),
           },
+        ],
+      },
+      {
+        source: "/api/:path*",
+        headers: [
+          { key: "Cache-Control", value: "private, no-store, max-age=0" },
         ],
       },
     ];

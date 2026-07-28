@@ -1,62 +1,69 @@
-import { ApiError, apiError, assertRateLimit } from "@/lib/api";
-import { AZ_COPY, localizeAuthError } from "@/lib/i18n";
+import { ApiError, apiError } from "@/lib/api";
+import { localizedAuthResponse, type AuthAction } from "@/lib/auth-response";
+import { AZ_COPY } from "@/lib/i18n";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { getSupabaseClient } from "@/lib/supabase";
 import { z } from "zod";
 
-const credentials = z
-  .object({ email: z.string().email(), password: z.string().min(8).max(128) })
+const loginCredentials = z
+  .object({ email: z.string().email(), password: z.string().min(1).max(128) })
+  .strict();
+const newAccountCredentials = z
+  .object({ email: z.string().email(), password: z.string().min(12).max(128) })
   .strict();
 const emailOnly = z.object({ email: z.string().email() }).strict();
-
-function localizedAuthResponse(result: { data: unknown; error: unknown }) {
-  if (!result.error) return Response.json(result);
-  const source =
-    typeof result.error === "object" && result.error !== null
-      ? (result.error as Record<string, unknown>)
-      : {};
-  return Response.json({
-    data: result.data,
-    error: {
-      message: localizeAuthError(result.error),
-      ...(typeof source.code === "string" ? { code: source.code } : {}),
-      ...(typeof source.status === "number" ? { status: source.status } : {}),
-    },
-  });
-}
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ action: string }> },
 ) {
   try {
-    assertRateLimit(request, "auth", 10, 60_000);
     const { action } = await params;
+    if (!["signup", "login", "magic-link", "reset"].includes(action))
+      throw new ApiError(
+        AZ_COPY.api.authActionNotFound,
+        404,
+        "AUTH_ACTION_NOT_FOUND",
+      );
+    await assertRateLimit(request, `auth:${action}`, {
+      limit: 10,
+      windowMs: 60_000,
+    });
     const supabase = getSupabaseClient();
     if (!supabase)
-      return apiError(new Error(AZ_COPY.auth.configurationUnavailable), 503);
+      return apiError(
+        new ApiError(
+          AZ_COPY.auth.configurationUnavailable,
+          503,
+          "AUTH_UNAVAILABLE",
+        ),
+        503,
+        request,
+      );
     const body = await request.json();
-    if (action === "signup")
+    const authAction = action as AuthAction;
+    if (authAction === "signup")
       return localizedAuthResponse(
-        await supabase.auth.signUp(credentials.parse(body)),
+        authAction,
+        await supabase.auth.signUp(newAccountCredentials.parse(body)),
       );
-    if (action === "login")
+    if (authAction === "login")
       return localizedAuthResponse(
-        await supabase.auth.signInWithPassword(credentials.parse(body)),
+        authAction,
+        await supabase.auth.signInWithPassword(loginCredentials.parse(body)),
       );
-    if (action === "magic-link")
+    if (authAction === "magic-link")
       return localizedAuthResponse(
+        authAction,
         await supabase.auth.signInWithOtp(emailOnly.parse(body)),
       );
-    if (action === "reset")
+    if (authAction === "reset")
       return localizedAuthResponse(
+        authAction,
         await supabase.auth.resetPasswordForEmail(emailOnly.parse(body).email),
       );
-    throw new ApiError(
-      AZ_COPY.api.authActionNotFound,
-      404,
-      "AUTH_ACTION_NOT_FOUND",
-    );
+    throw new ApiError(AZ_COPY.api.authActionNotFound, 404);
   } catch (error) {
-    return apiError(error);
+    return apiError(error, 400, request);
   }
 }

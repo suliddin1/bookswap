@@ -2,6 +2,7 @@ import { requireSupabaseAdmin } from "./supabase";
 import type { Json } from "./database.types";
 import { escapeHtml } from "./security";
 import { AZ_COPY, formatNotificationPresentation } from "./i18n";
+import { logServerError } from "./server-log";
 
 type NotificationType = "MESSAGE" | "SYSTEM";
 
@@ -50,7 +51,7 @@ export async function sendOptionalNotificationEmail(
     .eq("id", userId)
     .single();
   if (userError) {
-    console.error("Notification email recipient lookup failed", userError);
+    logServerError("notification.recipient_lookup_failed", userError);
     return {
       emailAttempted: false,
       emailDelivered: false,
@@ -64,7 +65,7 @@ export async function sendOptionalNotificationEmail(
         ...email,
       },
     });
-    if (error) console.error("Notification email delivery failed", error);
+    if (error) logServerError("notification.email_delivery_failed", error);
     return {
       emailAttempted: true,
       emailDelivered: !error,

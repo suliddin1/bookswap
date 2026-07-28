@@ -50,7 +50,7 @@ export function ResetPasswordPanel() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (password.length < 8) {
+    if (password.length < 12) {
       return showError(AZ_COPY.resetPassword.minLength, "password");
     }
     if (password !== confirmation) {
@@ -113,7 +113,7 @@ export function ResetPasswordPanel() {
             </span>
             <input
               required
-              minLength={8}
+              minLength={12}
               maxLength={128}
               type="password"
               ref={passwordRef}
@@ -145,7 +145,7 @@ export function ResetPasswordPanel() {
           </span>
           <input
             required
-            minLength={8}
+            minLength={12}
             maxLength={128}
             type="password"
             ref={confirmationRef}

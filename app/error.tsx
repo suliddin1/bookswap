@@ -11,7 +11,12 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("BookSwap page error", error);
+    console.error(
+      JSON.stringify({
+        event: "bookswap.page_error",
+        digest: error.digest ?? null,
+      }),
+    );
   }, [error]);
   return (
     <div className="container-shell grid min-h-[600px] place-items-center py-16">

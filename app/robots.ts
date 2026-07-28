@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
+import { getSiteUrl } from "@/lib/site-url";
 
 export default function robots(): MetadataRoute.Robots {
-  const base =
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://bookswap-fawn.vercel.app";
+  const base = getSiteUrl();
   return {
     rules: {
       userAgent: "*",
@@ -16,6 +16,6 @@ export default function robots(): MetadataRoute.Robots {
         "/profile",
       ],
     },
-    sitemap: `${base}/sitemap.xml`,
+    sitemap: new URL("/sitemap.xml", base).toString(),
   };
 }

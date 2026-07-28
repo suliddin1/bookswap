@@ -1,4 +1,6 @@
-import { ApiError, assertRateLimit } from "../../../lib/api";
+import { ApiError } from "../../../lib/api";
+import { assertRateLimit } from "../../../lib/rate-limit";
+import { logServerEvent } from "../../../lib/server-log";
 import { rateWebVital } from "../../../lib/web-vitals";
 import { webVitalPayloadSchema } from "../../../lib/web-vitals-server";
 
@@ -58,16 +60,22 @@ export async function POST(request: Request) {
 
   try {
     if (!hasSameOriginBrowserContext(request)) return emptyResponse(403);
-    assertRateLimit(request, "web-vitals", 120, 60_000);
+    const accepted = await assertRateLimit(request, "web-vitals", {
+      limit: 120,
+      windowMs: 60_000,
+      failureMode: "drop",
+    });
+    if (!accepted) return emptyResponse(204);
 
     const payload = webVitalPayloadSchema.parse(await readBoundedJson(request));
-    console.info(
-      JSON.stringify({
-        event: "bookswap.web_vital",
-        ...payload,
-        rating: rateWebVital(payload.name, payload.value),
-      }),
-    );
+    logServerEvent("info", "bookswap.web_vital", {
+      version: payload.version,
+      name: payload.name,
+      value: payload.value,
+      rating: rateWebVital(payload.name, payload.value),
+      route: payload.route,
+      navigationType: payload.navigationType,
+    });
     return emptyResponse(204);
   } catch (error) {
     if (error instanceof ApiError) return emptyResponse(error.status);

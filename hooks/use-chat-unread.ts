@@ -47,7 +47,12 @@ export function useChatUnread(userId?: string) {
         .gt("unread_count", 0);
       if (!active) return;
       if (error) {
-        console.error("Chat unread state failed to load", error);
+        console.error(
+          JSON.stringify({
+            event: "bookswap.chat_unread_load_failed",
+            code: typeof error.code === "string" ? error.code : null,
+          }),
+        );
         return;
       }
       const next = Object.fromEntries(

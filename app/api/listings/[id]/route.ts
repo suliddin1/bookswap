@@ -1,13 +1,10 @@
 import { requireSupabaseAdmin, requireSupabaseClient } from "@/lib/supabase";
 import { assertOwnedListingImages } from "@/lib/security";
-import {
-  ApiError,
-  apiError,
-  assertRateLimit,
-  listingUpdateInput,
-} from "@/lib/api";
+import { ApiError, apiError, listingUpdateInput } from "@/lib/api";
 import { normalizeListing } from "@/lib/listings";
 import { requireUser } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
+import { logServerError } from "@/lib/server-log";
 import { randomUUID } from "node:crypto";
 import {
   assertModerationApproved,
@@ -21,7 +18,7 @@ import {
 } from "@/lib/listing-images";
 
 export async function GET(
-  _: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
@@ -40,7 +37,7 @@ export async function GET(
       data: { ...normalizeListing(data), reviews: data.reviews ?? [] },
     });
   } catch (error) {
-    return apiError(error, 503);
+    return apiError(error, 503, request);
   }
 }
 
@@ -52,10 +49,15 @@ export async function PATCH(
   let submittedImages: string[] = [];
   let supabase: ReturnType<typeof requireSupabaseAdmin> | null = null;
   try {
-    assertRateLimit(request, "update-listing", 20, 60_000);
     const user = await requireUser(request);
     ownerId = user.id;
     const { id } = await params;
+    await assertRateLimit(request, "update-listing", {
+      actorId: user.id,
+      resourceId: id,
+      limit: 20,
+      windowMs: 60_000,
+    });
     const input = listingUpdateInput.parse(await request.json());
     if (input.images) {
       submittedImages = input.images;
@@ -156,13 +158,13 @@ export async function PATCH(
         await queueListingImageCleanup(supabase, ownerId, submittedImages);
         await drainListingImageCleanupJobs(supabase, ownerId);
       } catch (cleanupError) {
-        console.error(
-          "Could not compensate failed listing update",
-          cleanupError,
-        );
+        logServerError("listing.update_cleanup_failed", cleanupError, {
+          method: request.method,
+          path: "/api/listings/:id",
+        });
       }
     }
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }
 
@@ -171,9 +173,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    assertRateLimit(request, "delete-listing", 10, 60_000);
     const user = await requireUser(request);
     const { id } = await params;
+    await assertRateLimit(request, "delete-listing", {
+      actorId: user.id,
+      resourceId: id,
+      limit: 10,
+      windowMs: 60_000,
+    });
     const supabase = requireSupabaseAdmin();
     await drainListingImageCleanupJobs(supabase, user.id);
     const { data: deleted, error } = await supabase
@@ -197,6 +204,6 @@ export async function DELETE(
       imageCleanupPending: cleanup.pending > 0,
     });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }

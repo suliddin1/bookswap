@@ -1,6 +1,7 @@
 import { ApiError, adminBanInput, apiError } from "@/lib/api";
 import { throwAdminActionError } from "@/lib/admin-actions";
 import { requireAdmin } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 
 export async function POST(request: Request) {
@@ -9,6 +10,12 @@ export async function POST(request: Request) {
     const { userId, banned, reason } = adminBanInput.parse(
       await request.json(),
     );
+    await assertRateLimit(request, "admin:ban", {
+      actorId: admin.id,
+      resourceId: userId,
+      limit: 10,
+      windowMs: 60_000,
+    });
     if (userId === admin.id)
       throw new ApiError(
         "Öz hesabını dayandıra bilməzsən.",
@@ -25,6 +32,6 @@ export async function POST(request: Request) {
     throwAdminActionError(error);
     return Response.json({ data });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }

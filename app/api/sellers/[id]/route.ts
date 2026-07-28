@@ -89,6 +89,6 @@ export async function GET(
       },
     });
   } catch (error) {
-    return apiError(error, 503);
+    return apiError(error, 503, request);
   }
 }

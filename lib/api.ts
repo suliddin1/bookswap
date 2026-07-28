@@ -5,12 +5,14 @@ import {
   BOOK_CONDITIONS,
 } from "./marketplace";
 import { AZ_COPY, localizeApiError } from "./i18n";
+import { logServerError, requestId } from "./server-log";
 
 export class ApiError extends Error {
   constructor(
     message: string,
     public readonly status = 400,
     public readonly code = "BAD_REQUEST",
+    public readonly retryAfterSeconds?: number,
   ) {
     super(message);
     this.name = "ApiError";
@@ -132,38 +134,8 @@ export const adminPrivacyRequestInput = z
   })
   .strict();
 
-type RateBucket = { count: number; resetAt: number };
-const rateBuckets = new Map<string, RateBucket>();
-
-export function assertRateLimit(
-  request: Request,
-  scope: string,
-  limit = 30,
-  windowMs = 60_000,
-) {
-  const forwarded = request.headers
-    .get("x-forwarded-for")
-    ?.split(",")[0]
-    ?.trim();
-  const client = forwarded || request.headers.get("x-real-ip") || "unknown";
-  const key = `${scope}:${client}`;
-  const now = Date.now();
-  if (rateBuckets.size > 5_000) {
-    rateBuckets.forEach((bucket, bucketKey) => {
-      if (bucket.resetAt <= now) rateBuckets.delete(bucketKey);
-    });
-  }
-  const current = rateBuckets.get(key);
-  if (!current || current.resetAt <= now) {
-    rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
-    return;
-  }
-  if (current.count >= limit)
-    throw new ApiError(AZ_COPY.api.rateLimited, 429, "RATE_LIMITED");
-  current.count += 1;
-}
-
-export function apiError(error: unknown, status = 400) {
+export function apiError(error: unknown, status = 400, request?: Request) {
+  const correlationId = requestId(request);
   if (error instanceof z.ZodError) {
     const fieldErrors = error.flatten().fieldErrors;
     const details = Object.fromEntries(
@@ -178,23 +150,45 @@ export function apiError(error: unknown, status = 400) {
         code: "VALIDATION_ERROR",
         details,
       },
-      { status: 422 },
+      { status: 422, headers: { "X-Request-ID": correlationId } },
     );
   }
   if (error instanceof ApiError) {
     const fallback =
       error.status >= 500 ? AZ_COPY.api.internalError : AZ_COPY.api.badRequest;
+    if (error.status >= 500) {
+      logServerError("api.request_failed", error, {
+        requestId: correlationId,
+        method: request?.method,
+        path: request ? new URL(request.url).pathname : undefined,
+        status: error.status,
+        code: error.code,
+      });
+    }
+    const headers: Record<string, string> = {
+      "X-Request-ID": correlationId,
+    };
+    if (error.retryAfterSeconds) {
+      headers["Retry-After"] = String(error.retryAfterSeconds);
+    }
     return Response.json(
       { error: localizeApiError(error.code, fallback), code: error.code },
-      { status: error.status },
+      { status: error.status, headers },
     );
   }
-  if (status >= 500) console.error("BookSwap API error", error);
+  if (status >= 500) {
+    logServerError("api.unexpected_failure", error, {
+      requestId: correlationId,
+      method: request?.method,
+      path: request ? new URL(request.url).pathname : undefined,
+      status,
+    });
+  }
   return Response.json(
     {
       error: status >= 500 ? AZ_COPY.api.internalError : AZ_COPY.api.badRequest,
       code: status >= 500 ? "INTERNAL_ERROR" : "BAD_REQUEST",
     },
-    { status },
+    { status, headers: { "X-Request-ID": correlationId } },
   );
 }

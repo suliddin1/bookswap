@@ -1,5 +1,6 @@
 import { apiError, profileInput } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { normalizeListing } from "@/lib/listings";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 
@@ -36,13 +37,18 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }
 
 export async function PATCH(request: Request) {
   try {
     const user = await requireUser(request);
+    await assertRateLimit(request, "profile:update", {
+      actorId: user.id,
+      limit: 20,
+      windowMs: 60_000,
+    });
     const input = profileInput.parse(await request.json());
     const supabase = requireSupabaseAdmin();
     const { data, error } = await supabase
@@ -58,6 +64,6 @@ export async function PATCH(request: Request) {
     if (error) throw error;
     return Response.json({ requesterId: user.id, data });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }

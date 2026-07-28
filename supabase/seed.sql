@@ -15,13 +15,22 @@ on conflict (id) do nothing;
 
 insert into public.listings (id, title, author, description, isbn, price, original_price, category, condition, city, status, seller_id)
 values
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', 'Atomic Habits', 'James Clear', 'Light pencil notes, otherwise excellent.', '9780735211292', 12, 27, 'Business', 'Like new', 'Baku', 'active', '11111111-1111-1111-1111-111111111111'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2', 'The Midnight Library', 'Matt Haig', 'Read once, clean pages.', '9780525559474', 9, 18, 'Fiction', 'Very good', 'Ganja', 'active', '22222222-2222-2222-2222-222222222222'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', 'Sapiens', 'Yuval Noah Harari', 'Dust jacket shows light wear.', '9780062316097', 11, 22, 'History', 'Very good', 'Baku', 'active', '11111111-1111-1111-1111-111111111111'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', 'Clean Code', 'Robert C. Martin', 'A few useful sticky notes.', '9780132350884', 20, 35, 'Academic', 'Good', 'Ganja', 'active', '22222222-2222-2222-2222-222222222222'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5', 'The Alchemist', 'Paulo Coelho', 'Lovingly read and ready for a new shelf.', '9780061122415', 7, 14, 'Fiction', 'Good', 'Baku', 'sold', '11111111-1111-1111-1111-111111111111')
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', 'Atomic Habits', 'James Clear', 'Yüngül karandaş qeydləri var, qalan hissəsi əla vəziyyətdədir.', '9780735211292', 12, 27, 'Business', 'Like new', 'Baku', 'active', '11111111-1111-1111-1111-111111111111'),
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2', 'The Midnight Library', 'Matt Haig', 'Bir dəfə oxunub, səhifələri təmizdir.', '9780525559474', 9, 18, 'Fiction', 'Very good', 'Ganja', 'active', '22222222-2222-2222-2222-222222222222'),
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', 'Sapiens', 'Yuval Noah Harari', 'Toz üzlüyündə yüngül istifadə izi var.', '9780062316097', 11, 22, 'History', 'Very good', 'Baku', 'active', '11111111-1111-1111-1111-111111111111'),
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', 'Clean Code', 'Robert C. Martin', 'Bir neçə faydalı yapışqan qeyd var.', '9780132350884', 20, 35, 'Academic', 'Good', 'Ganja', 'active', '22222222-2222-2222-2222-222222222222'),
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5', 'The Alchemist', 'Paulo Coelho', 'Səliqə ilə oxunub və yeni oxucusuna hazırdır.', '9780061122415', 7, 14, 'Fiction', 'Good', 'Baku', 'sold', '11111111-1111-1111-1111-111111111111')
 on conflict (id) do nothing;
 
+insert into public.chat_rooms (id, listing_id, buyer_id, seller_id)
+values (
+  'cccccccc-cccc-cccc-cccc-ccccccccccc1',
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5',
+  '22222222-2222-2222-2222-222222222222',
+  '11111111-1111-1111-1111-111111111111'
+)
+on conflict (listing_id, buyer_id) do nothing;
+
 insert into public.reviews (listing_id, rating, comment, author_id)
-values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5', 5, 'Exactly as described and beautifully packed.', '22222222-2222-2222-2222-222222222222')
+values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5', 5, 'Elan edildiyi kimidir və səliqəli qablaşdırılmışdı.', '22222222-2222-2222-2222-222222222222')
 on conflict do nothing;

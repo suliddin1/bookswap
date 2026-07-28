@@ -25,9 +25,7 @@ export function useNotifications(userId?: string) {
       if (!active || item.user_id !== userId) return;
       latestEvents.current.set(item.id, !item.read);
       setOwnedUnreadIds((current) => {
-        const next = new Set(
-          current?.ownerId === userId ? current.ids : [],
-        );
+        const next = new Set(current?.ownerId === userId ? current.ids : []);
         if (item.read) next.delete(item.id);
         else next.add(item.id);
         return { ownerId: userId, ids: Array.from(next) };
@@ -43,7 +41,12 @@ export function useNotifications(userId?: string) {
         .eq("read", false);
       if (!active) return;
       if (error) {
-        console.error("Notification count failed to load", error);
+        console.error(
+          JSON.stringify({
+            event: "bookswap.notification_count_load_failed",
+            code: typeof error.code === "string" ? error.code : null,
+          }),
+        );
         return;
       }
       const next = new Set((data ?? []).map((item) => item.id));

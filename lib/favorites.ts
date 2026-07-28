@@ -10,9 +10,9 @@ export function isFavoriteListingVisible(
 ) {
   return Boolean(
     listing &&
-      FAVORITE_VISIBLE_STATUSES.includes(
-        listing.status as (typeof FAVORITE_VISIBLE_STATUSES)[number],
-      ) &&
-      listing.seller?.banned === false,
+    FAVORITE_VISIBLE_STATUSES.includes(
+      listing.status as (typeof FAVORITE_VISIBLE_STATUSES)[number],
+    ) &&
+    listing.seller?.banned === false,
   );
 }

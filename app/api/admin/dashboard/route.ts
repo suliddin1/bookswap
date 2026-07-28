@@ -1,11 +1,17 @@
 import { apiError } from "@/lib/api";
 import { requireAdmin } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { normalizeListing } from "@/lib/listings";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 
 export async function GET(request: Request) {
   try {
-    await requireAdmin(request);
+    const admin = await requireAdmin(request);
+    await assertRateLimit(request, "admin:dashboard", {
+      actorId: admin.id,
+      limit: 60,
+      windowMs: 60_000,
+    });
     const supabase = requireSupabaseAdmin();
     const [
       { data: listings, error: listingsError },
@@ -70,6 +76,6 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }

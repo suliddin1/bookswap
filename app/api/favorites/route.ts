@@ -1,5 +1,6 @@
 import { ApiError, apiError, favoriteInput } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 import {
   FAVORITE_VISIBLE_STATUSES,
   isFavoriteListingVisible,
@@ -57,7 +58,7 @@ export async function GET(request: Request) {
       ),
     });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }
 
@@ -65,6 +66,12 @@ export async function POST(request: Request) {
   try {
     const user = await requireUser(request);
     const { listingId } = favoriteInput.parse(await request.json());
+    await assertRateLimit(request, "favorite:add", {
+      actorId: user.id,
+      resourceId: listingId,
+      limit: 30,
+      windowMs: 60_000,
+    });
     const supabase = requireSupabaseAdmin();
     const { data: listing, error: listingError } = await supabase
       .from("listings")
@@ -82,7 +89,7 @@ export async function POST(request: Request) {
     if (error) throw error;
     return Response.json({ data: { listingId, saved: true } });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }
 
@@ -90,6 +97,12 @@ export async function DELETE(request: Request) {
   try {
     const user = await requireUser(request);
     const { listingId } = favoriteInput.parse(await request.json());
+    await assertRateLimit(request, "favorite:remove", {
+      actorId: user.id,
+      resourceId: listingId,
+      limit: 30,
+      windowMs: 60_000,
+    });
     const supabase = requireSupabaseAdmin();
     const { error } = await supabase
       .from("favorites")
@@ -99,6 +112,6 @@ export async function DELETE(request: Request) {
     if (error) throw error;
     return Response.json({ data: { listingId, saved: false } });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }

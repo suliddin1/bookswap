@@ -223,14 +223,18 @@ export function AuthPanel() {
                 label={AZ_COPY.auth.password}
                 value={password}
                 onChange={setPassword}
-                placeholder={AZ_COPY.auth.passwordPlaceholder}
+                placeholder={
+                  mode === "signup"
+                    ? AZ_COPY.auth.passwordPlaceholder
+                    : AZ_COPY.auth.password
+                }
                 type="password"
-                minLength={8}
+                minLength={mode === "signup" ? 12 : 1}
                 autoComplete={
                   mode === "signup" ? "new-password" : "current-password"
                 }
                 errorId={error ? "auth-form-error" : undefined}
-                hint={AZ_COPY.auth.passwordHint}
+                hint={mode === "signup" ? AZ_COPY.auth.passwordHint : undefined}
                 hintId="auth-password-hint"
               />
             )}

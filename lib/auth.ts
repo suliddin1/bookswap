@@ -1,13 +1,19 @@
 import { ApiError } from "@/lib/api";
-import { requireSupabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 export async function requireUser(request: Request) {
-  const supabase = requireSupabaseAdmin();
   const token = request.headers
     .get("authorization")
     ?.replace(/^Bearer\s+/i, "");
   if (!token)
     throw new ApiError("Davam etmək üçün daxil ol.", 401, "AUTH_REQUIRED");
+  const supabase = getSupabaseAdmin();
+  if (!supabase)
+    throw new ApiError(
+      "Autentifikasiya xidməti hazırda əlçatan deyil.",
+      503,
+      "AUTH_UNAVAILABLE",
+    );
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user)
     throw new ApiError(

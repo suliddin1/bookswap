@@ -1,12 +1,18 @@
-import { ApiError, apiError, assertRateLimit, reportInput } from "@/lib/api";
+import { ApiError, apiError, reportInput } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   try {
-    assertRateLimit(request, "report-listing", 8, 60_000);
     const user = await requireUser(request);
     const input = reportInput.parse(await request.json());
+    await assertRateLimit(request, "report-listing", {
+      actorId: user.id,
+      resourceId: input.listingId,
+      limit: 8,
+      windowMs: 60_000,
+    });
     const supabase = requireSupabaseAdmin();
     const { data: listing, error: listingError } = await supabase
       .from("listings")
@@ -40,6 +46,6 @@ export async function POST(request: Request) {
     if (error) throw error;
     return Response.json({ data }, { status: 201 });
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }

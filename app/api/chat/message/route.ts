@@ -1,4 +1,4 @@
-import { ApiError, apiError, assertRateLimit, messageInput } from "@/lib/api";
+import { ApiError, apiError, messageInput } from "@/lib/api";
 import { randomUUID } from "node:crypto";
 import {
   assertModerationApproved,
@@ -6,12 +6,18 @@ import {
 } from "@/lib/moderation";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 import { requireUser } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
-    assertRateLimit(request, "send-message", 30, 60_000);
-    const input = messageInput.parse(await request.json());
     const user = await requireUser(request);
+    const input = messageInput.parse(await request.json());
+    await assertRateLimit(request, "send-message", {
+      actorId: user.id,
+      resourceId: input.roomId,
+      limit: 30,
+      windowMs: 60_000,
+    });
     const supabase = requireSupabaseAdmin();
     const { data: room, error: roomError } = await supabase
       .from("chat_rooms")
@@ -43,6 +49,6 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error) {
-    return apiError(error, 500);
+    return apiError(error, 500, request);
   }
 }
