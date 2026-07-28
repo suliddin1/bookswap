@@ -20,7 +20,7 @@ Updated: 28 July 2026
 | Favorites, chat, reports, reviews                              | Complete                  | Stable Azerbaijani labels/errors; bounded message/review/report input                                  |
 | Notifications and optional email                               | Complete                  | Stable event keys; legacy English approval/rejection payloads map to Azerbaijani; user content escaped |
 | Profile, privacy requests, deletion/appeal                     | Complete                  | No false success; duplicate request message localized                                                  |
-| Admin and moderation                                           | Complete                  | Actions, states, reasons, audit targets, notification messages localized                               |
+| Admin and moderation                                           | Complete                  | Human actions plus deterministic local-rule states/reasons are localized; no AI/provider promise       |
 | Safety, FAQ, Terms, Privacy, Marketplace Rules, appeals        | Draft complete            | Unknown legal facts remain explicit placeholders, not invented translations                            |
 | Number/date/time/currency                                      | Complete                  | Azerbaijani display helpers and regression tests; Baku time zone                                       |
 | Development seed                                               | Complete                  | Descriptions/review converted to Azerbaijani; original book titles/authors preserved                   |

@@ -43,10 +43,13 @@ export default function PrivacyPage() {
         <p>
           Kodla hazırda hosting üçün Vercel, verilənlər bazası, autentifikasiya
           və saxlama üçün Supabase, aktivləşdirilərsə bildiriş e-poçtu üçün
-          Resend, məzmun təhlükəsizliyi üçün OpenAI və ya Cloudflare sərhədləri
-          nəzərdə tutulur. Yalnız faktiki aktivləşdirilən təminatçıya zəruri
-          məlumat ötürülməlidir. Sərhədlərarası ötürmə və müqavilə təminatları
-          operator tərəfindən ictimai istifadədən əvvəl hüquqi yoxlanmalıdır.
+          Resend nəzərdə tutulur. Məzmun qaydaları tətbiq daxilində dar və
+          şəffaf yoxlamalar, dərəcə məhdudiyyəti, istifadəçi şikayətləri və
+          idarəçi baxışı ilə tətbiq olunur; mətn və şəkillər xarici avtomatik
+          qiymətləndirmə xidmətinə göndərilmir. Yalnız faktiki aktivləşdirilən
+          təminatçıya zəruri məlumat ötürülməlidir. Sərhədlərarası ötürmə və
+          müqavilə təminatları operator tərəfindən ictimai istifadədən əvvəl
+          hüquqi yoxlanmalıdır.
         </p>
       </InfoSection>
       <InfoSection title="Saxlama və silinmə">

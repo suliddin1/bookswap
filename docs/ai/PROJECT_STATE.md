@@ -4,7 +4,7 @@ Updated: 28 July 2026
 
 ## Current verdict
 
-**Not production-ready; conditionally non-deployment ready.** All identified safe repository-side launch-critical work is implemented, and the guarded real development authorization matrix passes. The remaining non-deployment launch blocker is owner/counsel-supplied legal facts and approval. The production gate was inspected on 28 July 2026 and failed before migration or deployment because backup/restore evidence, migration-history reconciliation, hosted Auth settings, required environment values, moderation credentials, operational ownership, and post-deploy verification are incomplete.
+**Not production-ready; conditionally non-deployment ready.** All identified safe repository-side launch-critical work is implemented, and the guarded real development authorization matrix passes. The remaining non-deployment launch blocker is owner/counsel-supplied legal facts and approval. The production gate was inspected on 28 July 2026 and failed before migration or deployment because backup/restore evidence, migration-history reconciliation, hosted Auth settings, required environment values, operational ownership, and post-deploy verification are incomplete. External AI/moderation credentials are no longer part of the product or launch gate.
 
 ## Authoritative workspace and Git baseline
 
@@ -18,6 +18,8 @@ Updated: 28 July 2026
 ## Launch product scope
 
 The MVP is an Azerbaijani-first used-book marketplace for listing, discovering, selling, and buying books. Launch-critical flows are Auth, listings, search/filter, protected image upload, favorites, buyer/seller chat, sold/relist lifecycle, eligible reviews, reports, notifications, privacy requests, moderation/admin controls, safety/legal pages, and stable error behavior.
+
+Normal-user listings and messages are free at launch. There is no commission, integrated payment, VIP listing, subscription, or display advertising. Paid listing promotion, professional seller plans, and direct sponsorships are unimplemented future candidates, not launch promises.
 
 Automated exchange matching, wanted-title matching, reader shelves, social reading, and advanced edition/bibliographic intelligence are post-launch. A `sale/exchange/both` model was not added because the current schema/UI coherently implement sale and the public promise does not claim an automated exchange platform.
 
@@ -33,6 +35,7 @@ Automated exchange matching, wanted-title matching, reader shelves, social readi
 - Azerbaijani launch drafts for Terms, Privacy, Marketplace Rules, Safety, prohibited content, reporting/moderation, appeals, participant transaction responsibility, minors placeholder, account deletion/privacy, and accessible footer/sitemap links.
 - Local Supabase Postgres 17 config, repeatable static migration check, transactional SQL launch test, guarded real-backend authorization suite, dependency baseline, and repository secret scan.
 - Provider-neutral monitoring/incident guidance plus backup, restore, forward-fix, Vercel rollback, Storage, secret-rotation, and failed-release procedures.
+- AI-free content safety: deterministic boundary validation, one narrow credential-theft text rule, durable rate limits, existing upload checks, user reporting, admin review/removal/ban/audit, and no external content-classification request. Image content is not claimed to be semantically understood.
 
 ## Development Supabase status
 
@@ -60,22 +63,22 @@ Local `supabase db reset` remains unexecuted on this workstation because Docker/
 - The `listing-images` bucket exists as public-read with the expected 5 MiB JPEG/PNG/WebP limits, but production still has two Storage object policies rather than the launch architecture's service-only mutation posture.
 - Production Security Advisor reports leaked-password protection disabled. Hosted Site URL, redirect allow-list, confirmation, password/session settings, admin MFA, network/SSL controls, and Auth email delivery were not available through the current read-only connector and are not claimed verified.
 - The Supabase organization is on the Free plan. No downloadable backup, PITR, encrypted logical export, Storage-object copy, or successful isolated restore was evidenced. Because production contains an account, no migration was attempted.
-- Required Vercel Production variable names are `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`, and `OPENAI_API_KEY`. `WEB_VITALS_ENABLED` is opt-in. Notification email additionally requires a deployed `notify` Edge Function and its own `RESEND_API_KEY`; neither project currently has that function deployed.
-- `OPENAI_API_KEY` is launch-critical in the current architecture: listing and chat moderation fail closed when the provider is unavailable. Production variable scopes/roles were not readable through the available platform connector, so completeness is not claimed.
+- Required Vercel Production variable names are `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `NEXT_PUBLIC_SITE_URL`. `WEB_VITALS_ENABLED` is opt-in. Optional notification email additionally requires a deployed `notify` Edge Function and its own `RESEND_API_KEY`; neither project currently has that function deployed.
+- Listing and chat safety checks are repository-local and require no external AI key. Production variable scopes/roles were not readable through the available platform connector, so completeness of the remaining required values is not claimed.
 - Vercel had no grouped runtime errors in the prior seven days and one observed production 200 response. This is not alerting, retention, uptime, or incident-ownership evidence.
 - Deployment gate result: **failed safely**. No migration, Auth/Storage setting change, environment mutation, Git reconnection, production deployment, production authorization fixture, or rollback was performed.
 
 ## Validation snapshot
 
 - Strict TypeScript: pass
-- Unit/adversarial tests: 61/61 pass
+- Unit/adversarial tests: 59/59 pass
 - Development environment identity and credential-role/project guard: pass without printing values
 - Migration static check: 22 migrations pass
 - Dependency patched-version baseline: 7/7 pass
 - Secret scan: 189 repository files pass
 - Development database structural/behavioral checks: pass
 - Format/lint/strict TypeScript: pass
-- Production build: pass, 40/40 static pages generated
+- Production build: pass, 39/39 static pages generated
 - Bundle budgets: 5/5 pass
 - Chromium browser/E2E: 28/28 pass
 - Real multi-actor backend authorization: 10/10 pass against `uibatsbzjswmtdvdrlxj`; temporary fixtures cleaned
@@ -86,6 +89,6 @@ Launch blockers:
 
 1. owner supplies legal identity/contact/age/retention/appeal facts, replaces placeholders, and obtains qualified counsel approval.
 
-Production/deployment-only requirements include project/domain/environment configuration, Auth dashboard controls and leaked-password decision, admin MFA enforcement, backup/restore evidence, provider credentials, alert routing, field performance, deployment, and production smoke/authorization verification.
+Production/deployment-only requirements include project/domain/environment configuration, Auth dashboard controls and leaked-password decision, admin MFA enforcement, backup/restore evidence, alert routing, field performance, deployment, and production smoke/authorization verification. Optional email/CAPTCHA/telemetry services may remain disabled.
 
 Exact actions are in `docs/ai/DECISION_REQUESTS.md`; prioritized status is in `docs/ai/ISSUE_QUEUE.md`.

@@ -49,3 +49,7 @@ The repository provides Azerbaijani launch-draft structure and accessible routes
 ## ADR-012 — Production claims require production evidence
 
 Repository procedures do not prove deployment, backups/PITR, restore, MFA, leaked-password protection, CAPTCHA, alerting, provider delivery, field performance, domain, or production authorization. Those statuses remain external until observed in the exact production environment.
+
+## ADR-013 — AI-free launch and free core marketplace
+
+BookSwap has no AI/OpenAI runtime, key, dependency, or external content-classification request. Content safety combines strict boundary validation, a deliberately narrow deterministic credential-theft rule, durable abuse limits, secure upload checks, user reports, admin review/removal/bans, and audit history. These rules do not claim semantic understanding, especially for images. Normal-user listings and messages are free; launch has no commission, integrated payment, VIP listing, subscription, or display ads. Paid listing promotion, professional seller plans, and direct sponsorships remain future candidates only.

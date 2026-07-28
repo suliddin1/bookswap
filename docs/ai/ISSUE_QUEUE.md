@@ -18,7 +18,6 @@ This queue contains only unresolved work. Completed repository work is summarize
 | PROD-002 | Verify hosted Site URL/redirects, confirmation, 12-character password policy, secure changes, limits, leaked-password decision, and enforced admin MFA             | Only the disabled leaked-password warning is observed; remaining dashboard settings are unverified                                           |
 | PROD-003 | Create an encrypted logical database export and Storage inventory/copy, restore them to an isolated target, and record RPO/RTO evidence                            | Organization is Free; no downloadable backup/PITR or successful isolated restore was evidenced                                               |
 | PROD-004 | Verify Vercel Production variables by name/scope/role and set the canonical origin/domain without exposing values                                                  | Existing production bundle targets the correct ref, but current variable completeness and a custom launch domain are unverified              |
-| PROD-005 | Supply an approved `OPENAI_API_KEY` for fail-closed listing/chat moderation; separately decide optional email/CAPTCHA/Web Vitals providers                         | Moderation is required by current core mutations; neither a credential nor provider availability may be fabricated                           |
 | PROD-006 | Name log retention, uptime/alert destinations, incident owners, and on-call test; then run post-deploy smoke, authorization, accessibility, and performance checks | Seven-day Vercel runtime query is clean but proves neither alerting nor launch behavior                                                      |
 
 ## Strong pre-launch recommendations
@@ -32,13 +31,16 @@ This queue contains only unresolved work. Completed repository work is summarize
 
 ## Post-launch product work
 
-| ID       | Feature                                                                            | Classification                                                  |
-| -------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| POST-001 | Sale/exchange/both intention and direct exchange negotiation                       | Product expansion after semantics and completion-state design   |
-| POST-002 | Automated exchange and wanted-title matching                                       | Post-launch                                                     |
-| POST-003 | Reader/custom/wanted shelves and social reading                                    | Post-launch                                                     |
-| POST-004 | Edition/ISBN/publisher intelligence and advanced multilingual bibliographic search | Post-launch                                                     |
-| POST-005 | Integrated payments, escrow, shipping, buyer protection, or delivery               | Separate regulated/product project, not current promise         |
-| POST-006 | Product analytics beyond privacy-minimized Web Vitals                              | Requires lawful basis, consent/retention, and provider decision |
+| ID       | Feature                                                                            | Classification                                                                       |
+| -------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| POST-001 | Sale/exchange/both intention and direct exchange negotiation                       | Product expansion after semantics and completion-state design                        |
+| POST-002 | Automated exchange and wanted-title matching                                       | Post-launch                                                                          |
+| POST-003 | Reader/custom/wanted shelves and social reading                                    | Post-launch                                                                          |
+| POST-004 | Edition/ISBN/publisher intelligence and advanced multilingual bibliographic search | Post-launch                                                                          |
+| POST-005 | Integrated payments, escrow, shipping, buyer protection, or delivery               | Separate regulated/product project, not current promise                              |
+| POST-006 | Product analytics beyond privacy-minimized Web Vitals                              | Requires lawful basis, consent/retention, and provider decision                      |
+| POST-007 | Paid listing promotion                                                             | Future monetization candidate; design, fairness, labeling, and legal review required |
+| POST-008 | Professional seller plans                                                          | Future monetization candidate; no launch subscription or Pro tier exists             |
+| POST-009 | Direct sponsorships                                                                | Future monetization candidate; no launch display-ad product exists                   |
 
 No open repository-owned launch-critical engineering task is intentionally left in this queue.

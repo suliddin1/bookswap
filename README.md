@@ -19,6 +19,8 @@ BookSwap is an Azerbaijani-first, mobile-friendly marketplace for listing, disco
 
 There is intentionally no payment, escrow, shipping, automated exchange matching, wanted-list, or social-shelf system in the launch MVP. Buyers and sellers agree payment and handover directly.
 
+Normal-user listings and messages are free at launch. BookSwap takes no commission and has no integrated payment, VIP listing, subscription, or display-ad product. Paid listing promotion, professional seller plans, and direct sponsorships are future business candidates only; none is implemented or promised for launch.
+
 ## Local setup
 
 ```bash
@@ -41,10 +43,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 BOOKSWAP_REMOTE_TEST_CONFIRMATION=
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 WEB_VITALS_ENABLED=false
-OPENAI_API_KEY=
 RESEND_API_KEY=
-CLOUDFLARE_ACCOUNT_ID=
-CLOUDFLARE_API_TOKEN=
 ```
 
 Never expose `SUPABASE_SERVICE_ROLE_KEY` or other secret keys to client components.

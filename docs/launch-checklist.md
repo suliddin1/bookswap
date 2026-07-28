@@ -75,7 +75,7 @@ Vercel rollback restores application code/config version; it does not reverse da
 - `listing-images` has the intended public/5 MiB/JPEG-PNG-WebP bucket settings, but production has not reached the service-only Storage mutation policy state.
 - Hosted Auth URL/provider/session/MFA settings and Vercel Production variable values/scopes were not readable through the available connectors. Leaked-password protection is observably disabled.
 - The existing Vercel production deployment is `dpl_3YJ15xSUXwLvT82Q2ZDc8E9BRR7f` from old source SHA `941b0c75...`; it remains available on Vercel aliases. No deployment exists for `cf126c3...`, Git remains disconnected, and no custom domain was observed.
-- The repository requires a production `OPENAI_API_KEY` for fail-closed listing/chat moderation. Notification email remains disabled because no `notify` Edge Function is deployed; its placeholder sender must never be published.
+- Listing/chat content checks are deterministic repository code and require no external AI key. Notification email remains disabled because no `notify` Edge Function is deployed; its placeholder sender must never be published.
 - The gate stopped before every production mutation. Follow DR-006 and DR-007 in `docs/ai/DECISION_REQUESTS.md`; do not deploy until backup/restore, migration baseline, Auth, Storage, variables, canonical domain, operational ownership, and legal facts are complete.
 
 ## Failed release and incident recovery

@@ -13,6 +13,8 @@ BookSwap should occupy the gap between a general local classifieds site and a sp
 
 The recommended launch model remains payment-free and reader-to-reader. Adding escrow, delivery or commissions would materially change operations, consumer obligations and dispute handling and therefore requires a separate business decision.
 
+The approved launch business model keeps normal-user listings and messages free, charges no commission, and includes no integrated payment, VIP listing, subscription/Pro tier, or display ads. Paid listing promotion, professional seller plans, and direct sponsorships may be researched later but are not implemented launch promises.
+
 ## Products reviewed
 
 ### Azerbaijan classifieds

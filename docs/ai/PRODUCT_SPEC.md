@@ -6,13 +6,15 @@ Updated: 28 July 2026
 
 BookSwap is an Azerbaijani-first marketplace where people list, discover, buy, and sell used books. It connects participants; it does not hold funds, process payments, provide escrow/buyer protection, ship books, or guarantee condition or handover.
 
+Normal-user listing and messaging are free at launch. BookSwap charges no commission and offers no integrated payment, VIP listing, paid subscription/Pro tier, or display advertising.
+
 ## Launch users and outcomes
 
 - A visitor can understand the marketplace/safety model and browse/search/filter public active or sold listings without seeing private account data.
 - A registered active seller can publish an accurate book with title, author, condition, price, description, location, and 1–5 real images; then edit, mark sold/relist, or remove it.
 - A registered active buyer can save a public listing, open a protected conversation, agree transaction/handover details directly, report problems, and review an eligible completed purchase.
 - Each user can manage safe profile fields, notifications, and privacy/deletion/appeal requests.
-- An admin can review listings, accounts, reports, privacy/appeal requests, and automated moderation records through server-enforced audited actions.
+- An admin can review listings, accounts, reports, privacy/appeal requests, and deterministic content-rule records through server-enforced audited actions.
 
 ## Launch-critical functional scope
 
@@ -40,6 +42,8 @@ BookSwap is an Azerbaijani-first marketplace where people list, discover, buy, a
 
 Users verify condition, price, counterpart, payment method, meeting, optional delivery, and handover. Fraud, harassment, illegal/stolen/counterfeit/pirated material, prohibited content, sensitive-data abuse, spam, unsafe links/files, and manipulation are forbidden. Users can report content/accounts and appeal moderation decisions. Chat warns against unnecessary sensitive information. Minor usage remains a legal owner decision.
 
+The application does not use AI to interpret text or images. It enforces strict input/upload boundaries, a narrow and documented credential-theft text rule, durable abuse limits, reporting, and human admin action. Passing a local rule is not a claim that content has been fully understood or certified safe.
+
 ## Non-functional launch requirements
 
 - Server/database authorization, no IDOR/mass assignment/forged owner or role trust.
@@ -58,5 +62,6 @@ Users verify condition, price, counterpart, payment method, meeting, optional de
 - external paid search;
 - integrated payments, escrow, shipping, delivery, or buyer protection;
 - product analytics beyond explicitly approved privacy-minimized operational Web Vitals.
+- paid listing promotion, professional seller plans, and direct sponsorships.
 
-These items must not be presented as unresolved MVP blockers or current public promises.
+These items must not be presented as unresolved MVP blockers or current public promises. Monetization is reconsidered only after the marketplace has meaningful listing supply, buyer activity, and seller demand, through a separate approved iteration.

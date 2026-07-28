@@ -305,7 +305,7 @@ export function AdminPanel() {
             ["admin-readers-title", AZ_COPY.admin.readerAccounts],
             ["admin-reports-title", AZ_COPY.admin.openReports],
             ["admin-privacy-title", AZ_COPY.admin.privacyRequests],
-            ["admin-moderation-title", AZ_COPY.admin.automatedModeration],
+            ["admin-moderation-title", AZ_COPY.admin.contentRuleDecisions],
           ].map(([id, label]) => (
             <li key={id} className="min-w-0">
               <a
@@ -811,15 +811,15 @@ export function AdminPanel() {
             tabIndex={-1}
             className="display scroll-mt-28 break-words text-2xl font-semibold [overflow-wrap:anywhere] focus:outline focus:outline-[3px] focus:outline-offset-[3px] focus:outline-[#8f6213]"
           >
-            {AZ_COPY.admin.automatedModeration}
+            {AZ_COPY.admin.contentRuleDecisions}
           </h2>
           <p className="mt-2 break-words text-xs leading-5 text-[#6b6254] [overflow-wrap:anywhere]">
-            {AZ_COPY.admin.automatedModerationBody}
+            {AZ_COPY.admin.contentRuleDecisionsBody}
           </p>
         </div>
         {data.moderationDecisions.length ? (
           <ol
-            aria-label={AZ_COPY.admin.moderationListLabel}
+            aria-label={AZ_COPY.admin.contentRuleListLabel}
             className="divide-y divide-[#d8cbb5]"
           >
             {data.moderationDecisions.map((decision) => (

@@ -719,4 +719,35 @@ The first authorization invocation was blocked by sandbox network access before 
 
 ### Gate result
 
-**FAILED SAFELY / NO DEPLOYMENT.** Required blockers are migration-history reconciliation, encrypted backup plus isolated restore, hosted Auth/MFA/redirect verification, production variable scope/role verification, required OpenAI moderation credentials, canonical domain, alert/incident ownership, post-deploy smoke/authorization evidence, and separate legal placeholder completion. The old production deployment remains unchanged and is the application rollback candidate only; no database rollback was needed.
+**FAILED SAFELY / NO DEPLOYMENT.** Required blockers are migration-history reconciliation, encrypted backup plus isolated restore, hosted Auth/MFA/redirect verification, production variable scope/role verification, canonical domain, alert/incident ownership, post-deploy smoke/authorization evidence, and separate legal placeholder completion. External AI moderation credentials were removed by the later AI-free product-alignment iteration and are not a current blocker. The old production deployment remains unchanged and is the application rollback candidate only; no database rollback was needed.
+
+## 2026-07-28 — AI-free product alignment (authoritative current evidence)
+
+This section supersedes prior provider-moderation requirements. No production, deployment, remote Git, Vercel Git, migration, or schema operation occurred.
+
+### Runtime and product evidence
+
+- Removed the external moderation adapter, network request, key/configuration references, multimodal image checks, and unused authenticated `/api/moderate` preflight route.
+- Listing creation/publication and chat still run strict Zod validation, ownership/account checks, durable rate limits, and a content-minimized local-rule audit. Normal text is accepted without credentials or network access; one deliberately narrow rule rejects requests for CVV/PIN/OTP-style secrets.
+- Image content is not semantically classified. Existing upload controls still enforce authenticated owner path, count, size, MIME type, file signature, replacement/deletion ownership, and cleanup behavior.
+- Reports, admin-only moderation/removal/ban actions, appeals, RLS/grants, real authorization, and immutable admin audit boundaries are unchanged. The historical `moderation_decisions` table/migration remains immutable; current runtime writes only `local_rules` text outcomes.
+- Launch decisions now state that normal-user listings and messages are free; there is no commission, integrated payment, VIP listing, subscription/Pro tier, or display advertising. Paid listing promotion, professional seller plans, and direct sponsorships are future candidates only.
+
+### Final validation
+
+```text
+npm.cmd run format:check          PASS — all matched files use Prettier
+npm.cmd run lint                  PASS — zero warnings
+npm.cmd run typecheck             PASS — strict TypeScript, zero diagnostics
+npm.cmd test                      PASS — 3 files, 59/59 tests
+npm.cmd run test:database:static  PASS — 22 immutable migrations
+npm.cmd run test:dependencies     PASS — 7 patched package locations
+npm.cmd run test:secrets          PASS — 189 repository paths; deleted working-tree paths skipped safely
+npm.cmd run test:env              PASS — intended development ref; public/service-role presence guarded
+npm.cmd run test:authorization    PASS — real development backend 10/10; temporary fixtures cleaned
+OPENAI_API_KEY unset + npm build  PASS — Next 15.5.21, 39/39 pages; deleted preflight route absent
+npm.cmd run test:performance      PASS — 5/5 gzip budgets
+npm.cmd run test:e2e              PASS — Chromium 28/28
+```
+
+The first authorization and build attempts were blocked by sandbox network policy; approved reruns reached only the guarded development backend and existing Google font host and passed. The first E2E run found a real stale administrator-navigation label and was fixed. A later run encountered the previously documented intermittent React 418 in an unchanged profile test; no assertion was weakened, and the final complete 28-test suite passed. No live external dependency advisory query, production smoke test, semantic image review, or claim of comprehensive deterministic content understanding is included.

@@ -2144,10 +2144,10 @@ test("administrator actions keep context, focus, targets, and 200% reflow", asyn
 
   const moderationLink = page
     .getByRole("navigation", { name: "İdarəetmə bölmələri" })
-    .getByRole("link", { name: "Avtomatlaşdırılmış moderasiya qərarları" });
+    .getByRole("link", { name: AZ_COPY.admin.contentRuleDecisions });
   await moderationLink.click();
   const moderationHeading = page.getByRole("heading", {
-    name: "Avtomatlaşdırılmış moderasiya qərarları",
+    name: AZ_COPY.admin.contentRuleDecisions,
   });
   await expect(moderationHeading).toBeFocused();
   expect(

@@ -58,14 +58,14 @@ Status: production/deployment-only. The production Supabase identity is now know
 
 Name the production Supabase/Vercel projects, domain, region/data-residency decision, deployment approver, incident commander, on-call/alert destination, log owner/retention, backup retention, restore target, support/privacy mailbox owners, moderation SLA, and secret-rotation owner. Verify backups and restore in production; repository procedures are not proof that either is enabled.
 
-## DR-005 — Required moderation and optional provider credentials
+## DR-005 — Optional operational provider decisions
 
-Status: production/deployment-only. Automated moderation is already required by launch-critical listing and chat mutations and fails closed when unavailable.
+Status: production/deployment-only. Core listing and chat safety requires no external AI/content-classification service or key.
 
 - Choose and configure a real error-monitoring/log destination, or retain provider-neutral structured platform logs.
-- Approve the OpenAI moderation processor/privacy terms and place a production-only `OPENAI_API_KEY` in Vercel Production. Without it, listing creation/publication and message sending return a stable 503; local rules can reject but do not approve content.
 - Provide Resend credentials only if notification email is enabled and templates/privacy/retention are approved.
 - Enable `WEB_VITALS_ENABLED=true` only after log access, retention, alert queries, and privacy scope are approved.
+- Enable CAPTCHA only after provider, privacy basis, keys, and an accessible fallback are approved for specific high-risk anonymous Auth flows.
 
 No fake DSN, token, or API key may be committed.
 
@@ -85,9 +85,9 @@ No production reset is permitted.
 
 ## DR-007 — Controlled production release approval
 
-Status: blocked until DR-002 through DR-006 are resolved.
+Status: blocked until DR-002, DR-003, DR-004, and DR-006 are resolved. DR-005 services are optional and do not block launch when left disabled.
 
-In Vercel **bookswap > Settings > Environment Variables**, verify by name only that Production has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`, and `OPENAI_API_KEY`. Confirm the two Supabase keys belong to `lnhublqrtkdrrafghvki`, keep the service role server-only, and do not reuse development values. Leave Git disconnected. After migrations/Auth/Storage/recovery/alerts and all repository gates pass, authorize one explicit deployment of `cf126c3c4a408007eacf7d337f485be69e23517c` or a reviewed successor through the controlled Vercel deployment tool. Record deployment ID/URL and retain `dpl_3YJ15xSUXwLvT82Q2ZDc8E9BRR7f` as the application rollback candidate, noting that an app rollback does not reverse database changes.
+In Vercel **bookswap > Settings > Environment Variables**, verify by name only that Production has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `NEXT_PUBLIC_SITE_URL`. Confirm the two Supabase keys belong to `lnhublqrtkdrrafghvki`, keep the service role server-only, and do not reuse development values. Leave Git disconnected. After migrations/Auth/Storage/recovery/alerts and all repository gates pass, authorize one explicit deployment of `cf126c3c4a408007eacf7d337f485be69e23517c` or a reviewed successor through the controlled Vercel deployment tool. Record deployment ID/URL and retain `dpl_3YJ15xSUXwLvT82Q2ZDc8E9BRR7f` as the application rollback candidate, noting that an app rollback does not reverse database changes.
 
 ## Resolved product decisions
 
@@ -95,4 +95,8 @@ In Vercel **bookswap > Settings > Environment Variables**, verify by name only t
 - Payment, escrow, shipping, delivery, and handover are participant responsibilities.
 - Automated exchange matching, wanted-title matching, shelves, social reading, and edition intelligence are post-launch.
 - A dedicated `sale/exchange/both` schema is not included: the current product coherently supports sale, and no public copy promises a full exchange platform.
+- No AI/OpenAI service is part of launch. Listing/chat safety is deterministic and human-review-backed; it does not claim semantic image understanding.
+- Normal-user listings and messages are free. There is no commission, integrated payment, VIP listing, subscription/Pro tier, or display advertising at launch.
+- Paid listing promotion, professional seller plans, and direct sponsorships are future candidates only and are not implemented or promised.
+- Revisit monetization only after measurable listing supply, buyer activity, and seller demand exist; require a separate product/legal/fairness decision before implementation.
 - No paid service, production project, or deployment was authorized by this readiness run.
