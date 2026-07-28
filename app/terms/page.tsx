@@ -1,82 +1,108 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { InfoPage, InfoSection } from "@/components/info-page";
 
-export const metadata = {
-  title: "Terms of Use",
-  description: "Rules for using the BookSwap marketplace.",
+export const metadata: Metadata = {
+  title: "İstifadə şərtləri",
+  description:
+    "BookSwap kitab bazarından istifadə qaydalarının ilkin hüquqi layihəsi.",
 };
 
 export default function TermsPage() {
   return (
     <InfoPage
-      eyebrow="Effective 12 July 2026"
+      eyebrow="Qüvvəyə minmə / son yenilənmə: [QÜVVƏYƏ MİNMƏ TARİXİ]"
       title="İstifadə şərtləri."
-      intro="BookSwap-dan istifadə etməklə bu marketplace qaydalarına əməl etməyi qəbul edirsiniz."
+      intro="Bu mətn BookSwap ictimai istifadəyə verilməzdən əvvəl tamamlanmalı hüquqi layihədir. Xidməti təqdim edən tərəf [HÜQUQİ OPERATORUN ADI], hüquqi ünvan [HÜQUQİ ÜNVAN], tətbiq olunan hüquq və mübahisə yurisdiksiyası [YURİSDİKSİYA] kimi tamamlanmalıdır."
     >
       <InfoSection title="Platformanın rolu">
         <p>
-          BookSwap kitabın satıcısı, alıcısı, ödəniş xidməti və ya çatdırılma
-          şirkəti deyil. Platforma istifadəçilərin elan verməsi və birbaşa əlaqə
-          saxlaması üçün texniki vasitədir. Alqı-satqı müqaviləsi alıcı ilə
-          satıcı arasında yaranır.
+          BookSwap istifadə olunmuş kitab elanlarını dərc etmək, tapmaq və bazar
+          iştirakçılarının bir-biri ilə əlaqə saxlaması üçün texniki
+          platformadır. BookSwap elandakı kitabın satıcısı və ya alıcısı deyil,
+          vəsait saxlamır, ödəniş emal etmir, çatdırılma, sığorta, eskrou və ya
+          alıcı müdafiəsi xidməti göstərmir.
         </p>
       </InfoSection>
-      <InfoSection title="Hesab və uyğunluq">
+      <InfoSection title="Hesab və yaş qaydası">
         <p>
-          Dəqiq məlumat təqdim etməli, hesabınızı və giriş kodlarını qorumalı,
-          başqa şəxsi təqlid etməməlisiniz. Yetkinlik yaşına çatmayan istifadəçi
-          valideyn və ya qanuni nümayəndənin nəzarəti ilə əməliyyat etməlidir.
+          İstifadəçi dəqiq hesab məlumatı verməli, giriş məlumatlarını qorumalı
+          və başqa şəxsi təqlid etməməlidir. Yetkinlik yaşına çatmayanların
+          istifadəsi məhsul sahibi tərəfindən seçiləcək [MİNİMUM YAŞ VƏ VALİDEYN
+          RAZILIĞI QAYDASI] əsasında tamamlanmalıdır. Qanuni nümayəndə tələb
+          olunan hallarda əməliyyata nəzarət etməlidir.
         </p>
       </InfoSection>
-      <InfoSection title="Satıcının öhdəlikləri">
+      <InfoSection title="Elan və satıcı öhdəlikləri">
         <p>
-          Kitaba sahib olmalı, başlıq, nəşr, vəziyyət, qüsur, qiymət və fotoları
-          dürüst göstərməli, satıldıqdan sonra elanı bağlamalı və müəlliflik
-          hüququnu pozan saxta/pirat material yerləşdirməməlisiniz.
+          Satıcı kitab üzərində qanuni sərəncam hüququna malik olmalı; başlıq,
+          müəllif, vəziyyət, qüsur, qiymət, məkan və fotoları dürüst göstərməli;
+          satıldıqdan sonra elanın statusunu yeniləməlidir. Saxta, pirat,
+          oğurlanmış və ya qanunsuz material yerləşdirmək olmaz.
         </p>
       </InfoSection>
-      <InfoSection title="Alıcının öhdəlikləri">
+      <InfoSection title="Alıcı və əməliyyat öhdəlikləri">
         <p>
-          Kitabı və şərtləri yoxlamalı, razılaşdırılmış görüş və ödəniş
-          qaydasına əməl etməli, əsassız report və manipulyativ review
-          göndərməməlisiniz.
+          Alıcı kitabın vəziyyətini, nəşrini, qiyməti və təhvil şərtlərini özü
+          yoxlamalıdır. Ödəniş, göndəriş, çatdırılma, görüş və təhvil alıcı ilə
+          satıcının məsuliyyətidir. İştirakçılar razılaşmanı yazışmada aydın
+          saxlamalı və şübhəli ödəniş keçidlərindən istifadə etməməlidir.
         </p>
       </InfoSection>
-      <InfoSection title="Qadağan olunmuş istifadə">
+      <InfoSection title="Qadağan olunmuş davranış və məzmun">
         <p>
-          Fırıldaqçılıq, spam, fişinq, zərərli link, təhdid, nifrət nitqi, şəxsi
-          məlumatların icazəsiz yayılması, platformanın təhlükəsizliyini
-          sınaqdan keçirmək və qanunsuz məhsul/məzmun qadağandır.
+          Dələduzluq, fişinq, spam, təhdid, təqib, nifrət nitqi, qanunsuz mal,
+          saxta material, zərərli keçid və kod, şəxsi məlumatın icazəsiz
+          paylaşılması, reytinq manipulyasiyası və təhlükəsizlik nəzarətlərini
+          aşmaq cəhdi qadağandır. Ətraflı qaydalar
+          <Link href="/marketplace-rules" className="text-orange underline">
+            {" "}
+            Kitab bazarı qaydalarında
+          </Link>{" "}
+          göstərilir.
         </p>
       </InfoSection>
-      <InfoSection title="Moderasiya və hesab tədbirləri">
+      <InfoSection title="Moderasiya, şikayət və etiraz">
         <p>
-          BookSwap elan və hesabı araşdıra, görünməsini məhdudlaşdıra, materialı
-          silə və təhlükəsizlik pozuntusunda hesabı müvəqqəti və ya daimi
-          dayandıra bilər. Avtomatik moderasiya qərarı mümkün olduqda insan
-          baxışı və etiraz mexanizmi ilə dəstəklənməlidir.
+          Operator elan və hesabı araşdıra, görünməni məhdudlaşdıra, məzmunu
+          silə və ya hesabı dayandıra bilər. İstifadəçi elanı tətbiqdən şikayət
+          edə və moderasiya qərarına
+          <Link href="/moderation-appeals" className="text-orange underline">
+            {" "}
+            etiraz edə bilər
+          </Link>
+          . Təcili təhlükə halları platforma şikayəti ilə məhdudlaşmamalıdır.
+        </p>
+      </InfoSection>
+      <InfoSection title="Məxfilik və hesabın silinməsi">
+        <p>
+          Şəxsi məlumatların emalı
+          <Link href="/privacy" className="text-orange underline">
+            {" "}
+            Məxfilik bildirişində
+          </Link>{" "}
+          izah edilir. Məlumat çıxarışı, düzəliş, silinmə və etiraz sorğuları
+          <Link href="/user-rights" className="text-orange underline">
+            {" "}
+            İstifadəçi hüquqları səhifəsindən
+          </Link>{" "}
+          göndərilə bilər.
         </p>
       </InfoSection>
       <InfoSection title="Məsuliyyət və qanuni hüquqlar">
         <p>
-          Platforma istifadəçilərin kitabının keyfiyyətinə və görüş davranışına
-          zəmanət vermir. Heç bir bənd qanunla imtina edilə bilməyən istehlakçı
-          və fərdi məlumat hüquqlarınızı aradan qaldırmır.
+          Platforma istifadəçi elanının doğruluğuna, kitabın keyfiyyətinə,
+          ödənişə və təhvilə zəmanət vermir. Bu şərtlər tətbiq olunan qanunla
+          məhdudlaşdırılması mümkün olmayan istehlakçı və fərdi məlumat
+          hüquqlarını aradan qaldırmır. Hüquqi sorğular: [DƏSTƏK E-POÇTU].
         </p>
       </InfoSection>
-      <InfoSection title="Dəyişiklik və tətbiq olunan hüquq">
+      <InfoSection title="Dəyişikliklər və tətbiq olunan hüquq">
         <p>
           Əhəmiyyətli dəyişikliklər qüvvəyə minməzdən əvvəl platformada
-          bildiriləcək. Şərtlər Azərbaycan Respublikasının tətbiq olunan
-          qanunları, o cümlədən{" "}
-          <a
-            href="https://e-qanun.az/framework/11850"
-            target="_blank"
-            rel="noreferrer"
-            className="text-orange underline"
-          >
-            “Elektron ticarət haqqında” Qanun
-          </a>{" "}
-          nəzərə alınaraq şərh edilir.
+          bildirilməlidir. Tətbiq olunan hüquq və səlahiyyətli məhkəmə
+          [YURİSDİKSİYA] məlumatı hüquqi sahib tərəfindən ictimai istifadədən
+          əvvəl tamamlanmalıdır.
         </p>
       </InfoSection>
     </InfoPage>

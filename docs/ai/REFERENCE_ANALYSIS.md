@@ -73,15 +73,15 @@ Local baseline:
 
 ## BookSwap synthesis
 
-| Need | Adopt | BookSwap-specific adaptation |
-| --- | --- | --- |
-| Fast listing | PangoBooks metadata assist; Vinted mobile simplicity | Essential physical-copy fields first; optional book depth; Azerbaijani defaults |
-| Discovery | Book-native title/copy model | Azerbaijani/Russian/English search, local location, sale/exchange intention |
-| Reader identity | Seller bookstore and shelves | Public seller inventory plus privacy-explicit owned/read/wanted shelves |
-| Saving | Favorites and title wishlists | Preserve listing favorites; add title saves and wanted list separately |
-| Negotiation | Clear message/offer entry | Direct protected chat; price negotiability and book exchange are distinct |
-| Exchange | Not supplied by references as the core | Privacy-safe two-way offered/wanted matching is BookSwap's differentiator |
-| Trust | Actual photos, condition, profiles, reports | No payment/delivery guarantees; eligible reviews, moderation, local safety copy |
-| Local fit | AZN, city, direct arrangement | Approximate area/handoff preferences; no precise public address |
+| Need            | Adopt                                                | BookSwap-specific adaptation                                                    |
+| --------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Fast listing    | PangoBooks metadata assist; Vinted mobile simplicity | Essential physical-copy fields first; optional book depth; Azerbaijani defaults |
+| Discovery       | Book-native title/copy model                         | Azerbaijani/Russian/English search, local location, sale/exchange intention     |
+| Reader identity | Seller bookstore and shelves                         | Public seller inventory plus privacy-explicit owned/read/wanted shelves         |
+| Saving          | Favorites and title wishlists                        | Preserve listing favorites; add title saves and wanted list separately          |
+| Negotiation     | Clear message/offer entry                            | Direct protected chat; price negotiability and book exchange are distinct       |
+| Exchange        | Not supplied by references as the core               | Privacy-safe two-way offered/wanted matching is BookSwap's differentiator       |
+| Trust           | Actual photos, condition, profiles, reports          | No payment/delivery guarantees; eligible reviews, moderation, local safety copy |
+| Local fit       | AZN, city, direct arrangement                        | Approximate area/handoff preferences; no precise public address                 |
 
 The product should feel like the existing BookSwap bookstore, not a reskinned reference. The references validate behaviors and information architecture only.

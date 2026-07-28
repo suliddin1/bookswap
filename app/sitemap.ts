@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
+import { getSiteUrl } from "@/lib/site-url";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base =
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://bookswap-fawn.vercel.app";
+  const base = getSiteUrl();
   return [
     "",
     "/listings",
@@ -10,9 +10,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/safety",
     "/privacy",
     "/terms",
+    "/marketplace-rules",
+    "/moderation-appeals",
     "/user-rights",
   ].map((path) => ({
-    url: `${base}${path}`,
+    url: new URL(path, base).toString(),
     lastModified: new Date(),
     changeFrequency:
       path === "/listings" ? ("daily" as const) : ("monthly" as const),

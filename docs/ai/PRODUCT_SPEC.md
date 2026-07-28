@@ -1,117 +1,62 @@
-# BookSwap product specification
+# BookSwap launch product specification
 
-Status: approved direction for autonomous product development; current implementation must be evolved, not rebuilt.
+Updated: 28 July 2026
 
-## Product statement
+## Product promise
 
-BookSwap is Azerbaijan's book-specific reader marketplace, combining physical-book sales, local exchange, reader shelves, wanted-book lists, and direct communication. Its advantage over a generic classified category is structured book discovery and reader-to-reader matching.
+BookSwap is an Azerbaijani-first marketplace where people list, discover, buy, and sell used books. It connects participants; it does not hold funds, process payments, provide escrow/buyer protection, ship books, or guarantee condition or handover.
 
-The service does not currently promise integrated payment, platform-controlled shipping, buyer protection, delivery guarantees, or insurance. Users arrange payment, meeting, handoff, or optional delivery directly and must see accurate trust language.
+## Launch users and outcomes
 
-## Target users and problems
+- A visitor can understand the marketplace/safety model and browse/search/filter public active or sold listings without seeing private account data.
+- A registered active seller can publish an accurate book with title, author, condition, price, description, location, and 1–5 real images; then edit, mark sold/relist, or remove it.
+- A registered active buyer can save a public listing, open a protected conversation, agree transaction/handover details directly, report problems, and review an eligible completed purchase.
+- Each user can manage safe profile fields, notifications, and privacy/deletion/appeal requests.
+- An admin can review listings, accounts, reports, privacy/appeal requests, and automated moderation records through server-enforced audited actions.
 
-- Students need affordable textbooks and a fast way to resell prior-course books.
-- Readers need a book-native place to pass on finished books or exchange them instead of buying.
-- Azerbaijani readers need useful discovery across Azerbaijani, Russian, and English inventory.
-- Collectors need edition, publication, condition, and ISBN detail that generic listings omit.
-- Parents need a practical way to rotate children's books locally.
-- Exchange-first readers need wanted-book matching without exposing private information.
+## Launch-critical functional scope
 
-Generic classifieds provide local reach but weak book metadata, reader identity, shelves, wanted titles, and exchange matching. International book marketplaces offer richer book culture but import unsuitable shipping, payment, and commercial assumptions.
+1. Supabase email/password, magic-link, confirmation/reset/session flows.
+2. Catalog search over title, author, description, and ISBN with category, condition, price, location, sort, and cursor pagination.
+3. Book identity: title, author, condition, applicable price, seller, city/location, description, images, optional ISBN/category/original price.
+4. Owner-only listing lifecycle and service-validated Storage uploads.
+5. Owner-only favorites and notification state.
+6. Buyer/seller participant-only chat with forged-sender prevention and bounded input/history.
+7. Sold-listing buyer review eligibility, duplicate/rating/comment constraints.
+8. Authenticated reports, private moderation metadata, admin-only audited resolution.
+9. Privacy access/correction/export/deletion/objection/appeal workflow.
+10. Azerbaijani-first UI/generated messages, safety guidance, legal drafts, stable errors, rate limits, and operational foundations.
 
-## Mandatory launch capabilities
+## Listing and marketplace rules
 
-1. Authentication and recovery with safe session handling and an automatically created public profile.
-2. Editable reader profiles and public seller pages with active/sold seller listings and trust context.
-3. Fast physical-book listing creation, editing, state changes, and deletion.
-4. Listing intention: sale, exchange, or sale-or-exchange.
-5. Structured essentials: title, author, language, condition, city/region, description, copy photos, intention, and price when sale is enabled.
-6. Optional metadata: genre, publisher, publication year, edition, ISBN, cover type, annotations/highlighting, missing/damaged pages, negotiability, approximate area, handoff preferences, and desired exchange titles.
-7. Secure image upload, replacement, removal, failed-create cleanup, and listing-delete cleanup.
-8. Book-first catalog, search, filters, sorting, stable cursor pagination, and responsive browsing.
-9. Saved physical listings plus saved book titles, reader shelves, and wanted-book lists.
-10. Privacy-preserving potential exchange matching from owned/offered and wanted titles.
-11. Direct buyer/seller messaging with membership authorization, unread state, and notifications.
-12. Reviews tied to eligible completed interactions.
-13. Reporting, moderation, bans, admin authorization, and durable admin audit history.
-14. Azerbaijani-first interface, metadata, validation, empty/error states, and legal/trust copy.
-15. Production-quality RLS, grants, Storage policies, service-role checks, monitoring, tests, responsive accessibility, SEO, and deployment configuration.
+- Title 2–140; author 2–100; description 10–2000; ISBN optional <=20.
+- Price is positive and <=10,000 AZN; original price, if present, is 0.01–10,000.
+- Exactly 1–5 unique public image URLs; upload accepts JPEG/PNG/WebP up to 5 MB after MIME and signature validation.
+- Category, condition, and city use existing allow-listed values; display values are localized.
+- Only active listings appear as available. Sold listings may remain public for lifecycle/review context. Draft/locked/removed content follows protected/admin visibility.
+- Seller identity is public only to the limited marketplace projection; email, phone, roles, bans, and private workflows are not public.
 
-Existing authentication, profiles, sale listings, catalog, favorites, chat, notifications, reviews, reporting, admin, legal pages, security migrations, and tests are the foundation. Work should close verified gaps without discarding those flows.
+## Trust and transaction model
 
-## Optional capabilities
+Users verify condition, price, counterpart, payment method, meeting, optional delivery, and handover. Fraud, harassment, illegal/stolen/counterfeit/pirated material, prohibited content, sensitive-data abuse, spam, unsafe links/files, and manipulation are forbidden. Users can report content/accounts and appeal moderation decisions. Chat warns against unnecessary sensitive information. Minor usage remains a legal owner decision.
 
-- ISBN/barcode-assisted metadata entry with user confirmation.
-- Public or private custom shelves beyond owned/read/wanted.
-- Price-drop and wanted-title availability alerts.
-- Same-seller bundles and multi-book negotiation.
-- Approximate-distance matching without precise-location disclosure.
-- Reader/storefront curation, follow relationships, and recommendations.
-- Delivery preference fields and neutral handoff planning.
+## Non-functional launch requirements
 
-Optional items must not delay secure, understandable core sale/exchange flows.
+- Server/database authorization, no IDOR/mass assignment/forged owner or role trust.
+- Durable shared rate limits and stable Azerbaijani errors with retry information.
+- Safe structured logs/correlation IDs, security headers, bounded uploads/inputs/pagination, no private public caching.
+- Strict TypeScript, lint/format/unit/database/E2E/build/performance/secret/dependency gates.
+- Accessible keyboard/focus/semantic behavior and responsive mobile/desktop layouts.
+- Actionable backup/rollback/incident/secret-rotation procedures with honest production verification boundaries.
 
-## Non-goals for the current product phase
+## Explicitly post-launch
 
-- Integrated checkout, escrow, wallets, commission collection, refunds, or payment guarantees.
-- Platform-controlled labels, couriers, shipping insurance, or guaranteed delivery.
-- Importing PangoBooks' US logistics or Vinted's buyer-protection/payment system.
-- General merchandise categories, ebooks/PDF trading, or copyright-infringing digital content.
-- Broad social networking, gamification, or an unrelated visual redesign.
-- Exact-address publication or exposing private wanted/ownership data during exchange matching.
+- `sale/exchange/both` intention and direct exchange workflow;
+- automated exchange or wanted-title matching;
+- owned/read/custom/wanted shelves and social reading;
+- complete edition/publisher/bibliographic intelligence;
+- external paid search;
+- integrated payments, escrow, shipping, delivery, or buyer protection;
+- product analytics beyond explicitly approved privacy-minimized operational Web Vitals.
 
-## Primary journeys
-
-### Discover and buy
-
-A signed-out or signed-in reader opens an Azerbaijani catalog, searches by title/author/ISBN, filters language/genre/condition/location/intention/price, pages through stable results, opens a physical-copy detail page, reviews seller context, saves the listing or title, signs in if needed, and starts an authorized conversation.
-
-### Sell a book
-
-A reader signs in, creates a listing quickly, chooses sale or sale-or-exchange, adds actual copy photos and honest condition/flaw details, optionally adds richer metadata and negotiability, previews, publishes, edits or replaces photos, marks sold, and later deletes with storage cleanup.
-
-### Exchange books
-
-A reader records owned/offered books and wanted titles, publishes an exchange or sale-or-exchange copy, receives a privacy-safe potential match, reviews only public listing/profile context, opens a protected conversation, and arranges a local handoff. Matching never reveals a private shelf, precise location, email, or phone.
-
-### Build a reader identity
-
-A reader maintains public profile basics, seller inventory, saved listings, saved titles, and shelves with explicit privacy. A public seller page shows only allowed fields and eligible listings.
-
-### Trust and moderation
-
-A user sees honest safety guidance, reports a listing/user interaction, tracks permitted report state, and can appeal or exercise privacy rights. An authorized admin reviews evidence, takes bounded action, and creates an immutable audit record.
-
-## Trust model
-
-BookSwap facilitates discovery and communication; users arrange transactions. Trust comes from verified account state, structured copy descriptions, actual photos, public seller history, eligible reviews, reporting/moderation, transparent listing states, privacy minimization, and accurate safety guidance—not fabricated protection.
-
-Required communication must state that BookSwap does not currently hold funds, guarantee condition/delivery, insure exchanges, or verify every claim. Sensitive contact and location data remain private by default.
-
-## Exchange model
-
-- A copy has one intention: sale, exchange, or both.
-- Sale requires a positive AZN price; exchange-only does not invent a price.
-- Wanted items should resolve to a book/title identity where possible while permitting free-text fallback for uncommon editions.
-- A two-way candidate exists when A offers X and wants Y while B offers Y and wants X. Edition/language/condition/location preferences may refine ranking but should not silently exclude viable matches.
-- A match is a suggestion, not a reservation or guarantee.
-- The first disclosure should contain public book/listing/profile facts and approximate location only. Each user decides whether to message and disclose more.
-- Dismissal/block/report signals must suppress unsuitable repeats.
-
-## Design direction
-
-Preserve the current Fraunces/Manrope typography, ivory/paper/walnut/near-black/brown/restrained-gold palette, warm bookstore atmosphere, shelf catalog, cover fallbacks, card language, header/footer, responsive grid, and existing state vocabulary. Improve only evidence-backed accessibility, hierarchy, consistency, responsiveness, and interaction issues. Product references inform behavior, not appearance.
-
-## Localization standards
-
-- Default locale and document lang: Azerbaijani (az).
-- Correct Azerbaijani spelling and characters; no machine-like literal translations.
-- Book language values include Azerbaijani, Russian, English, and extensible other languages.
-- Money is displayed in AZN with consistent numeric formatting.
-- Location uses Azerbaijani city/region terminology; approximate area is optional and precise address is private.
-- All navigation, forms, validation, moderation, trust, legal, metadata, empty/error/loading states, emails, and notifications require Azerbaijani coverage before launch.
-- User-entered titles/authors/descriptions remain in their entered language.
-
-## Launch requirements
-
-Launch requires every launch-required acceptance criterion to be Pass; zero open P0/P1 issues; a healthy dedicated production backend separate from development; reviewed migrations and generated types; verified RLS/grants/Storage/Realtime/service-role behavior; successful buyer/seller/admin browser journeys; Azerbaijani-first UX; accessible four-viewport behavior; no core console/network errors; production secrets, domain, monitoring, backups, abuse controls, legal operator/contact details, privacy process, and rollback runbook. A build passing by itself is not launch readiness.
+These items must not be presented as unresolved MVP blockers or current public promises.

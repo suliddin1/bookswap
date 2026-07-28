@@ -613,3 +613,69 @@ Safe column grants existed, but the listing RLS policy itself tried to read prot
 - Only a minimal temporary authorization listing was seeded and removed; search relevance, pagination, query plans, and realistic performance remain unverified.
 - Accessibility evidence is foundation/source inspection plus responsive checks, not a complete WCAG audit.
 - Deployment, production secrets/domain, monitoring, backups, rollback, and legal operator configuration remain unverified.
+
+## 2026-07-28 — Complete non-deployment launch-readiness gate (authoritative current evidence)
+
+This section supersedes earlier current-status/blocker summaries in this historical file. Earlier entries remain as iteration history, not present-state claims.
+
+### Environment and repository
+
+- Writable repository: `C:\Users\Lenovo\Documents\2HandedBook`; read-only D source was not modified.
+- Branch/baseline: `autonomous/bookswap-product` from `5e36c584ca12780226f8b18ae7876335a0bbe82f`.
+- `npm run test:env` passed with project name `bookswap-development`, ref `uibatsbzjswmtdvdrlxj`, correct public configuration, and `hasServiceRole:false`. No values were printed.
+- `npm run test:authorization` stopped before fixture creation with exactly: missing `SUPABASE_SERVICE_ROLE_KEY` and missing `BOOKSWAP_REMOTE_TEST_CONFIRMATION=bookswap-development`. This is a fail-safe external blocker, not a pass.
+
+### Database and migrations
+
+- Applied `launch_readiness_hardening` and `clarify_private_rate_limit_policy` to the authorized empty development project; remote migration count is 22.
+- Real SQL result: public tables without RLS `0`; six sampled launch constraints and three launch indexes present; direct browser Storage mutation policies `0`; anon/authenticated execute on `consume_rate_limit` false; service-role execute true; function `search_path=""`; Azerbaijani normalization produced `işıq ışıq`.
+- Real durable limiter calls with threshold 2 returned allow/remaining 1, allow/remaining 0, then deny/remaining 0; retry values were in 1–60 seconds; the test bucket was deleted.
+- Supabase Security Advisor after both migrations: `0` findings.
+- Performance Advisor: unused-index information only on the zero-row development database; no index was removed without representative workload evidence.
+- Generated development TypeScript types matched the committed `consume_rate_limit` Args/Returns signature.
+- `npm run test:database:static`: pass, 22 migrations.
+- Local `supabase db reset --local --no-seed`: blocked with `LegacyDbBootstrapError: failed to inspect service`. Read-only tool check confirmed Docker=false, Podman=false, `psql`=false, Docker pipe=false. `supabase/config.toml`, corrected seed, and `supabase/tests/launch_readiness.sql` are ready for a Docker-capable owner machine.
+
+### Final local commands and results
+
+```text
+npm run format:check          PASS — all matched files use Prettier
+npm run lint                  PASS — zero warnings (`--max-warnings=0`)
+npm run typecheck             PASS — `tsc --noEmit --strict`
+npm test                      PASS — 3 files, 61/61 tests
+npm run test:database:static  PASS — 22 migrations
+npm run test:dependencies     PASS — 7 patched package locations
+npm run test:secrets          PASS — 189 files at the final repository scan
+npm run build                 PASS — Next 15.5.21, compile/type/lint, 40/40 pages
+npm run test:performance      PASS — 5/5 gzip budgets
+npm run test:e2e              PASS — Chromium 28/28
+```
+
+Bundle evidence:
+
+- shared App Router runtime: 100.1 KiB / 105 KiB;
+- home: 186.4 / 195 KiB;
+- catalog: 188.7 / 195 KiB;
+- listing detail: 190.7 / 200 KiB;
+- seller storefront: 187.0 / 195 KiB.
+
+Browser coverage includes mobile navigation, keyboard entry/focus, reduced motion, contrast/reflow at 200%, catalog/listing/seller flows, protected signed-out states, stale/cross-resource false-success rejection, Auth/password validation, legal/safety/privacy/appeal routes, security headers, localized machine errors, admin controls, and console/page-error assertions in high-risk flows.
+
+### Regressions found and fixed during the gate
+
+1. Network-sandboxed build could not fetch configured Google fonts. The approved local build fetch was allowed; subsequent builds used the fetched artifacts. No deployment occurred.
+2. Next route contract rejected an exported Auth helper. It was moved to `lib/auth-response.ts`; build then passed.
+3. Initial browser run was 26/28: password fixture used eight characters after policy changed to 12, and unauthenticated review hit missing server credentials before returning stable Auth rejection. The fixture was corrected and `requireUser` now validates missing bearer identity before loading server credentials. Unit regression added; rerun passed 28/28.
+
+### Dependency and secret limitations
+
+- Installed lock-tree baseline verifies Next/eslint-config-next 15.5.21, Sharp 0.35.3, PostCSS 8.5.18, js-yaml 4.3.0, brace-expansion 1.1.16 and 5.0.8.
+- A standalone `npm audit --json` was blocked by the execution environment because it transmits the dependency tree externally. No pass is claimed. The repository check is a patched-version baseline, not a live advisory service.
+- Secret scan reports only file/signature names on failure and never matched/prints values. Ignored `.env.local`/`.env.test.local` are not committed.
+
+### Honest authorization and production limits
+
+- Real development backend evidence covers migration execution, schema/RLS/ACL/policy inspection, security advisor, Azerbaijani normalization, and the durable rate-limit function.
+- The complete multi-actor route/Data API/Storage matrix was not run because the development service-role credential is unavailable. Its deterministic temporary-user suite is prepared and fail-safe guarded. Mocked browser tests are not backend authorization evidence.
+- No production Supabase/Vercel project, data, domain, backup/restore, Auth paid control, MFA enforcement, CAPTCHA, provider alert, deployment, field performance, or production smoke was configured or verified.
+- Legal pages are structured Azerbaijani drafts; operator/contact/jurisdiction/age/retention/effective-date facts and counsel approval remain external launch blockers.

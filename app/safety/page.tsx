@@ -40,6 +40,18 @@ export default function SafetyPage() {
         >
           {copy.rightsAction}
         </Link>
+        <Link
+          className="btn-secondary max-w-full whitespace-normal py-3 text-center leading-5"
+          href="/marketplace-rules"
+        >
+          Kitab bazarı qaydaları
+        </Link>
+        <Link
+          className="btn-secondary max-w-full whitespace-normal py-3 text-center leading-5"
+          href="/moderation-appeals"
+        >
+          Moderasiya qərarına etiraz
+        </Link>
       </nav>
     </InfoPage>
   );

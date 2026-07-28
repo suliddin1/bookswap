@@ -1,82 +1,87 @@
-# Decision requests
+# Owner decisions and external actions
 
-Only genuine product, legal, operational, credential, and deployment decisions belong here. Engineering defects already evidenced in ISSUE_QUEUE.md do not need user re-approval to fix in Goal mode when the selected slice is authorized.
+Updated: 28 July 2026
 
-## DR-001 — Development service secret handoff
+Only facts or authority that cannot be derived safely from the repository remain here. Exchange matching, wanted titles, reader shelves, and social reading are intentionally post-launch and require no launch decision.
 
-Status: External blocker for full authenticated E2E.
+## DR-001 — Complete real development authorization verification
 
-The connected Supabase tools expose the development project and publishable keys but not a service-role/secret key. The current Next.js server mutation architecture requires SUPABASE_SERVICE_ROLE_KEY.
+Status: launch-blocking; engineering preparation complete.
 
-Recovery note (2026-07-19): the ignored local `.env.local` public URL points at project ref `lnhublqrtkdrrafghvki`, while the authorized disposable development target is `uibatsbzjswmtdvdrlxj`. Goal mode preserved the ignored user configuration and used browser-local representative responses for localization evidence; it did not silently repoint projects or treat that UI matrix as backend evidence.
+The ignored `.env.local` now points to the intended active `bookswap-development` project (`uibatsbzjswmtdvdrlxj`) and has a valid public key. The service-role secret is not available. The guarded matrix in `tests/authorization.integration.test.ts` refuses any other project, creates temporary actors, exercises anonymous/owner/unrelated/banned/moderator/admin/stale-account behavior, and removes its fixtures.
 
-Decision/action required: the repository owner should configure the bookswap-development public URL/publishable key and server secret together in local `.env.local` or the approved secret manager, never placing the secret in chat, Git, browser variables, screenshots, logs, or documentation. Confirm that Goal mode may replace the current ignored local project configuration. Once the development environment is aligned, run the P0-005 authorization matrix.
+Exact owner action (PowerShell, from the repository root):
 
-This does not block documentation or public-schema work; it blocks credible verification of protected route handlers and therefore launch readiness.
+```powershell
+Copy-Item .env.test.example .env.test.local
+# In .env.test.local, paste the ACTIVE bookswap-development public key and
+# service-role key from Supabase Dashboard > Project Settings > API.
+# Do not paste either value into chat, Git, screenshots, logs, or documentation.
+npm.cmd run test:authorization
+```
 
-## DR-002 — Legal operator and support identity
+Keep these exact non-secret lines unchanged:
 
-Status: Required before launch.
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://uibatsbzjswmtdvdrlxj.supabase.co
+BOOKSWAP_REMOTE_TEST_CONFIRMATION=bookswap-development
+```
 
-Provide the legal operator name/entity, jurisdiction/address disclosure requirements, privacy/support email, moderation/report contact, data-controller wording, effective dates, and escalation/appeal contact. Current legal pages cannot be declared complete without facts.
+Acceptance: the command exits 0 and reports the complete real-backend matrix. A mocked UI test is not a substitute.
 
-## DR-003 — Age/minor policy
+## DR-002 — Insert legal identity and contact facts
 
-Status: Required before launch.
+Status: launch-blocking; legal structure and Azerbaijani-first drafts complete.
 
-Decide minimum age, parental/guardian requirements, handling of children's data, prohibited contact behavior, and safety escalation. Parents exchanging children's books are an audience, but that does not decide whether minors may hold accounts.
+Provide and have qualified Azerbaijani counsel approve every value below. Do not publish placeholders:
 
-## DR-004 — Transaction and handoff policy
+- `[HÜQUQİ OPERATORUN ADI]`
+- `[HÜQUQİ ÜNVAN]`
+- `[YURİSDİKSİYA]`
+- `[DƏSTƏK E-POÇTU]`
+- `[MƏXFİLİK ƏLAQƏSİ]`
+- `[QÜVVƏYƏ MİNMƏ TARİXİ]`
+- `[MİNİMUM YAŞ VƏ VALİDEYN RAZILIĞI QAYDASI]`
+- `[ETİRAZ MÜDDƏTİ VƏ CAVAB HƏDƏFİ]`
+- data-retention periods and cross-border processing basis;
+- any legally required registration, tax, consumer, and regulator disclosures.
 
-Status: Required for Azerbaijani trust copy.
+Update `/terms`, `/privacy`, `/marketplace-rules`, and `/moderation-appeals`; search the repository for `[` placeholders; obtain written approval; then record reviewer/date/version in `docs/ai/QA_EVIDENCE.md`.
 
-Confirm allowed payment arrangements, local meeting guidance, optional user-arranged delivery language, prohibited goods/content, no-guarantee wording, dispute boundaries, and whether precise contact details may be exchanged only after both users opt in.
+## DR-003 — Production Auth security choices
 
-## DR-005 — Exchange negotiation semantics
+Status: production/deployment-only, but required before public launch.
 
-Status: Required before exchange schema/API design is finalized.
+In the production Supabase project, confirm 12-character password minimum, email confirmation, secure password changes, exact redirect allow-list, generic reset behavior, platform Auth rate limits, and administrator MFA enforcement. Local `supabase/config.toml` contains the intended free controls.
 
-Decide whether exchange supports only one-for-one books, multi-book bundles, and/or book-plus-cash balancing; whether a suggested match can be reserved; and which completion states drive reviews. Recommended first release: suggestions plus direct negotiation, no reservation guarantee, optional multi-book discussion in chat, no platform-handled cash.
+Supabase leaked-password protection is a paid-plan option. Choose one:
 
-## DR-006 — Shelf privacy defaults
+1. enable a plan/control that provides leaked-password protection; or
+2. explicitly accept the residual risk with the implemented compensating controls: 12-character application/local policy, platform and application rate limits, generic errors, secure reset redirects, rotating sessions, server-side authorization, and no client-side role trust.
 
-Status: Required before shelves/wanted implementation.
+No homemade leaked-password database is permitted. Optional CAPTCHA should be enabled only for high-risk anonymous Auth flows after provider, privacy basis, keys, and accessibility fallback are approved; the repository does not claim CAPTCHA is enabled.
 
-Decide visibility defaults for owned, read, custom, and wanted shelves. Recommended: wanted titles and custom shelves private by default with explicit per-shelf publication; only data needed for a match is disclosed as a match suggestion.
+## DR-004 — Production operations ownership
 
-## DR-007 — Production environment and domain
+Status: production/deployment-only.
 
-Status: Required before deployment.
+Name the production Supabase/Vercel projects, domain, region/data-residency decision, deployment approver, incident commander, on-call/alert destination, log owner/retention, backup retention, restore target, support/privacy mailbox owners, moderation SLA, and secret-rotation owner. Verify backups and restore in production; repository procedures are not proof that either is enabled.
 
-Name the hosting account/project, production domain, authorized Supabase production organization/region, environment ownership, data residency expectations, backup/restore target, and approval path. Creating bookswap-development did not authorize production provisioning or deployment.
+## DR-005 — Optional provider credentials
 
-## DR-008 — Abuse controls and observability providers
+Status: production/deployment-only unless the feature is enabled.
 
-Status: Required before launch.
+- Choose and configure a real error-monitoring/log destination, or retain provider-neutral structured platform logs.
+- Provide moderation credentials only if external automated moderation is approved; local rules remain available and provider failure stays fail-closed for protected content.
+- Provide Resend credentials only if notification email is enabled and templates/privacy/retention are approved.
+- Enable `WEB_VITALS_ENABLED=true` only after log access, retention, alert queries, and privacy scope are approved.
 
-Choose approved durable rate limiting, error tracking, logs/retention, uptime monitoring, alert destination, moderation provider, and incident owner. The current in-memory limiter and optional moderation integration are not production evidence.
+No fake DSN, token, or API key may be committed.
 
-Performance update (2026-07-24): application-owned Web Vitals instrumentation can now emit identity-free `bookswap.web_vital` structured logs for four public marketplace route groups when explicitly enabled. This does not choose a hosting/log provider, retention period, dashboard, alert owner, or durable rate limit. Before setting `WEB_VITALS_ENABLED=true` in production, name the authorized deployment and log/metrics owner, approve retention/access, and confirm how mobile/desktop route-level p75 distributions will be queried.
+## Resolved product decisions
 
-## DR-009 — Product analytics and privacy
-
-Status: Required only if analytics are desired.
-
-Choose whether to collect product analytics, lawful basis/consent model, permitted events, retention, IP/device handling, and provider. Default without a decision: no non-essential tracking.
-
-The current Web Vitals contract is operational performance telemetry rather than product analytics: it excludes page-load IDs, raw URLs/queries, private routes, referrers, users/sessions, user content, device/network details, and geography. It must not be expanded into pageview, conversion, behavior, or cross-page tracking without resolving this decision.
-
-## DR-010 — Leaked-password protection and Auth plan
-
-Status: Required before production launch if password authentication remains enabled.
-
-The Supabase security advisor reports leaked-password protection disabled. Current official documentation says this control is available on Pro and above, while bookswap-development was explicitly authorized only at zero cost.
-
-Decision/action required: authorize a production plan that includes leaked-password protection, or approve a documented passwordless/compensating-control strategy during the production Auth design. Goal mode must not upgrade a plan or incur cost autonomously.
-
-## Resolved during preparation
-
-- A separate development Supabase project was allowed only with authenticated access and no paid commitment. The authorized organization was on the free plan, the reported cost was zero monthly, and bookswap-development was created in eu-central-1.
-- The inactive legacy bookswap Supabase project was not restored or modified.
-- Integrated payment and platform-controlled shipping are outside current scope.
-- Existing BookSwap visual identity is preserved; references are behavioral, not redesign targets.
+- Launch MVP: Azerbaijani-first used-book listing, discovery, buying, and selling.
+- Payment, escrow, shipping, delivery, and handover are participant responsibilities.
+- Automated exchange matching, wanted-title matching, shelves, social reading, and edition intelligence are post-launch.
+- A dedicated `sale/exchange/both` schema is not included: the current product coherently supports sale, and no public copy promises a full exchange platform.
+- No paid service, production project, or deployment was authorized by this readiness run.

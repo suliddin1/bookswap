@@ -1,6 +1,6 @@
 # BookSwap
 
-BookSwap is a premium, mobile-friendly marketplace for pre-loved books and textbooks. It uses an editorial private-library design, real Supabase authentication and data, Supabase Storage uploads, protected favorites, admin roles, and Realtime conversations.
+BookSwap is an Azerbaijani-first, mobile-friendly marketplace for listing, discovering, selling, and buying used books. It uses Next.js 15 and Supabase for authentication, Postgres data, protected server-side uploads, authorization, and Realtime conversations.
 
 ## Product flows
 
@@ -14,9 +14,10 @@ BookSwap is a premium, mobile-friendly marketplace for pre-loved books and textb
 - Admin-only listing moderation, user banning, and report counts
 - Seller-controlled sold/relist lifecycle, buyer reviews, listing reports, and notifications
 - Privacy requests for access, correction, export, deletion, objection, and moderation appeal
-- Installable PWA manifest, theme colors, and app icon placeholders
+- Azerbaijani-first marketplace, safety, privacy, legal-draft, and moderation-appeal surfaces
+- Installable PWA manifest, theme colors, and app icon
 
-There is intentionally no payment or Stripe integration in this version.
+There is intentionally no payment, escrow, shipping, automated exchange matching, wanted-list, or social-shelf system in the launch MVP. Buyers and sellers agree payment and handover directly.
 
 ## Local setup
 
@@ -37,6 +38,7 @@ Without valid Supabase variables, public pages still render their premium layout
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+BOOKSWAP_REMOTE_TEST_CONFIRMATION=
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 WEB_VITALS_ENABLED=false
 OPENAI_API_KEY=
@@ -57,9 +59,9 @@ evidence gate.
 
 The migrations create profiles, listings, favorites, rooms, messages, reviews, notifications, reports, RLS policies, search indexes, Realtime publications, and the `listing-images` bucket.
 
-The latest hardening migration also applies least-privilege column grants, hides private contact and role fields, blocks suspended accounts in RLS and API checks, validates chat participants, and creates the privacy-request workflow. Apply every migration in filename order to a new Supabase project.
+The latest hardening migrations add database validation constraints, review/report/chat invariants, Azerbaijani-aware search normalization, service-only Storage mutation, stable Azerbaijani notifications, and an atomic Postgres-backed rate limiter. Apply all 22 migrations in filename order.
 
-Make an admin through the Supabase SQL editor:
+The first administrator is a production-owner bootstrap operation, not an application flow. Perform it only in the intended project, record the operator/ticket, and then use audited admin actions for subsequent changes:
 
 ```sql
 update public.users set is_admin = true where email = 'admin@example.com';
@@ -69,10 +71,17 @@ update public.users set is_admin = true where email = 'admin@example.com';
 
 ```bash
 npm run lint
+npm run typecheck
 npm test
+npm run test:database:static
+npm run test:dependencies
+npm run test:secrets
 npm run build
+npm run test:performance
 npm run test:e2e
 ```
+
+Real development authorization tests additionally require `.env.test.local` with the exact `bookswap-development` URL, its public key, its service-role key, and `BOOKSWAP_REMOTE_TEST_CONFIRMATION=bookswap-development`. Run `npm run test:authorization`; the preflight refuses any other project and never prints values.
 
 ## Security model
 
@@ -82,7 +91,7 @@ npm run test:e2e
 - Service-role credentials are server-only and must never use a `NEXT_PUBLIC_` prefix.
 - Uploaded images are limited by count, size, MIME type, file signature, random filename, and authenticated owner folder.
 - User-generated email content is HTML-escaped.
-- Marketplace mutations use strict Zod schemas and baseline request throttling. Production should add a distributed rate-limit store before a large public launch.
+- Marketplace mutations use strict Zod schemas and a concurrency-safe Postgres-backed rate limiter shared across server instances. Protected actions fail closed if the durable store is unavailable; optional Web Vitals telemetry is dropped.
 - The database remains the final authorization layer through RLS and column-level privileges.
 
 See [docs/security-model.md](docs/security-model.md), [docs/market-research.md](docs/market-research.md), and [docs/launch-checklist.md](docs/launch-checklist.md).

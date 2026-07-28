@@ -1,5 +1,15 @@
 # Iteration log
 
+## 2026-07-27 - Full non-deployment launch-readiness ownership
+
+Goal / acceptance IDs: all launch-critical non-deployment requirements, with particular ownership of P0-005, P1-001, P1-002, P1-005, P1-006, P1-010, P1-012, P1-013, P1-016, and P1-017; preserve every already completed product and safety contract while reclassifying advanced exchange, matching, wanted-list, shelf, social, and edition-intelligence work as post-launch unless a complete safe implementation already exists.
+
+Ownership: root exclusively owns the complete remaining repository-preparable launch-readiness program in this run: MVP scope reconciliation, environment safeguards, development-database authorization evidence, append-only schema hardening, durable abuse controls, authentication and API safety, Storage and privacy boundaries, Azerbaijani-first product/legal copy, provider-neutral operations and rollback documentation, dependency/secret checks, full static/unit/database/browser/accessibility/performance verification, canonical launch-state reconciliation, and coherent local checkpoints. Deployment, production Supabase or production data, domains, paid services, real secrets, remote pushes, merges, and externally consequential production changes remain explicitly out of scope.
+
+Starting state: clean `autonomous/bookswap-product` at `5e36c58`, 35 commits ahead of `origin/main`. The active non-production backend is `bookswap-development` (`uibatsbzjswmtdvdrlxj`) with 20 applied migrations, all public application tables under RLS, zero current Security Advisor findings, no data rows, and only unused-index informational Performance Advisor notices. The ignored local environment still points at the inactive legacy project and has no service-role key; therefore protected application-route execution is not yet available from the local checkout. The repository has a broad Azerbaijani marketplace implementation and a clean prior application gate, but canonical scope, durable distributed rate limiting, exact environment refusal rules, duplicate privacy-request handling, database-level review bounds, legal placeholders/owner checklist, and provider-independent launch operations remain incomplete or stale.
+
+Planned contract: finish every safe code, migration, test, legal, localization, security, and operations task that can be prepared without deployment; use the development project only for non-production validation; make unavailable secret/provider/owner actions explicit reproducible launch-owner steps rather than false pass claims; run the complete evidence gate after implementation; reconcile every canonical status record to observed facts; and create local commits only when the repository is coherent and verified.
+
 ## 2026-07-27 - P1 profile-save and privacy-submission acknowledgement boundary
 
 Goal / acceptance IDs: P1-016; TEST-01, BROW-01, PROF-01, PRIV-01; retain AUTH-03's explicit blocker, A11Y-01, RESP-01, L10N-01, and every completed account-load, profile-listing, listing-authoring/detail/card, messaging/notification, security, moderation, administrator, pagination/seller, relisting, accessibility, and performance contract.
@@ -697,3 +707,16 @@ Next slice: resolve P0-001 and P0-002 through an additive migration/API contract
 - Commit:
 - Remaining P0/P1:
 - Ownership released / next safe slice:
+
+### 2026-07-28 — Full non-deployment launch-readiness completion
+
+- Goal / acceptance IDs: all achievable launch-critical product, database, authorization preparation, Auth/storage/security, durable limiting, monitoring/operations, Azerbaijani-first, legal-draft, test, and canonical documentation work.
+- Files and contract owner: complete repository in `C:\Users\Lenovo\Documents\2HandedBook`; D source left untouched.
+- Starting branch/commit/status: `autonomous/bookswap-product` at `5e36c58`; three continuation files already modified.
+- Changes: two additive migrations; guarded development authorization suite; Postgres limiter; structured safe logs; Auth/error/cache/header hardening; legal/rules/appeal routes; localization/search/seed fixes; local Supabase config and SQL/static/security scripts; CI and canonical records.
+- Migrations/backend: 22 development migrations applied; real SQL/limiter checks passed; Security Advisor zero findings; no production operation.
+- Security/authorization: schema/ACL/policy behavior verified on real development backend; 61 unit tests and 28 browser tests pass; full temporary multi-actor suite blocked before execution by missing development service key.
+- Validation: format, lint, strict TypeScript, unit, static migration, dependency baseline, secret scan, build 40/40, five budgets, Chromium 28/28 all pass. Docker local reset and standalone live advisory audit remain externally blocked as recorded in QA.
+- Evidence updated: PROJECT_STATE, ISSUE_QUEUE, QA_EVIDENCE, ACCEPTANCE_MATRIX, ARCHITECTURE_DECISIONS, DECISION_REQUESTS, LOCALIZATION_INVENTORY, PRODUCT_SPEC, README, launch checklist, and security model.
+- Commit: local-only commits created after the final gate; inspect `git log --oneline 5e36c58..HEAD`.
+- Remaining launch blockers: only development service-role handoff/real authorization pass and owner/counsel legal facts/approval. Production/deployment tasks and post-launch features are classified separately.

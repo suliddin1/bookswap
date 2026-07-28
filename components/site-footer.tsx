@@ -51,6 +51,18 @@ export function SiteFooter() {
           </Link>
           <Link
             className="inline-flex min-h-11 items-center"
+            href="/marketplace-rules"
+          >
+            {AZ_COPY.footer.marketplaceRules}
+          </Link>
+          <Link
+            className="inline-flex min-h-11 items-center"
+            href="/moderation-appeals"
+          >
+            {AZ_COPY.footer.moderationAppeals}
+          </Link>
+          <Link
+            className="inline-flex min-h-11 items-center"
             href="/user-rights"
           >
             {AZ_COPY.footer.userRights}
