@@ -1,8 +1,50 @@
 # QA evidence
 
-Evidence date: 2026-07-28 (Asia/Baku). Repository: `C:\Users\Lenovo\Documents\2HandedBook`, branch `autonomous/bookswap-product`.
+Evidence date: 2026-07-28 (Asia/Baku). Repository: `C:\Users\Lenovo\Documents\2HandedBook`, branch `main`.
 
 No production database, production deployment, migration, or Vercel Git setting was touched. No credential was written to tracked files. Generated build and browser diagnostics remained ignored and were removed after verification.
+
+## Dependency-security audit - current evidence
+
+The authorized live registry audit started at 0 critical, 13 high, 0 moderate, 0 low, and 0 informational findings across the complete dependency tree. `npm audit --omit=dev --json` returned 0 at every severity, proving that no reported advisory is installed in the production dependency tree. The 13 full-tree entries are npm's propagation of one reviewed advisory, [`GHSA-mh99-v99m-4gvg`](https://github.com/advisories/GHSA-mh99-v99m-4gvg), through the ESLint development graph; they are not 13 independent vulnerabilities.
+
+| npm audit entry               | Installed | Relationship       | npm-reported affected range             | Development dependency path and role                                                                    | Compatible remediation status                                                                                           |
+| ----------------------------- | --------- | ------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `@eslint/eslintrc`            | 2.1.4     | Transitive         | 0.0.1; or >=0.1.1                       | `eslint > @eslint/eslintrc > minimatch > brace-expansion`; lint/config only                             | Underlying fix is `brace-expansion` 5.0.8; no compatible parent release removes the 1.x API path                        |
+| `@humanwhocodes/config-array` | 0.13.0    | Transitive         | `*`                                     | `eslint > @humanwhocodes/config-array > minimatch > brace-expansion`; lint/config only                  | Same upstream constraint                                                                                                |
+| `brace-expansion`             | 1.1.16    | Transitive         | `<=5.0.7`                               | `minimatch` 3.1.5; brace/glob expansion during lint only                                                | Fixed in 5.0.8; no patched 1.x release exists                                                                           |
+| `eslint`                      | 8.57.1    | Direct development | 0.12.0-2.0.0-rc.1; or 4.1.0-10.0.0-rc.2 | Root lint command and its config/cache/glob dependencies                                                | npm suggests ESLint 10.8.0, but that is outside `eslint-config-next` 15's peer range and does not remove plugin paths   |
+| `eslint-config-next`          | 15.5.21   | Direct development | `>=10.2.1-canary.2`                     | Supplies Next, React, import, JSX accessibility, and TypeScript lint rules                              | npm's 0.2.4 suggestion is an invalid downgrade; Next 16 remains a major migration and still depends on affected plugins |
+| `eslint-plugin-import`        | 2.32.0    | Transitive         | `>=1.15.0`                              | `eslint-config-next > eslint-plugin-import > minimatch > brace-expansion`; lint only                    | Latest release still uses minimatch 3; no compatible fix                                                                |
+| `eslint-plugin-jsx-a11y`      | 6.10.2    | Transitive         | `>=6.5.0`                               | `eslint-config-next > eslint-plugin-jsx-a11y > minimatch > brace-expansion`; lint only                  | Latest release still uses minimatch 3; no compatible fix                                                                |
+| `eslint-plugin-react`         | 7.37.5    | Transitive         | `>=7.23.0`                              | `eslint-config-next > eslint-plugin-react > minimatch > brace-expansion`; lint only                     | Latest release still uses minimatch 3; no compatible fix                                                                |
+| `file-entry-cache`            | 6.0.1     | Transitive         | `4.0.0-7.0.2`                           | `eslint > file-entry-cache > flat-cache > rimraf > glob > minimatch > brace-expansion`; lint cache only | ESLint 10 updates this branch but is currently peer-incompatible and other plugin paths remain                          |
+| `flat-cache`                  | 3.2.0     | Transitive         | `1.3.4-4.0.0`                           | ESLint cache cleanup path; local/CI only                                                                | Same upstream constraint                                                                                                |
+| `glob`                        | 7.1.7     | Transitive         | `4.3.0-10.5.0`                          | ESLint cache cleanup path; local/CI only                                                                | Same upstream constraint                                                                                                |
+| `minimatch`                   | 3.1.5     | Transitive         | `2.0.0-10.0.2`                          | Shared by ESLint core and three Next lint plugins                                                       | Fixed modern line uses a different export/API contract; a forced major override is unsupported                          |
+| `rimraf`                      | 3.0.2     | Transitive         | 2.3.0-3.0.2; or 4.2.0-5.0.10            | ESLint cache cleanup path; local/CI only                                                                | Same upstream constraint                                                                                                |
+
+Exploitability requires attacker-controlled brace/glob patterns. The application does not import this graph, and HTTP, listing, search, chat, upload, database, build output, and production server paths cannot reach it. Repository lint patterns are static. A contributor able to alter lint configuration or package scripts could exhaust an ephemeral CI runner, but already controls code executed in that unprivileged check; this creates a development/CI availability risk, not a production service or data-exposure path.
+
+No package or lockfile was changed. Forcing `brace-expansion` 5.0.8 beneath minimatch 3 was rejected because 1.x exports a callable CommonJS function while 5.x exposes `expand` through a new package contract and requires a different supported Node range. Forcing minimatch 10 or ESLint 10 would likewise create unsupported API/peer combinations, and updating Next does not remove the affected lint plugins. The baseline now fails if the known affected copy becomes production-scoped or if any unexpected affected copy appears, while reporting the exact accepted development-only advisory instead of describing 1.1.16 as fully patched.
+
+After repository remediation, the live counts remain 0 critical, 13 high, 0 moderate, 0 low, and 0 informational for the full development tree, and 0 across the production-only tree. The residual is accepted temporarily with an upstream-update watch, static trusted lint patterns, no production installation, and an exact baseline guard. It is a strong pre-launch maintenance item, not a launch blocker.
+
+```text
+npm.cmd run format:check          PASS — all matched files use Prettier
+npm.cmd run lint                  PASS — zero warnings
+npm.cmd run typecheck             PASS — strict TypeScript, zero diagnostics
+npm.cmd test                      PASS — 3 files, 59/59 tests
+npm.cmd run test:database:static  PASS — 22 migrations
+npm.cmd run test:dependencies     PASS — 7 pinned locations; exact known dev advisory reported; affected production brace-expansion copies 0
+npm.cmd run test:secrets          PASS — 188 repository files
+npm.cmd run test:env              PASS — intended guarded development environment
+npm.cmd run build                 PASS — Next 15.5.21, 39/39 static pages
+npm.cmd run test:performance      PASS — 5/5 gzip budgets
+npm.cmd run test:e2e              PASS — Chromium 29/29
+npm.cmd audit --json              EXPECTED NONZERO — 13 high development-tree entries from one advisory
+npm.cmd audit --omit=dev --json   PASS — 0 advisories at every severity
+```
 
 ## PR #2 profile/privacy hydration stabilization - current evidence
 

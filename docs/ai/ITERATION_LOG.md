@@ -777,3 +777,15 @@ Next slice: resolve P0-001 and P0-002 through an additive migration/API contract
 - Preserved facts: production migration reconciliation, backup/restore evidence, hosted Auth/environment verification, canonical domain, operations ownership, post-deploy evidence, and legal facts remain explicitly unresolved.
 - Validation: format check, lint, strict TypeScript, unit 59/59, static migrations 22, dependency baseline 7, secret scan 188 paths, environment guard, real development authorization 10/10 with fixture cleanup, build 39/39 pages, performance 5/5, and Chromium 28/28 passed.
 - Safety boundary: no secret value, ignored environment file, fixture, migration, production setting, Git connection, or deployment was changed.
+
+### 2026-07-28 — Focused dependency-security audit
+
+- Goal / acceptance IDs: close the previously blocked live npm advisory triage without broad dependency upgrades, deployment, migration, or production operations.
+- Files and contract owner: root owns the dependency baseline script and canonical dependency/security evidence for this local-only iteration; `package.json` and `package-lock.json` were reviewed but did not require a safe change.
+- Starting branch/commit/status: clean synchronized `main` at `c8b396a`; Node 24.15.0, npm 11.12.1, CI Node 22 with `npm ci`.
+- Live audit: complete tree 13 high and no other severities; production-only tree 0. All 13 entries propagate one reviewed `brace-expansion` denial-of-service advisory through direct development dependencies `eslint`/`eslint-config-next` and their transitive lint/cache/plugin graph.
+- Compatibility decision: no patched 1.x `brace-expansion` release exists. The fixed 5.0.8 package is not a safe override for minimatch 3's callable 1.x API; minimatch/ESLint/Next major overrides would violate current API or peer contracts and still leave plugin paths. No force fix, unsupported override, broad upgrade, package removal, or lockfile churn was performed.
+- Mitigation: the baseline now rejects any production-scoped or unexpected affected `brace-expansion` copy and reports the exact known development-only advisory. Lint patterns remain repository-controlled; the graph is absent from runtime and production dependencies. PRE-002 remains an upstream monitoring recommendation, not a launch blocker.
+- Migrations/backend/production: none; Supabase, Vercel Production, Vercel Git, remote Git, and database migrations remained untouched.
+- Validation: format pass; lint pass with zero warnings; strict TypeScript pass; Vitest 59/59; static migrations 22; dependency baseline pass with the exact residual reported; secrets 188; environment guard pass; build 39/39; performance 5/5; Chromium 29/29; final full live audit 13 high from one development-only advisory; final production-only audit 0.
+- Commit: one focused local commit after final diff/security review; no push, PR, merge, or deployment.
