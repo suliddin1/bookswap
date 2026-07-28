@@ -27,6 +27,20 @@ Before any production migration, the owner must:
 
 Never run destructive authorization fixtures against production.
 
+## Merge safety with Vercel Git integration
+
+The `bookswap` Vercel project is connected directly to `suliddin1/bookswap`. Repository history confirms that feature-branch pushes create Preview deployments and pushes to `main` create Production deployments. GitHub Actions performs validation only; it does not own the current Vercel deployment path.
+
+Before merging a release PR when production publication is not authorized:
+
+1. In Vercel, open **bookswap > Settings > Git** and disconnect the `suliddin1/bookswap` repository.
+2. Verify that the existing Production deployment remains available and that the project is not paused. Pausing the project is not an acceptable substitute because it makes Production unavailable.
+3. Verify the release PR's GitHub Actions `CI / checks` and Vercel Preview checks are successful and the PR is conflict-free.
+4. Merge through GitHub using the repository's approved merge strategy. Do not run `vercel --prod`, promote a deployment, or reconnect Git as part of the merge.
+5. Confirm the `main` SHA and GitHub Actions push run. Keep Git disconnected until a separately approved production release window.
+
+When production release is later authorized, reconnecting Git or deploying/promoting through Vercel is a production operation. Record the approver, exact commit, environment checks, rollback candidate, and post-deploy smoke evidence before that action.
+
 ## Rollback and forward-fix strategy
 
 Postgres migrations in this repository are additive and do not promise automatic down-migrations. If a migration fails before commit, preserve logs and let the transaction roll back. If it commits and application compatibility is affected:
