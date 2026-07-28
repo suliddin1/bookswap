@@ -7,5 +7,6 @@ test-results
 coverage
 .npm-cache
 .DS_Store
+*.tsbuildinfo
 
 .vercel

@@ -4,15 +4,15 @@
 
 :root {
   --ink: #17140f;
-  --muted: #746b5c;
+  --muted: #6b6254;
   --paper: #f4efe5;
   --paper-light: #fbf8f1;
-  --line: #ded4c1;
-  --orange: #b88928;
+  --line: #95866f;
+  --orange: #8f6213;
   --blue: #493b28;
   --walnut: #2b2117;
   --charcoal: #171713;
-  --gold: #b88928;
+  --gold: #8f6213;
 }
 
 * {
@@ -21,6 +21,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 96px;
 }
 
 body {
@@ -30,7 +31,11 @@ body {
   font-family: var(--font-manrope), Arial, sans-serif;
   background-image:
     url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E"),
-    radial-gradient(circle at 50% -20%, rgba(184, 137, 40, 0.09), transparent 36%);
+    radial-gradient(
+      circle at 50% -20%,
+      rgba(184, 137, 40, 0.09),
+      transparent 36%
+    );
 }
 
 a {
@@ -53,9 +58,43 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid var(--gold);
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 3px solid var(--gold);
   outline-offset: 3px;
+  box-shadow: 0 0 0 2px #fffaf0;
+  scroll-margin-block: 96px 24px;
+}
+
+.file-input-control:focus-within {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 2px #fffaf0;
+}
+
+.skip-link {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+  min-height: 44px;
+  padding: 11px 16px;
+  color: #fffaf0;
+  background: var(--ink);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  transform: translateY(-160%);
+  transition: transform 140ms ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+main:focus {
+  outline: none;
 }
 
 ::selection {
@@ -77,7 +116,7 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--gold);
   font-weight: 700;
   letter-spacing: 0.16em;
@@ -115,7 +154,7 @@ textarea:focus-visible {
   position: relative;
   overflow: hidden;
   color: #fffaf0;
-  background: linear-gradient(135deg, #c59a38, #9d6f18);
+  background: linear-gradient(135deg, #8f6213, #6f4908);
   box-shadow: 0 10px 25px rgba(126, 86, 14, 0.22);
 }
 
@@ -123,7 +162,12 @@ textarea:focus-visible {
   position: absolute;
   inset: 0;
   content: "";
-  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.35) 48%, transparent 66%);
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.35) 48%,
+    transparent 66%
+  );
   transform: translateX(-130%);
   transition: transform 600ms ease;
 }
@@ -140,8 +184,8 @@ textarea:focus-visible {
 
 .btn-secondary {
   color: var(--ink);
-  background: rgba(255,255,255,.45);
-  border-color: #cdbfA7;
+  background: rgba(255, 255, 255, 0.45);
+  border-color: #cdbfa7;
 }
 
 .btn-dark {
@@ -173,6 +217,11 @@ textarea:focus-visible {
   box-shadow: 0 0 0 3px rgba(184, 137, 40, 0.12);
 }
 
+.input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
 .card {
   background: rgba(255, 253, 248, 0.84);
   border: 1px solid var(--line);
@@ -202,7 +251,11 @@ textarea:focus-visible {
   inset: 0 auto 0 9px;
   width: 1px;
   content: "";
-  background: linear-gradient(90deg, rgba(0,0,0,.22), rgba(255,255,255,.12));
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.22),
+    rgba(255, 255, 255, 0.12)
+  );
 }
 
 .book-cover::after {
@@ -231,7 +284,7 @@ textarea:focus-visible {
 .book-cover-author {
   position: relative;
   z-index: 1;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -241,6 +294,10 @@ textarea:focus-visible {
   min-width: 0;
   perspective: 1000px;
   transition: transform 240ms ease;
+}
+
+.book-card:hover {
+  transform: translateY(-5px);
 }
 
 .book-card .book-cover {
@@ -277,6 +334,18 @@ textarea:focus-visible {
   box-shadow: 0 7px 10px rgba(51, 33, 18, 0.2);
 }
 
+@keyframes motion-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+.motion-reveal {
+  animation: motion-reveal 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--motion-reveal-delay, 0s);
+}
+
 .shelf-row {
   position: relative;
   padding-bottom: 30px;
@@ -297,24 +366,29 @@ textarea:focus-visible {
 .bookmark-badge {
   position: relative;
   display: inline-flex;
-  min-height: 34px;
+  min-height: 36px;
   align-items: center;
   padding: 0 16px 6px;
   color: #fff9eb;
   background: var(--gold);
   clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .catalog-drawer {
-  border: 1px solid #cdbd9e;
+  min-width: 0;
+  border: 1px solid var(--line);
   background:
-    repeating-linear-gradient(0deg, rgba(95, 70, 39, .035) 0 1px, transparent 1px 29px),
-    rgba(255, 251, 242, .78);
-  box-shadow: 5px 7px 0 rgba(71, 49, 26, .08);
+    repeating-linear-gradient(
+      0deg,
+      rgba(95, 70, 39, 0.035) 0 1px,
+      transparent 1px 29px
+    ),
+    rgba(255, 251, 242, 0.78);
+  box-shadow: 5px 7px 0 rgba(71, 49, 26, 0.08);
 }
 
 .spine-stack {
@@ -334,17 +408,24 @@ textarea:focus-visible {
   color: #ead5a2;
   background: var(--spine-color);
   border-radius: 3px 5px 2px 2px;
-  box-shadow: inset -4px 0 rgba(0,0,0,.12), 3px 2px 5px rgba(0,0,0,.15);
+  box-shadow:
+    inset -4px 0 rgba(0, 0, 0, 0.12),
+    3px 2px 5px rgba(0, 0, 0, 0.15);
   writing-mode: vertical-rl;
   font-family: var(--font-fraunces), Georgia, serif;
-  font-size: 10px;
-  letter-spacing: .04em;
+  font-size: 12px;
+  letter-spacing: 0.04em;
 }
 
 .desk-surface {
   background:
-    linear-gradient(90deg, rgba(255,255,255,.025), transparent 40%),
-    repeating-linear-gradient(90deg, #352317 0 2px, #3c291b 2px 80px, #342216 81px 83px);
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025), transparent 40%),
+    repeating-linear-gradient(
+      90deg,
+      #352317 0 2px,
+      #3c291b 2px 80px,
+      #342216 81px 83px
+    );
 }
 
 .pill {
@@ -377,7 +458,11 @@ textarea:focus-visible {
 .dark-library {
   color: #f7f0e3;
   background:
-    radial-gradient(circle at 72% 40%, rgba(184,137,40,.18), transparent 30%),
+    radial-gradient(
+      circle at 72% 40%,
+      rgba(184, 137, 40, 0.18),
+      transparent 30%
+    ),
     linear-gradient(135deg, #171713, #2b2117);
   border: 1px solid rgba(213, 177, 99, 0.26);
 }
@@ -396,7 +481,7 @@ textarea:focus-visible {
   text-align: center;
   border: 1px dashed #cdbfa7;
   border-radius: 16px;
-  background: rgba(255,253,248,.45);
+  background: rgba(255, 253, 248, 0.45);
   animation: breathe 3s ease-in-out infinite;
 }
 
@@ -420,15 +505,28 @@ textarea:focus-visible {
 }
 
 @keyframes breathe {
-  50% { border-color: #aa8641; }
+  50% {
+    border-color: #aa8641;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     scroll-behavior: auto !important;
-    animation-duration: .01ms !important;
+    animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .motion-reveal {
+    animation: none !important;
+  }
+
+  .book-card:hover,
+  .book-card:hover .book-cover {
+    transform: none;
   }
 }
 

@@ -1,81 +1,877 @@
 "use client";
 
 import Link from "next/link";
-import { BarChart3, BookOpen, Edit3, Heart, MessageCircle, Plus, ShoppingBag, Trash2, UserRound } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  BarChart3,
+  BookOpen,
+  Check,
+  Edit3,
+  Heart,
+  MessageCircle,
+  Plus,
+  ShoppingBag,
+  Trash2,
+  UserRound,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { BookCard } from "@/components/book-card";
 import { EmptyState } from "@/components/empty-state";
-import { authFetch } from "@/lib/client-api";
-import { Listing } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  parseListingDeletionResponse,
+  parseListingMutationResponse,
+  parseProfileDashboardResponse,
+  parseProfileSaveResponse,
+  type ProfileDashboardData,
+  type ProfileRecord,
+} from "@/lib/account-responses";
+import { authFetch } from "@/lib/client-api";
+import { AZ_COPY, formatCity, localizeApiError } from "@/lib/i18n";
+import type { FormEvent, KeyboardEvent, ReactNode } from "react";
 
 const tabs = [
-  ["listings", "My Listings", BookOpen],
-  ["messages", "Messages", MessageCircle],
-  ["favorites", "Favorites", Heart],
-  ["requests", "Sales / Requests", ShoppingBag],
-  ["profile", "Profile", UserRound],
+  ["listings", AZ_COPY.profile.tabs.listings, BookOpen],
+  ["messages", AZ_COPY.profile.tabs.messages, MessageCircle],
+  ["favorites", AZ_COPY.profile.tabs.favorites, Heart],
+  ["requests", AZ_COPY.profile.tabs.requests, ShoppingBag],
+  ["profile", AZ_COPY.profile.tabs.profile, UserRound],
 ] as const;
+
+type TabId = (typeof tabs)[number][0];
 
 export function ProfileDashboard() {
   const { user, loading } = useAuth();
-  const [data, setData] = useState<{ profile: any; listings: Listing[]; favoriteCount: number } | null>(null);
-  const [tab, setTab] = useState("listings");
+  const userId = user?.id;
+  const [data, setData] = useState<ProfileDashboardData | null>(null);
+  const [dataOwnerId, setDataOwnerId] = useState<string | null>(null);
+  const dashboardData = dataOwnerId === userId ? data : null;
+  const [tab, setTab] = useState<TabId>("listings");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [invalidProfileField, setInvalidProfileField] = useState<
+    "name" | "city" | null
+  >(null);
+  const [busyListingId, setBusyListingId] = useState<string | null>(null);
+  const userIdRef = useRef(userId);
+  const dataRef = useRef(data);
+  const dataOwnerIdRef = useRef(dataOwnerId);
+  const profileSaveSequenceRef = useRef(0);
+  const activeProfileSaveRef = useRef<{
+    requestId: number;
+    ownerId: string;
+    controller: AbortController;
+  } | null>(null);
+  const listingMutationSequenceRef = useRef(0);
+  const activeListingMutationRef = useRef<{
+    requestId: number;
+    ownerId: string;
+    listingId: string;
+  } | null>(null);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const loadErrorRef = useRef<HTMLDivElement>(null);
+  const feedbackRef = useRef<HTMLParagraphElement>(null);
+  const profileSavedRef = useRef<HTMLParagraphElement>(null);
+  userIdRef.current = userId;
+  dataRef.current = data;
+  dataOwnerIdRef.current = dataOwnerId;
+
+  function beginProfileSave() {
+    const ownerId = userId;
+    if (
+      !ownerId ||
+      userIdRef.current !== ownerId ||
+      dataOwnerIdRef.current !== ownerId ||
+      !dataRef.current ||
+      activeProfileSaveRef.current
+    )
+      return null;
+    const context = {
+      requestId: ++profileSaveSequenceRef.current,
+      ownerId,
+      controller: new AbortController(),
+    };
+    activeProfileSaveRef.current = context;
+    setProfileBusy(true);
+    setProfileSaved(false);
+    setInvalidProfileField(null);
+    setError("");
+    setNotice("");
+    return context;
+  }
+
+  function isCurrentProfileSave(context: {
+    requestId: number;
+    ownerId: string;
+  }) {
+    const activeSave = activeProfileSaveRef.current;
+    return (
+      activeSave?.requestId === context.requestId &&
+      activeSave.ownerId === context.ownerId &&
+      userIdRef.current === context.ownerId &&
+      dataOwnerIdRef.current === context.ownerId
+    );
+  }
+
+  function finishProfileSave(context: { requestId: number; ownerId: string }) {
+    if (!isCurrentProfileSave(context)) return;
+    activeProfileSaveRef.current = null;
+    setProfileBusy(false);
+  }
+
+  function beginListingMutation(listingId: string) {
+    const ownerId = userId;
+    if (
+      !ownerId ||
+      userIdRef.current !== ownerId ||
+      dataOwnerIdRef.current !== ownerId ||
+      !dataRef.current?.listings.some((listing) => listing.id === listingId) ||
+      activeListingMutationRef.current
+    )
+      return null;
+    const context = {
+      requestId: ++listingMutationSequenceRef.current,
+      ownerId,
+      listingId,
+    };
+    activeListingMutationRef.current = context;
+    setBusyListingId(listingId);
+    setError("");
+    setNotice("");
+    return context;
+  }
+
+  function isCurrentListingMutation(context: {
+    requestId: number;
+    ownerId: string;
+    listingId: string;
+  }) {
+    const activeMutation = activeListingMutationRef.current;
+    return (
+      activeMutation?.requestId === context.requestId &&
+      activeMutation.ownerId === context.ownerId &&
+      activeMutation.listingId === context.listingId &&
+      userIdRef.current === context.ownerId &&
+      dataOwnerIdRef.current === context.ownerId
+    );
+  }
+
+  function finishListingMutation(context: {
+    requestId: number;
+    ownerId: string;
+    listingId: string;
+  }) {
+    if (!isCurrentListingMutation(context)) return;
+    activeListingMutationRef.current = null;
+    setBusyListingId(null);
+  }
+
+  function selectTab(id: TabId) {
+    setTab(id);
+    setProfileSaved(false);
+    setInvalidProfileField(null);
+  }
+
+  function handleTabKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number,
+  ) {
+    let nextIndex: number | null = null;
+    if (event.key === "ArrowDown" || event.key === "ArrowRight")
+      nextIndex = (currentIndex + 1) % tabs.length;
+    if (event.key === "ArrowUp" || event.key === "ArrowLeft")
+      nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = tabs.length - 1;
+    if (nextIndex === null) return;
+
+    event.preventDefault();
+    const nextTab = tabs[nextIndex][0];
+    selectTab(nextTab);
+    tabRefs.current[nextIndex]?.focus();
+  }
 
   async function removeListing(id: string) {
-    if (!window.confirm("Delete this listing permanently?")) return;
-    const response = await authFetch(`/api/listings/${id}`, { method: "DELETE" });
-    if (response.ok) setData((current) => current ? { ...current, listings: current.listings.filter((item) => item.id !== id) } : current);
+    if (activeListingMutationRef.current) return;
+    if (!window.confirm(AZ_COPY.profile.deleteConfirm)) return;
+    const context = beginListingMutation(id);
+    if (!context) return;
+    try {
+      const response = await authFetch(`/api/listings/${id}`, {
+        method: "DELETE",
+      });
+      const body = await response.json();
+      if (!response.ok)
+        throw new Error(
+          localizeApiError(body.code, AZ_COPY.profile.deleteFailed),
+        );
+      const deletion = parseListingDeletionResponse(body, id);
+      if (!deletion) throw new Error(AZ_COPY.profile.deleteFailed);
+      if (
+        !isCurrentListingMutation(context) ||
+        !dataRef.current?.listings.some((item) => item.id === id)
+      )
+        return;
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              listings: current.listings.filter((item) => item.id !== id),
+            }
+          : current,
+      );
+      setNotice(
+        deletion.imageCleanupPending
+          ? AZ_COPY.profile.deleteCleanupPending
+          : AZ_COPY.profile.deleteComplete,
+      );
+    } catch {
+      if (isCurrentListingMutation(context))
+        setError(AZ_COPY.profile.deleteFailed);
+    } finally {
+      finishListingMutation(context);
+    }
+  }
+
+  async function setListingStatus(id: string, status: "active" | "sold") {
+    const context = beginListingMutation(id);
+    if (!context) return;
+    try {
+      const response = await authFetch(`/api/listings/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const body = await response.json();
+      if (!response.ok)
+        throw new Error(
+          localizeApiError(body.code, AZ_COPY.profile.statusFailed),
+        );
+      const mutation = parseListingMutationResponse(body, {
+        listingId: id,
+        ownerId: context.ownerId,
+        status,
+      });
+      if (!mutation) throw new Error(AZ_COPY.profile.statusFailed);
+      if (
+        !isCurrentListingMutation(context) ||
+        !dataRef.current?.listings.some((item) => item.id === id)
+      )
+        return;
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              listings: current.listings.map((item) =>
+                item.id === id ? mutation.listing : item,
+              ),
+            }
+          : current,
+      );
+      setNotice(AZ_COPY.profile.statusUpdated);
+    } catch {
+      if (isCurrentListingMutation(context))
+        setError(AZ_COPY.profile.statusFailed);
+    } finally {
+      finishListingMutation(context);
+    }
+  }
+
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!dashboardData || activeProfileSaveRef.current) return;
+    const formElement = event.currentTarget;
+    const form = new FormData(event.currentTarget);
+    const name = String(form.get("name") ?? "").trim();
+    const city = String(form.get("city") ?? "").trim();
+    if (name.length < 2 || city.length < 2) {
+      const field = name.length < 2 ? "name" : "city";
+      setInvalidProfileField(field);
+      setProfileSaved(false);
+      setNotice("");
+      setError(
+        field === "name"
+          ? AZ_COPY.profile.nameInvalid
+          : AZ_COPY.profile.cityInvalid,
+      );
+      requestAnimationFrame(() => {
+        const control = formElement.elements.namedItem(field);
+        if (control instanceof HTMLElement) control.focus();
+      });
+      return;
+    }
+
+    const phone = String(form.get("phone") ?? "").trim() || null;
+    const expectedProfile: ProfileRecord = { name, city, phone };
+    const context = beginProfileSave();
+    if (!context) return;
+    try {
+      const response = await authFetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(expectedProfile),
+        signal: context.controller.signal,
+      });
+      const body = await response.json();
+      if (!response.ok)
+        throw new Error(
+          localizeApiError(body.code, AZ_COPY.profile.profileSaveFailed),
+        );
+      const parsedProfile = parseProfileSaveResponse(body, {
+        userId: context.ownerId,
+        profile: expectedProfile,
+      });
+      if (!parsedProfile) throw new Error(AZ_COPY.profile.profileSaveFailed);
+      if (!isCurrentProfileSave(context)) return;
+      setData((current) =>
+        current ? { ...current, profile: parsedProfile } : current,
+      );
+      setProfileSaved(true);
+    } catch {
+      if (isCurrentProfileSave(context))
+        setError(AZ_COPY.profile.profileSaveFailed);
+    } finally {
+      finishProfileSave(context);
+    }
   }
 
   useEffect(() => {
-    if (!user) return;
-    authFetch("/api/profile").then((response) => response.json()).then((body) => setData(body.data));
-  }, [user]);
+    profileSaveSequenceRef.current += 1;
+    activeProfileSaveRef.current?.controller.abort();
+    activeProfileSaveRef.current = null;
+    setProfileBusy(false);
+    listingMutationSequenceRef.current += 1;
+    activeListingMutationRef.current = null;
+    setBusyListingId(null);
+    if (!userId) {
+      setData(null);
+      setDataOwnerId(null);
+      return;
+    }
 
-  if (!loading && !user) return <div className="container-shell py-16"><EmptyState title="Your marketplace dashboard awaits." body="Sign in to manage listings, favorites, and conversations." action="Sign in" href="/login" /></div>;
-  if (!data) return <div className="container-shell min-h-[650px] animate-pulse py-16"><div className="h-32 rounded bg-[#e5dece]" /><div className="mt-8 grid grid-cols-3 gap-4">{[1,2,3].map((x) => <div key={x} className="h-28 rounded bg-[#e5dece]" />)}</div></div>;
-  const name = data.profile.name ?? user?.email ?? "Reader";
-  const initials = name.split(" ").map((part: string) => part[0]).join("").slice(0,2).toUpperCase();
-  const active = data.listings.filter((item) => item.status === "active").length;
-  const sold = data.listings.filter((item) => item.status === "sold").length;
+    const controller = new AbortController();
+    let active = true;
+    setData(null);
+    setDataOwnerId(null);
+    setError("");
+    setNotice("");
+    setProfileSaved(false);
+    setInvalidProfileField(null);
+    void authFetch("/api/profile", { signal: controller.signal })
+      .then(async (response) => {
+        const body = await response.json();
+        if (!response.ok)
+          throw new Error(
+            localizeApiError(body.code, AZ_COPY.profile.unavailableBody),
+          );
+        const parsedDashboard = parseProfileDashboardResponse(body);
+        if (!parsedDashboard) throw new Error(AZ_COPY.profile.unavailableBody);
+        if (active) {
+          setData(parsedDashboard);
+          setDataOwnerId(userId);
+        }
+      })
+      .catch((reason) => {
+        if (active && reason?.name !== "AbortError")
+          setError(AZ_COPY.profile.unavailableBody);
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+      const activeProfileSave = activeProfileSaveRef.current;
+      if (activeProfileSave?.ownerId === userId) {
+        activeProfileSave.controller.abort();
+        activeProfileSaveRef.current = null;
+      }
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!error) return;
+    if (!dashboardData) loadErrorRef.current?.focus();
+    else if (!invalidProfileField) feedbackRef.current?.focus();
+  }, [dashboardData, error, invalidProfileField]);
+
+  useEffect(() => {
+    if (notice) feedbackRef.current?.focus();
+  }, [notice]);
+
+  useEffect(() => {
+    if (profileSaved) profileSavedRef.current?.focus();
+  }, [profileSaved]);
+
+  if (!loading && !user)
+    return (
+      <div className="container-shell py-16">
+        <EmptyState
+          title={AZ_COPY.profile.authTitle}
+          body={AZ_COPY.profile.authBody}
+          action={AZ_COPY.profile.signIn}
+          href="/login"
+          headingLevel="h1"
+        />
+      </div>
+    );
+
+  if (error && !dashboardData)
+    return (
+      <div
+        ref={loadErrorRef}
+        className="container-shell py-16"
+        role="alert"
+        tabIndex={-1}
+      >
+        <EmptyState
+          title={AZ_COPY.profile.unavailableTitle}
+          body={AZ_COPY.profile.unavailableBody}
+          action={AZ_COPY.profile.signInAgain}
+          href="/login"
+          headingLevel="h1"
+        />
+      </div>
+    );
+
+  if (!dashboardData)
+    return (
+      <div
+        className="container-shell min-h-[650px] animate-pulse py-16"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+        aria-label={AZ_COPY.profile.loading}
+      >
+        <h1 className="sr-only">{AZ_COPY.profile.loading}</h1>
+        <div className="h-32 rounded bg-[#e5dece]" />
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {[1, 2, 3].map((item) => (
+            <div key={item} className="h-28 rounded bg-[#e5dece]" />
+          ))}
+        </div>
+      </div>
+    );
+
+  const name =
+    dashboardData.profile.name || user?.email || AZ_COPY.profile.reader;
+  const firstName = name.trim().split(/\s+/)[0] || AZ_COPY.profile.reader;
+  const initials = name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const active = dashboardData.listings.filter(
+    (item) => item.status === "active",
+  ).length;
+  const sold = dashboardData.listings.filter(
+    (item) => item.status === "sold",
+  ).length;
+  const listingMutationBusy = busyListingId !== null;
 
   return (
     <div className="container-shell py-10 md:py-14">
       <div className="mb-8 flex flex-col justify-between gap-5 border-b-2 border-[#5b3c25] pb-6 md:flex-row md:items-end">
-        <div><span className="bookmark-badge">Seller dashboard</span><h1 className="display mt-4 text-5xl font-semibold">Welcome back, {name.split(" ")[0]}.</h1></div>
-        <Link href="/listings/new" className="btn-primary"><Plus size={14} /> Create listing</Link>
+        <div className="min-w-0">
+          <span className="bookmark-badge">{AZ_COPY.profile.badge}</span>
+          <h1 className="display mt-4 min-w-0 break-words text-4xl font-semibold leading-tight [overflow-wrap:anywhere] sm:text-5xl">
+            {AZ_COPY.profile.welcome(firstName)}
+          </h1>
+        </div>
+        <Link href="/listings/new" className="btn-primary shrink-0">
+          <Plus size={14} /> {AZ_COPY.profile.createListing}
+        </Link>
       </div>
 
       <div className="grid gap-7 lg:grid-cols-[210px_1fr]">
         <aside className="catalog-drawer h-fit rounded-sm p-4">
-          <div className="flex items-center gap-3 border-b border-[#cfbea0] pb-4"><span className="grid h-11 w-11 place-items-center rounded-full bg-ink text-xs font-bold text-orange">{initials}</span><div className="min-w-0"><b className="block truncate text-[11px]">{name}</b><span className="block truncate text-[8px] text-gray-500">{data.profile.city || "Location not set"}</span></div></div>
-          <nav className="mt-3 divide-y divide-[#d8c8a9]">{tabs.map(([id,label,Icon]) => <button key={id} onClick={() => setTab(id)} className={`flex w-full items-center gap-3 py-3 text-left text-[10px] font-bold transition ${tab === id ? "text-orange" : "text-gray-600 hover:pl-1"}`}><Icon size={13} /> {label}</button>)}</nav>
+          <div className="flex min-w-0 items-center gap-3 border-b border-[#cfbea0] pb-4">
+            <span className="grid h-11 w-11 place-items-center rounded-full bg-ink text-xs font-bold text-orange">
+              {initials}
+            </span>
+            <div className="min-w-0">
+              <b className="block break-words text-xs">{name}</b>
+              <span className="block break-words text-xs text-[#6b6254]">
+                {dashboardData.profile.city
+                  ? formatCity(dashboardData.profile.city)
+                  : AZ_COPY.profile.locationNotSet}
+              </span>
+            </div>
+          </div>
+          <nav className="mt-3" aria-label={AZ_COPY.profile.navigationLabel}>
+            <div
+              className="divide-y divide-[#95866f]"
+              role="tablist"
+              aria-label={AZ_COPY.profile.navigationLabel}
+              aria-orientation="vertical"
+            >
+              {tabs.map(([id, label, Icon], index) => (
+                <button
+                  key={id}
+                  ref={(node) => {
+                    tabRefs.current[index] = node;
+                  }}
+                  id={`profile-tab-${id}`}
+                  type="button"
+                  role="tab"
+                  onClick={() => selectTab(id)}
+                  onKeyDown={(event) => handleTabKeyDown(event, index)}
+                  aria-controls="profile-tabpanel"
+                  aria-selected={tab === id}
+                  tabIndex={tab === id ? 0 : -1}
+                  className={`flex min-h-11 w-full items-center gap-3 py-3 text-left text-xs font-bold transition ${tab === id ? "text-orange" : "text-gray-600 hover:pl-1"}`}
+                >
+                  <Icon size={14} /> {label}
+                </button>
+              ))}
+            </div>
+          </nav>
         </aside>
 
-        <main>
-          <section className="grid gap-3 sm:grid-cols-4">
-            <Stat label="Active listings" value={active} />
-            <Stat label="Sold books" value={sold} />
-            <Stat label="Saved by readers" value={data.favoriteCount} />
-            <Stat label="Listing views" value="—" />
-          </section>
+        <div id="profile-dashboard-content" className="min-w-0">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Stat label={AZ_COPY.profile.activeListings} value={active} />
+            <Stat label={AZ_COPY.profile.soldBooks} value={sold} />
+            <Stat
+              label={AZ_COPY.profile.savedBooks}
+              value={dashboardData.favoriteCount}
+            />
+            <Stat
+              label={AZ_COPY.profile.totalListings}
+              value={dashboardData.listings.length}
+            />
+          </div>
 
-          {tab === "listings" && <DashboardSection title="My Listings" icon={BookOpen}>{data.listings.length ? <div className="shelf-row grid grid-cols-2 gap-8 md:grid-cols-3">{data.listings.map((listing) => <div key={listing.id}><BookCard listing={listing} /><div className="mt-4 flex gap-2"><Link href={`/listings/${listing.id}/edit`} className="btn-secondary !min-h-[34px] flex-1 !px-3 !text-[9px]"><Edit3 size={11} /> Edit</Link><button onClick={() => removeListing(listing.id)} className="grid h-[34px] w-[34px] place-items-center rounded border border-red-200 bg-red-50 text-red-700" aria-label="Delete listing"><Trash2 size={12} /></button></div></div>)}</div> : <EmptyState title="No listings yet." body="List a finished book and help it find another reader." action="List a book" href="/listings/new" />}</DashboardSection>}
-          {tab === "messages" && <DashboardSection title="Messages" icon={MessageCircle}><EmptyState title="Continue your conversations." body="Open the messages marketplace inbox to speak with buyers and sellers." action="Open messages" href="/messages" /></DashboardSection>}
-          {tab === "favorites" && <DashboardSection title="Favorites" icon={Heart}><EmptyState title={`${data.favoriteCount} saved book${data.favoriteCount === 1 ? "" : "s"}.`} body="Your saved marketplace finds live in one place." action="Open favorites" href="/favorites" /></DashboardSection>}
-          {tab === "requests" && <DashboardSection title="Sales / Requests" icon={ShoppingBag}><EmptyState title="No active requests." body="Buyer requests and completed sales will appear here as your listings get attention." /></DashboardSection>}
-          {tab === "profile" && <DashboardSection title="Profile" icon={UserRound}><div className="catalog-drawer max-w-xl rounded-sm p-6 text-xs leading-8 text-gray-600"><b className="text-ink">{name}</b><br />{user?.email}<br />{data.profile.city || "Location not set"}<br />{data.profile.phone || "Phone not set"}</div></DashboardSection>}
-        </main>
+          {error && (
+            <p
+              ref={feedbackRef}
+              id="profile-dashboard-feedback"
+              role="alert"
+              tabIndex={-1}
+              className="mt-5 rounded-lg bg-red-50 p-3 text-xs leading-5 text-red-700"
+            >
+              {error}
+            </p>
+          )}
+          {notice && (
+            <p
+              ref={feedbackRef}
+              id="profile-dashboard-feedback"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              tabIndex={-1}
+              className="mt-5 rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-800"
+            >
+              {notice}
+            </p>
+          )}
+
+          <div
+            id="profile-tabpanel"
+            role="tabpanel"
+            aria-labelledby={`profile-tab-${tab}`}
+            tabIndex={0}
+            className="min-w-0"
+          >
+            {tab === "listings" && (
+              <DashboardSection
+                id="profile-section-listings"
+                title={AZ_COPY.profile.listingsTitle}
+                icon={BookOpen}
+              >
+                {dashboardData.listings.length ? (
+                  <div className="shelf-row grid min-w-0 grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
+                    {dashboardData.listings.map((listing) => {
+                      const listingBusy = busyListingId === listing.id;
+                      const nextStatus =
+                        listing.status === "active"
+                          ? "sold"
+                          : listing.status === "sold" ||
+                              listing.status === "draft"
+                            ? "active"
+                            : null;
+                      const statusAction =
+                        listing.status === "active"
+                          ? AZ_COPY.profile.markSold
+                          : listing.status === "sold"
+                            ? AZ_COPY.profile.relist
+                            : AZ_COPY.profile.publish;
+
+                      return (
+                        <div
+                          key={listing.id}
+                          aria-busy={listingBusy}
+                          aria-describedby={
+                            listingBusy
+                              ? `listing-busy-${listing.id}`
+                              : undefined
+                          }
+                        >
+                          {listingBusy && (
+                            <p
+                              id={`listing-busy-${listing.id}`}
+                              role="status"
+                              className="sr-only"
+                            >
+                              {AZ_COPY.profile.listingUpdating(listing.title)}
+                            </p>
+                          )}
+                          <BookCard listing={listing} />
+                          <div className="mt-4 flex min-w-0 flex-wrap gap-2">
+                            <Link
+                              href={`/listings/${listing.id}/edit`}
+                              className="btn-secondary !min-h-11 min-w-0 flex-[1_1_9rem] !border-[#95866f] !px-3 !text-xs"
+                            >
+                              <Edit3 size={12} /> {AZ_COPY.profile.edit}
+                            </Link>
+                            {nextStatus ? (
+                              <button
+                                type="button"
+                                aria-disabled={listingMutationBusy}
+                                onClick={() =>
+                                  setListingStatus(listing.id, nextStatus)
+                                }
+                                className="btn-secondary !min-h-11 min-w-0 flex-[1_1_9rem] !border-[#95866f] !px-3 !text-xs aria-disabled:opacity-50"
+                              >
+                                <Check size={12} /> {statusAction}
+                              </button>
+                            ) : (
+                              <span className="pill flex min-h-11 min-w-0 flex-[1_1_9rem] items-center justify-center whitespace-normal text-center !text-xs">
+                                {AZ_COPY.profile.locked}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              aria-disabled={listingMutationBusy}
+                              onClick={() => removeListing(listing.id)}
+                              className="grid h-11 w-11 shrink-0 place-items-center rounded border border-red-700 bg-red-50 text-red-700 aria-disabled:opacity-50"
+                              aria-label={`${AZ_COPY.profile.deleteListing}: ${listing.title}`}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <EmptyState
+                    title={AZ_COPY.profile.emptyListingsTitle}
+                    body={AZ_COPY.profile.emptyListingsBody}
+                    action={AZ_COPY.profile.listBook}
+                    href="/listings/new"
+                  />
+                )}
+              </DashboardSection>
+            )}
+
+            {tab === "messages" && (
+              <DashboardSection
+                id="profile-section-messages"
+                title={AZ_COPY.profile.messagesTitle}
+                icon={MessageCircle}
+              >
+                <EmptyState
+                  title={AZ_COPY.profile.messagesEmptyTitle}
+                  body={AZ_COPY.profile.messagesEmptyBody}
+                  action={AZ_COPY.profile.openMessages}
+                  href="/messages"
+                />
+              </DashboardSection>
+            )}
+
+            {tab === "favorites" && (
+              <DashboardSection
+                id="profile-section-favorites"
+                title={AZ_COPY.profile.favoritesTitle}
+                icon={Heart}
+              >
+                <EmptyState
+                  title={AZ_COPY.profile.savedCount(
+                    dashboardData.favoriteCount,
+                  )}
+                  body={AZ_COPY.profile.favoritesBody}
+                  action={AZ_COPY.profile.openFavorites}
+                  href="/favorites"
+                />
+              </DashboardSection>
+            )}
+
+            {tab === "requests" && (
+              <DashboardSection
+                id="profile-section-requests"
+                title={AZ_COPY.profile.requestsTitle}
+                icon={ShoppingBag}
+              >
+                <EmptyState
+                  title={AZ_COPY.profile.requestsEmptyTitle}
+                  body={AZ_COPY.profile.requestsEmptyBody}
+                  action={AZ_COPY.profile.openMessages}
+                  href="/messages"
+                />
+              </DashboardSection>
+            )}
+
+            {tab === "profile" && (
+              <DashboardSection
+                id="profile-section-profile"
+                title={AZ_COPY.profile.profileTitle}
+                icon={UserRound}
+              >
+                <form
+                  key={`${user?.id ?? "profile"}:${dashboardData.profile.name}:${dashboardData.profile.city ?? ""}:${dashboardData.profile.phone ?? ""}`}
+                  onSubmit={saveProfile}
+                  noValidate
+                  className="catalog-drawer grid min-w-0 max-w-xl gap-4 rounded-sm p-4 sm:p-6"
+                  aria-busy={profileBusy}
+                  aria-describedby={
+                    error ? "profile-dashboard-feedback" : undefined
+                  }
+                >
+                  <label>
+                    <span className="mb-2 block text-xs font-bold uppercase">
+                      {AZ_COPY.profile.name}
+                    </span>
+                    <input
+                      required
+                      minLength={2}
+                      maxLength={80}
+                      name="name"
+                      autoComplete="name"
+                      className="input"
+                      defaultValue={dashboardData.profile.name}
+                      aria-invalid={invalidProfileField === "name"}
+                      aria-describedby={
+                        invalidProfileField === "name"
+                          ? "profile-dashboard-feedback"
+                          : undefined
+                      }
+                      onChange={() => {
+                        setProfileSaved(false);
+                        if (invalidProfileField === "name") {
+                          setInvalidProfileField(null);
+                          setError("");
+                        }
+                      }}
+                    />
+                  </label>
+                  <label>
+                    <span className="mb-2 block text-xs font-bold uppercase">
+                      {AZ_COPY.profile.city}
+                    </span>
+                    <input
+                      required
+                      minLength={2}
+                      maxLength={80}
+                      name="city"
+                      autoComplete="address-level2"
+                      className="input"
+                      defaultValue={
+                        dashboardData.profile.city
+                          ? formatCity(dashboardData.profile.city)
+                          : ""
+                      }
+                      aria-invalid={invalidProfileField === "city"}
+                      aria-describedby={
+                        invalidProfileField === "city"
+                          ? "profile-dashboard-feedback"
+                          : undefined
+                      }
+                      onChange={() => {
+                        setProfileSaved(false);
+                        if (invalidProfileField === "city") {
+                          setInvalidProfileField(null);
+                          setError("");
+                        }
+                      }}
+                    />
+                  </label>
+                  <label>
+                    <span className="mb-2 block text-xs font-bold uppercase">
+                      {AZ_COPY.profile.phone}
+                    </span>
+                    <input
+                      type="tel"
+                      maxLength={30}
+                      name="phone"
+                      autoComplete="tel"
+                      className="input"
+                      defaultValue={dashboardData.profile.phone ?? ""}
+                      aria-describedby="profile-privacy-help"
+                      onChange={() => setProfileSaved(false)}
+                    />
+                  </label>
+                  <p
+                    id="profile-privacy-help"
+                    className="break-words text-xs leading-5 text-[#6b6254]"
+                  >
+                    {AZ_COPY.profile.privacyHelp}
+                  </p>
+                  {profileSaved && (
+                    <p
+                      ref={profileSavedRef}
+                      role="status"
+                      aria-live="polite"
+                      aria-atomic="true"
+                      tabIndex={-1}
+                      className="flex items-center gap-2 text-xs leading-5 text-emerald-700"
+                    >
+                      <Check size={12} /> {AZ_COPY.profile.profileSaved}
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    aria-disabled={profileBusy}
+                    className="btn-primary aria-disabled:opacity-50"
+                  >
+                    {profileBusy
+                      ? AZ_COPY.profile.savingProfile
+                      : AZ_COPY.profile.saveProfile}
+                  </button>
+                </form>
+              </DashboardSection>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 function Stat({ label, value }: { label: string; value: string | number }) {
-  return <div className="catalog-drawer rounded-sm p-4"><span className="text-[8px] font-bold uppercase tracking-[.12em] text-gray-500">{label}</span><strong className="display mt-2 flex items-center gap-2 text-3xl"><BarChart3 size={13} className="text-orange" /> {value}</strong></div>;
+  return (
+    <div className="catalog-drawer rounded-sm p-4">
+      <span className="break-words text-xs font-bold uppercase tracking-[.12em] text-[#6b6254]">
+        {label}
+      </span>
+      <strong className="display mt-2 flex items-center gap-2 text-3xl">
+        <BarChart3 size={13} className="text-orange" /> {value}
+      </strong>
+    </div>
+  );
 }
 
-function DashboardSection({ title, icon: Icon, children }: { title: string; icon: typeof BookOpen; children: React.ReactNode }) {
-  return <section className="mt-9"><div className="mb-6 flex items-center gap-3 border-b border-[#cdbd9e] pb-4"><Icon size={16} className="text-orange" /><h2 className="display text-3xl font-semibold">{title}</h2></div>{children}</section>;
+function DashboardSection({
+  id,
+  title,
+  icon: Icon,
+  children,
+}: {
+  id: string;
+  title: string;
+  icon: typeof BookOpen;
+  children: ReactNode;
+}) {
+  return (
+    <section className="mt-9 min-w-0" aria-labelledby={id}>
+      <div className="mb-6 flex items-center gap-3 border-b border-[#cdbd9e] pb-4">
+        <Icon size={16} className="text-orange" />
+        <h2 id={id} className="display break-words text-3xl font-semibold">
+          {title}
+        </h2>
+      </div>
+      {children}
+    </section>
+  );
 }

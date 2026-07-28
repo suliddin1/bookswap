@@ -6,18 +6,30 @@ export function EmptyState({
   body,
   action,
   href,
+  headingLevel = "h3",
 }: {
   title: string;
   body: string;
   action?: string;
   href?: string;
+  headingLevel?: "h1" | "h2" | "h3";
 }) {
+  const Heading = headingLevel;
+
   return (
     <div className="empty-state">
-      <span className="empty-state-icon"><BookOpen size={22} /></span>
-      <h3 className="display text-3xl font-semibold">{title}</h3>
+      <span className="empty-state-icon">
+        <BookOpen size={22} />
+      </span>
+      <Heading className="display min-w-0 max-w-full break-words text-3xl font-semibold [overflow-wrap:anywhere]">
+        {title}
+      </Heading>
       <p>{body}</p>
-      {action && href && <Link href={href} className="btn-primary mt-5">{action}</Link>}
+      {action && href && (
+        <Link href={href} className="btn-primary mt-5">
+          {action}
+        </Link>
+      )}
     </div>
   );
 }

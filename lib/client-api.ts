@@ -1,10 +1,30 @@
 import { getSupabaseClient } from "@/lib/supabase";
+import { AZ_COPY, localizeApiError } from "@/lib/i18n";
 
-export async function authFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+export class LocalizedClientError extends Error {
+  override name = "LocalizedClientError";
+
+  constructor(
+    message: string,
+    readonly code?: string,
+  ) {
+    super(message);
+  }
+}
+
+export async function authFetch(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+) {
   const supabase = getSupabaseClient();
-  if (!supabase) throw new Error("Supabase is not configured.");
+  if (!supabase)
+    throw new LocalizedClientError(AZ_COPY.auth.configurationUnavailable);
   const { data } = await supabase.auth.getSession();
-  if (!data.session?.access_token) throw new Error("Please sign in to continue.");
+  if (!data.session?.access_token)
+    throw new LocalizedClientError(
+      localizeApiError("AUTH_REQUIRED", AZ_COPY.auth.failed),
+      "AUTH_REQUIRED",
+    );
   return fetch(input, {
     ...init,
     headers: {

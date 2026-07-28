@@ -3,26 +3,66 @@ import { Fraunces, Manrope } from "next/font/google";
 import "@/app/globals.css";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { WebVitalsReporter } from "@/components/web-vitals-reporter";
+import { AZ_COPY, DOCUMENT_LANGUAGE } from "@/lib/i18n";
+import { getSiteUrl } from "@/lib/site-url";
 
-const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces" });
+const manrope = Manrope({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-manrope",
+});
+const fraunces = Fraunces({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-fraunces",
+});
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: { default: "BookSwap | Give books a second life", template: "%s | BookSwap" },
-  description: "A private-library marketplace for pre-loved books, textbooks, and reader-to-reader exchange.",
+  metadataBase: getSiteUrl(),
+  title: {
+    default: AZ_COPY.metadata.title,
+    template: "%s | BookSwap",
+  },
+  description: AZ_COPY.metadata.description,
   applicationName: "BookSwap",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "BookSwap" },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "BookSwap",
+  },
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  openGraph: {
+    type: "website",
+    locale: "az_AZ",
+    siteName: "BookSwap",
+    title: AZ_COPY.metadata.title,
+    description: AZ_COPY.metadata.openGraphDescription,
+  },
+  twitter: {
+    card: "summary",
+    title: "BookSwap",
+    description: AZ_COPY.metadata.socialDescription,
+  },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={DOCUMENT_LANGUAGE} dir="ltr" suppressHydrationWarning>
       <body className={`${manrope.variable} ${fraunces.variable}`}>
+        <a href="#main-content" className="skip-link">
+          {AZ_COPY.navigation.skipToContent}
+        </a>
         <SiteHeader />
-        <main>{children}</main>
+        <main id="main-content" tabIndex={-1}>
+          {children}
+        </main>
         <SiteFooter />
+        <WebVitalsReporter
+          enabled={process.env.WEB_VITALS_ENABLED === "true"}
+        />
       </body>
     </html>
   );

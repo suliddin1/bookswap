@@ -1,16 +1,78 @@
-import { requireSupabaseAdmin } from "@/lib/supabase";
+import { requireSupabaseAdmin } from "./supabase";
+import type { Json } from "./database.types";
+import { escapeHtml } from "./security";
+import { AZ_COPY, formatNotificationPresentation } from "./i18n";
+import { logServerError } from "./server-log";
 
-export async function notifyUser(userId: string, type: "MESSAGE" | "SYSTEM", payload: Record<string, unknown>) {
+type NotificationType = "MESSAGE" | "SYSTEM";
+
+export function formatNotificationEmail(
+  type: NotificationType,
+  payload: Record<string, unknown>,
+) {
+  const presentation = formatNotificationPresentation(type, payload);
+  return {
+    subject:
+      type === "MESSAGE"
+        ? AZ_COPY.notifications.emailMessageSubject
+        : AZ_COPY.notifications.emailSystemSubject,
+    html: `<div lang="az"><p>${escapeHtml(presentation.body)}</p></div>`,
+  };
+}
+
+export async function notifyUser(
+  userId: string,
+  type: NotificationType,
+  payload: Record<string, unknown>,
+) {
   const supabase = requireSupabaseAdmin();
-  await supabase.from("notifications").insert({ user_id: userId, type, payload });
-  const { data: user } = await supabase.from("users").select("email").eq("id", userId).single();
+  const safePayload = JSON.parse(JSON.stringify(payload)) as Json;
+  const { data: notification, error: insertError } = await supabase
+    .from("notifications")
+    .insert({ user_id: userId, type, payload: safePayload })
+    .select("id")
+    .single();
+  if (insertError) throw insertError;
+  return {
+    notificationId: notification.id,
+    ...(await sendOptionalNotificationEmail(userId, type, payload)),
+  };
+}
+
+export async function sendOptionalNotificationEmail(
+  userId: string,
+  type: NotificationType,
+  payload: Record<string, unknown>,
+) {
+  const supabase = requireSupabaseAdmin();
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select("email")
+    .eq("id", userId)
+    .single();
+  if (userError) {
+    logServerError("notification.recipient_lookup_failed", userError);
+    return {
+      emailAttempted: false,
+      emailDelivered: false,
+    };
+  }
   if (user?.email) {
-    await supabase.functions.invoke("notify", {
+    const email = formatNotificationEmail(type, payload);
+    const { error } = await supabase.functions.invoke("notify", {
       body: {
         recipient: user.email,
-        subject: type === "MESSAGE" ? "New BookSwap message" : "Your BookSwap listing was updated",
-        html: `<p>${String(payload.preview ?? payload.message ?? "There is an update on your BookSwap account.")}</p>`,
+        ...email,
       },
     });
+    if (error) logServerError("notification.email_delivery_failed", error);
+    return {
+      emailAttempted: true,
+      emailDelivered: !error,
+    };
   }
+  return {
+    emailAttempted: false,
+    emailDelivered: false,
+  };
 }

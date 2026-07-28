@@ -1,5 +1,6 @@
-import { apiError } from "@/lib/api";
+import { apiError, profileInput } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { normalizeListing } from "@/lib/listings";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 
@@ -7,31 +8,62 @@ export async function GET(request: Request) {
   try {
     const user = await requireUser(request);
     const supabase = requireSupabaseAdmin();
-    const [{ data: profile, error }, { data: listings }, { count: favoriteCount }] = await Promise.all([
-      supabase.from("users").select("*").eq("id", user.id).single(),
-      supabase.from("listings").select("*, seller:users!listings_seller_id_fkey(*)").eq("seller_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("favorites").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+    const [profileResult, listingsResult, favoritesResult] = await Promise.all([
+      supabase
+        .from("users")
+        .select("name,phone,city")
+        .eq("id", user.id)
+        .single(),
+      supabase
+        .from("listings")
+        .select(
+          "*, seller:users!listings_seller_id_fkey(id,name,city,created_at)",
+        )
+        .eq("seller_id", user.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("favorites")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id),
     ]);
-    if (error) throw error;
-    return Response.json({ data: { profile, listings: (listings ?? []).map(normalizeListing), favoriteCount: favoriteCount ?? 0 } });
+    if (profileResult.error) throw profileResult.error;
+    if (listingsResult.error) throw listingsResult.error;
+    if (favoritesResult.error) throw favoritesResult.error;
+    return Response.json({
+      data: {
+        profile: profileResult.data,
+        listings: (listingsResult.data ?? []).map(normalizeListing),
+        favoriteCount: favoritesResult.count ?? 0,
+      },
+    });
   } catch (error) {
-    return apiError(error, 401);
+    return apiError(error, 500, request);
   }
 }
 
 export async function PATCH(request: Request) {
   try {
     const user = await requireUser(request);
-    const input = await request.json();
+    await assertRateLimit(request, "profile:update", {
+      actorId: user.id,
+      limit: 20,
+      windowMs: 60_000,
+    });
+    const input = profileInput.parse(await request.json());
     const supabase = requireSupabaseAdmin();
-    const { data, error } = await supabase.from("users").update({
-      name: input.name,
-      phone: input.phone,
-      city: input.city,
-    }).eq("id", user.id).select().single();
+    const { data, error } = await supabase
+      .from("users")
+      .update({
+        name: input.name,
+        phone: input.phone,
+        city: input.city,
+      })
+      .eq("id", user.id)
+      .select("name,phone,city")
+      .single();
     if (error) throw error;
-    return Response.json({ data });
+    return Response.json({ requesterId: user.id, data });
   } catch (error) {
-    return apiError(error, 401);
+    return apiError(error, 500, request);
   }
 }

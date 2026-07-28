@@ -1,16 +1,37 @@
-import { apiError } from "@/lib/api";
+import { ApiError, adminBanInput, apiError } from "@/lib/api";
+import { throwAdminActionError } from "@/lib/admin-actions";
 import { requireAdmin } from "@/lib/auth";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { requireSupabaseAdmin } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   try {
-    await requireAdmin(request);
-    const { userId, banned = true } = await request.json();
+    const admin = await requireAdmin(request);
+    const { userId, banned, reason } = adminBanInput.parse(
+      await request.json(),
+    );
+    await assertRateLimit(request, "admin:ban", {
+      actorId: admin.id,
+      resourceId: userId,
+      limit: 10,
+      windowMs: 60_000,
+    });
+    if (userId === admin.id)
+      throw new ApiError(
+        "Öz hesabını dayandıra bilməzsən.",
+        409,
+        "SELF_BAN_FORBIDDEN",
+      );
     const supabase = requireSupabaseAdmin();
-    const { data, error } = await supabase.from("users").update({ banned }).eq("id", userId).select().single();
-    if (error) throw error;
+    const { data, error } = await supabase.rpc("admin_set_user_ban", {
+      p_actor_id: admin.id,
+      p_target_id: userId,
+      p_banned: banned,
+      p_reason: reason,
+    });
+    throwAdminActionError(error);
     return Response.json({ data });
   } catch (error) {
-    return apiError(error, 403);
+    return apiError(error, 500, request);
   }
 }

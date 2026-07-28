@@ -8,15 +8,23 @@ on:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-fixture.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-fixture-public-anon-key
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run format:check
       - run: npm run lint
+      - run: npm run typecheck
       - run: npm test
+      - run: npm run test:database:static
+      - run: npm run test:dependencies
+      - run: npm run test:secrets
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
