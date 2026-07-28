@@ -68,7 +68,7 @@ Local `supabase db reset` remains unexecuted on this workstation because Docker/
 - Unit/adversarial tests: 59/59 pass
 - Development environment identity and credential-role/project guard: pass without printing values
 - Migration static check: 22 migrations pass
-- Dependency patched-version baseline: 7/7 pass
+- Dependency baseline: 7/7 pinned security versions pass; the live production-only npm audit is 0, while the full development tree has 13 high findings that all trace to one newly published `brace-expansion` denial-of-service advisory in the ESLint-only toolchain. No compatible 1.x fix exists yet; the known development-only path is guarded and does not block launch.
 - Secret scan: 188 repository files pass
 - Development database structural/behavioral checks: pass
 - Format/lint/strict TypeScript: pass

@@ -55,7 +55,7 @@ Status values: **PASS** = direct evidence exists; **PREPARED/BLOCKED** = determi
 ## Strong pre-launch recommendations
 
 - Docker-backed zero-to-head local reset and both SQL scripts.
-- Approved networked dependency advisory scan.
+- Repeat the approved networked dependency scan and adopt a compatible upstream fix for the known ESLint-only `brace-expansion` advisory when released; the current production-only audit is 0.
 - Native Azerbaijani editorial and qualified legal review.
 - Recovery/incident tabletop and isolated restore exercise.
 - Additional manual authenticated browser exploration against development; the automated real backend actor matrix already passes.

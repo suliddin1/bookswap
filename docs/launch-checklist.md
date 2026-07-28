@@ -6,7 +6,7 @@ This document separates repository-prepared procedures from production facts tha
 
 ## Repository-prepared release gate
 
-- Run `npm ci`, `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:database:static`, `npm run test:dependencies`, `npm run test:secrets`, `npm run build`, `npm run test:performance`, and `npm run test:e2e`.
+- Run `npm ci`, `npm audit --omit=dev --audit-level=high`, `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:database:static`, `npm run test:dependencies`, `npm run test:secrets`, `npm run build`, `npm run test:performance`, and `npm run test:e2e`. Also inspect the full `npm audit` result: the current accepted residual is one development-only ESLint-chain advisory, not a general vulnerability-count allowance.
 - With local Docker available, run `supabase db reset`, then execute `supabase/tests/launch_readiness.sql` and `supabase/tests/marketplace_query_plans.sql` with `psql -v ON_ERROR_STOP=1`.
 - With the guarded development credentials, run `npm run test:authorization` and retain only pass/fail evidence—never credentials or private fixture content.
 - Require zero Supabase Security Advisor findings. Treat unused-index notices on an empty development database as non-actionable until representative traffic exists.
