@@ -720,3 +720,15 @@ Next slice: resolve P0-001 and P0-002 through an additive migration/API contract
 - Evidence updated: PROJECT_STATE, ISSUE_QUEUE, QA_EVIDENCE, ACCEPTANCE_MATRIX, ARCHITECTURE_DECISIONS, DECISION_REQUESTS, LOCALIZATION_INVENTORY, PRODUCT_SPEC, README, launch checklist, and security model.
 - Commit: local-only commits created after the final gate; inspect `git log --oneline 5e36c58..HEAD`.
 - Remaining launch blockers: only development service-role handoff/real authorization pass and owner/counsel legal facts/approval. Production/deployment tasks and post-launch features are classified separately.
+
+### 2026-07-28 — Real development authorization closure and Git integration
+
+- Goal / acceptance IDs: close former EXT-001/DR-001 with real backend evidence and integrate the completed non-deployment readiness branch.
+- Files and contract owner: canonical authorization/state/evidence records only; no application, migration, package, or production configuration change.
+- Starting branch/commit/status: clean `autonomous/bookswap-product` at `4805704`; fetched `origin/main` at `941b0c75`; branch was 37 commits ahead and 0 behind before this evidence commit.
+- Environment: ignored `.env.test.local` targets `bookswap-development` (`uibatsbzjswmtdvdrlxj`); public key role `anon`, private test key role `service_role`; values never printed or tracked.
+- Security/authorization: guarded real-backend matrix passed 10/10 for anonymous, owner/participant, unrelated, banned, moderator-normal, admin, and stale-account boundaries across profiles, listings, favorites, chat, notifications, reviews, reports/privacy, admin audit, Storage, and stale requests.
+- Cleanup: temporary authorization identities and dependent fixtures were removed by the passing suite; no production target or production data was used.
+- Evidence updated: PROJECT_STATE, ISSUE_QUEUE, ACCEPTANCE_MATRIX, DECISION_REQUESTS, QA_EVIDENCE, and this log. Former EXT-001/DR-001 is resolved; legal EXT-002 remains the only non-deployment launch blocker.
+- Validation: format pass after one matrix-only Prettier correction; lint pass; strict TypeScript pass; unit 61/61; static migrations 22; dependency baseline 7; secrets 189 files; environment identity pass; real authorization 10/10; build 40/40; performance 5/5; final Chromium 28/28. One prior hidden-server startup race and one intermittent React 418 were diagnosed without weakening tests; the exact case and full unchanged suite then passed.
+- Commit/PR: recorded in the Git task report; no deployment or production Supabase action is authorized.

@@ -6,28 +6,17 @@ Only facts or authority that cannot be derived safely from the repository remain
 
 ## DR-001 — Complete real development authorization verification
 
-Status: launch-blocking; engineering preparation complete.
+Status: **RESOLVED** on 28 July 2026.
 
-The ignored `.env.local` now points to the intended active `bookswap-development` project (`uibatsbzjswmtdvdrlxj`) and has a valid public key. The service-role secret is not available. The guarded matrix in `tests/authorization.integration.test.ts` refuses any other project, creates temporary actors, exercises anonymous/owner/unrelated/banned/moderator/admin/stale-account behavior, and removes its fixtures.
+The ignored local environment targets `bookswap-development` (`uibatsbzjswmtdvdrlxj`). The public key was verified as `anon`, the private test key as `service_role`, and neither value was printed or committed. The guarded matrix refuses any other project, creates temporary actors, exercises anonymous/owner/unrelated/banned/moderator/admin/stale-account behavior, and removes its fixtures.
 
-Exact owner action (PowerShell, from the repository root):
+Completion evidence:
 
-```powershell
-Copy-Item .env.test.example .env.test.local
-# In .env.test.local, paste the ACTIVE bookswap-development public key and
-# service-role key from Supabase Dashboard > Project Settings > API.
-# Do not paste either value into chat, Git, screenshots, logs, or documentation.
-npm.cmd run test:authorization
-```
-
-Keep these exact non-secret lines unchanged:
-
-```dotenv
-NEXT_PUBLIC_SUPABASE_URL=https://uibatsbzjswmtdvdrlxj.supabase.co
-BOOKSWAP_REMOTE_TEST_CONFIRMATION=bookswap-development
-```
-
-Acceptance: the command exits 0 and reports the complete real-backend matrix. A mocked UI test is not a substitute.
+- `npm.cmd run test:env -- --authorization`: pass, exact project and both required roles present.
+- `npm.cmd run test:authorization`: 10/10 pass against the real development backend.
+- Temporary Auth/application/Storage-related fixtures cleaned by the guarded suite.
+- `.env.test.local` is ignored by Git; no production target or production data was used.
+- This is real backend evidence, not a mocked UI substitute.
 
 ## DR-002 — Insert legal identity and contact facts
 

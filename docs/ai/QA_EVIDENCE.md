@@ -622,8 +622,8 @@ This section supersedes earlier current-status/blocker summaries in this histori
 
 - Writable repository: `C:\Users\Lenovo\Documents\2HandedBook`; read-only D source was not modified.
 - Branch/baseline: `autonomous/bookswap-product` from `5e36c584ca12780226f8b18ae7876335a0bbe82f`.
-- `npm run test:env` passed with project name `bookswap-development`, ref `uibatsbzjswmtdvdrlxj`, correct public configuration, and `hasServiceRole:false`. No values were printed.
-- `npm run test:authorization` stopped before fixture creation with exactly: missing `SUPABASE_SERVICE_ROLE_KEY` and missing `BOOKSWAP_REMOTE_TEST_CONFIRMATION=bookswap-development`. This is a fail-safe external blocker, not a pass.
+- `npm run test:env -- --authorization` passed with project name `bookswap-development`, ref `uibatsbzjswmtdvdrlxj`, correct public configuration, and both required key roles present. No values were printed.
+- `npm run test:authorization` passed 10/10 against the real development backend. The exact-project confirmation guard remained active, and temporary fixtures were cleaned.
 
 ### Database and migrations
 
@@ -644,6 +644,7 @@ npm run lint                  PASS — zero warnings (`--max-warnings=0`)
 npm run typecheck             PASS — `tsc --noEmit --strict`
 npm test                      PASS — 3 files, 61/61 tests
 npm run test:database:static  PASS — 22 migrations
+npm run test:authorization   PASS — real development backend, 10/10
 npm run test:dependencies     PASS — 7 patched package locations
 npm run test:secrets          PASS — 189 files at the final repository scan
 npm run build                 PASS — Next 15.5.21, compile/type/lint, 40/40 pages
@@ -666,6 +667,7 @@ Browser coverage includes mobile navigation, keyboard entry/focus, reduced motio
 1. Network-sandboxed build could not fetch configured Google fonts. The approved local build fetch was allowed; subsequent builds used the fetched artifacts. No deployment occurred.
 2. Next route contract rejected an exported Auth helper. It was moved to `lib/auth-response.ts`; build then passed.
 3. Initial browser run was 26/28: password fixture used eight characters after policy changed to 12, and unauthenticated review hit missing server credentials before returning stable Auth rejection. The fixture was corrected and `requireUser` now validates missing bearer identity before loading server credentials. Unit regression added; rerun passed 28/28.
+4. During the later authorization-closure integration gate, one hidden-server startup attempt timed out because port 3000 was transiently occupied. After releasing that process, the first browser run reached 27/28 with the previously observed intermittent React 418 in the profile cross-identity test. The exact test passed unchanged in isolation, then the full unchanged four-worker suite passed 28/28. No assertion, concurrency boundary, or error check was weakened.
 
 ### Dependency and secret limitations
 
@@ -676,6 +678,7 @@ Browser coverage includes mobile navigation, keyboard entry/focus, reduced motio
 ### Honest authorization and production limits
 
 - Real development backend evidence covers migration execution, schema/RLS/ACL/policy inspection, security advisor, Azerbaijani normalization, and the durable rate-limit function.
-- The complete multi-actor route/Data API/Storage matrix was not run because the development service-role credential is unavailable. Its deterministic temporary-user suite is prepared and fail-safe guarded. Mocked browser tests are not backend authorization evidence.
+- The complete guarded multi-actor route/Data API/Storage matrix passed 10/10 on `bookswap-development`. It covered bounded anonymous visibility; safe self-profile changes and role-promotion denial; listing direct-write/owner/unrelated boundaries; favorite ownership/duplicates/forgery/banned denial; chat isolation/forged sender denial; notification isolation/arbitrary creation denial; review eligibility/duplicate/self/rating rules; report/moderation/privacy protections; moderator/admin separation and audit; direct Storage denial; and stale deleted-user rejection.
+- The suite used temporary seller, buyer, unrelated, banned, moderator-normal, admin, and stale identities and cleaned its fixtures. Keys stayed in ignored local files and were not printed or committed.
 - No production Supabase/Vercel project, data, domain, backup/restore, Auth paid control, MFA enforcement, CAPTCHA, provider alert, deployment, field performance, or production smoke was configured or verified.
 - Legal pages are structured Azerbaijani drafts; operator/contact/jurisdiction/age/retention/effective-date facts and counsel approval remain external launch blockers.

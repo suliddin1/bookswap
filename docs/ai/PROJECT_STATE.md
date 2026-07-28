@@ -4,7 +4,7 @@ Updated: 28 July 2026
 
 ## Current verdict
 
-**Conditionally non-deployment ready.** All identified safe repository-side launch-critical work is implemented. Final full local gate evidence must remain green, and two genuine external launch blockers remain: the missing development service-role credential for the real authorization matrix, and owner/counsel-supplied legal facts. Deployment/production operations were explicitly excluded.
+**Conditionally non-deployment ready.** All identified safe repository-side launch-critical work is implemented, and the guarded real development authorization matrix passes. The remaining non-deployment launch blocker is owner/counsel-supplied legal facts and approval. Deployment/production operations remain separate and unverified.
 
 ## Authoritative workspace and Git baseline
 
@@ -12,8 +12,8 @@ Updated: 28 July 2026
 - Source restored from: `D:\Codex Projects\2HandedBook` (D was read-only and is not modified)
 - Branch: `autonomous/bookswap-product`
 - Continuation baseline: `5e36c584ca12780226f8b18ae7876335a0bbe82f`
-- Baseline relation to `origin/main`: 35 commits ahead, 0 behind
-- Local commits for this readiness run: local only; inspect `git log --oneline 5e36c58..HEAD`
+- Integration baseline: fetched `origin/main` at `941b0c75c0a952c3d68d4a0dee4a1fad541107e4`
+- Readiness history: inspect `git log --oneline 5e36c58..HEAD`
 
 ## Launch product scope
 
@@ -23,7 +23,7 @@ Automated exchange matching, wanted-title matching, reader shelves, social readi
 
 ## Implemented launch-readiness work
 
-- Correct development Supabase public identity with fail-fast project guard; no service key copied or fabricated.
+- Correct development Supabase public identity with fail-fast project guard and an ignored local test credential boundary; no secret is tracked or documented.
 - Two additive migrations (22 total) for validation constraints, privacy uniqueness, report/review/chat invariants, Azerbaijani search normalization, service-only Storage mutations, durable atomic rate limiting, Azerbaijani moderation notifications, and explicit private-table ACL posture.
 - Postgres-backed HMAC-keyed limiter across Auth API, listing/upload/chat/favorite/report/review/notification/profile/privacy/admin/moderation actions; stable 429/503 and retry behavior.
 - Strict server ownership/state checks, bounded chat history/input, stale-account rejection, duplicate privacy handling, safe account-mutation response boundaries, and correlation IDs.
@@ -40,9 +40,9 @@ Automated exchange matching, wanted-title matching, reader shelves, social readi
 - Project ref: `uibatsbzjswmtdvdrlxj`
 - Region/status: `eu-central-1`, active/healthy at verification time
 - Public local URL/key: correct and guarded; ignored `.env.local` is not committed
-- Service-role key: missing
+- Service-role test key: available only in ignored `.env.test.local`; verified as `service_role` for the intended project and not committed
 - Remote migrations: 22, including both 28 July hardening migrations
-- Data: zero application rows before test; no production data used
+- Data: temporary authorization fixtures were cleaned; no production data was used
 - Security Advisor after migration: zero findings
 - Structural SQL: public tables without RLS = 0; launch constraints/indexes present; browser Storage mutation policies = 0; anon/authenticated rate-RPC execute = false; service-role execute = true; fixed search path present
 - Real limiter behavior: allow/allow/deny at threshold 2; retry value valid; fixture removed
@@ -54,23 +54,22 @@ Local `supabase db reset` remains unexecuted on this workstation because Docker/
 
 - Strict TypeScript: pass
 - Unit/adversarial tests: 61/61 pass
-- Development environment identity: pass; authorization preflight correctly reports service key missing
+- Development environment identity and credential-role/project guard: pass without printing values
 - Migration static check: 22 migrations pass
 - Dependency patched-version baseline: 7/7 pass
-- Secret scan: 187 repository files pass
+- Secret scan: 189 repository files pass
 - Development database structural/behavioral checks: pass
 - Format/lint/strict TypeScript: pass
 - Production build: pass, 40/40 static pages generated
 - Bundle budgets: 5/5 pass
 - Chromium browser/E2E: 28/28 pass
-- Real multi-actor backend authorization: prepared but not passed; blocked by missing development service-role key
+- Real multi-actor backend authorization: 10/10 pass against `uibatsbzjswmtdvdrlxj`; temporary fixtures cleaned
 
 ## Remaining external requirements
 
 Launch blockers:
 
-1. owner supplies the intended development service-role key only in `.env.test.local` and runs `npm run test:authorization`;
-2. owner supplies legal identity/contact/age/retention/appeal facts, replaces placeholders, and obtains qualified counsel approval.
+1. owner supplies legal identity/contact/age/retention/appeal facts, replaces placeholders, and obtains qualified counsel approval.
 
 Production/deployment-only requirements include project/domain/environment configuration, Auth dashboard controls and leaked-password decision, admin MFA enforcement, backup/restore evidence, provider credentials, alert routing, field performance, deployment, and production smoke/authorization verification.
 
