@@ -1,5 +1,19 @@
 # Iteration log
 
+## 2026-07-28 - Profile/privacy hydration stabilization
+
+Goal / acceptance IDs: Build/accessibility/performance, Account/privacy, Authentication; permanently explain and stabilize the intermittent React hydration failure in PR #2 without weakening console/page-error assertions, ownership checks, or authenticated profile/privacy behavior.
+
+Ownership: root exclusively owns the affected profile/privacy Playwright flow, its real application-ready signal, narrowly related auth/session hydration behavior, focused regression evidence, and canonical QA/iteration updates. Database migrations, RLS, production Supabase, Vercel Production, Vercel Git connection, deployment, and unrelated product scope remain unchanged.
+
+Starting evidence: PR #2 CI passed every step except Chromium E2E, where the profile/privacy cross-identity test reached 27/28 and recorded React hydration error #418. No CI Playwright artifact was uploaded. The unchanged test had passed locally 28/28, but CI-equivalent production stress reproduced #418 alongside resource-pressure failures, and a one-worker 10-run isolation still reproduced #418 four times.
+
+Root cause and implementation: navigation-aware capture placed the mismatch on later `/profile` and `/user-rights` viewport documents while a focused clean-document hydration case passed 20/20. The test reused one Playwright page across four independent viewport cases, injected a 200%-text style into each root document, and immediately reused that lifecycle for the next full navigation. A temporary application-level shared-auth/hydration experiment did not stabilize the four-worker reused-page case and was removed. The permanent test now creates and closes one clean page per viewport, retaining all request, ownership, duplicate-action, focus, localization, reflow, disclosure, and zero-error checks. A focused regression waits for authenticated privacy history and editable form controls before asserting a single protected read and zero React/console errors. Diagnostic errors now include viewport/navigation and URL context without suppressing them.
+
+Review compatibility: legacy moderation audit values remain permitted by immutable schema and may exist in historical rows. Their Azerbaijani outcome/provider/reason/category labels and focused unit assertions were restored without restoring any AI runtime or provider dependency.
+
+Verification: corrected cross-identity flow 8/8 with four workers after the application experiment was removed; hydration-ready privacy regression 20/20 with four workers; full Chromium 29/29 with four workers; format, lint, strict TypeScript, Vitest 59/59, 22-migration static check, 7-package dependency baseline, guarded development environment, 188-file secret scan, 39-page optimized build, and 5/5 bundle budgets pass. Production Supabase, migrations, Vercel Production, and Vercel Git remain untouched.
+
 ## 2026-07-27 - Full non-deployment launch-readiness ownership
 
 Goal / acceptance IDs: all launch-critical non-deployment requirements, with particular ownership of P0-005, P1-001, P1-002, P1-005, P1-006, P1-010, P1-012, P1-013, P1-016, and P1-017; preserve every already completed product and safety contract while reclassifying advanced exchange, matching, wanted-list, shelf, social, and edition-intelligence work as post-launch unless a complete safe implementation already exists.
@@ -726,9 +740,40 @@ Next slice: resolve P0-001 and P0-002 through an additive migration/API contract
 - Goal / acceptance IDs: close former EXT-001/DR-001 with real backend evidence and integrate the completed non-deployment readiness branch.
 - Files and contract owner: canonical authorization/state/evidence records only; no application, migration, package, or production configuration change.
 - Starting branch/commit/status: clean `autonomous/bookswap-product` at `4805704`; fetched `origin/main` at `941b0c75`; branch was 37 commits ahead and 0 behind before this evidence commit.
-- Environment: ignored `.env.test.local` targets `bookswap-development` (`uibatsbzjswmtdvdrlxj`); public key role `anon`, private test key role `service_role`; values never printed or tracked.
+- Environment: ignored `.env.test.local` targets the guarded development project; public key role `anon`, private test key role `service_role`; values and project identifiers were never committed.
 - Security/authorization: guarded real-backend matrix passed 10/10 for anonymous, owner/participant, unrelated, banned, moderator-normal, admin, and stale-account boundaries across profiles, listings, favorites, chat, notifications, reviews, reports/privacy, admin audit, Storage, and stale requests.
 - Cleanup: temporary authorization identities and dependent fixtures were removed by the passing suite; no production target or production data was used.
 - Evidence updated: PROJECT_STATE, ISSUE_QUEUE, ACCEPTANCE_MATRIX, DECISION_REQUESTS, QA_EVIDENCE, and this log. Former EXT-001/DR-001 is resolved; legal EXT-002 remains the only non-deployment launch blocker.
 - Validation: format pass after one matrix-only Prettier correction; lint pass; strict TypeScript pass; unit 61/61; static migrations 22; dependency baseline 7; secrets 189 files; environment identity pass; real authorization 10/10; build 40/40; performance 5/5; final Chromium 28/28. One prior hidden-server startup race and one intermittent React 418 were diagnosed without weakening tests; the exact case and full unchanged suite then passed.
 - Commit/PR: recorded in the Git task report; no deployment or production Supabase action is authorized.
+
+### 2026-07-28 — Production gate investigation and safe stop
+
+- Goal / acceptance IDs: PROD-001 through PROD-006; production identity, migration/recovery, Auth/Storage/environment, domain, operations, validation, and controlled-deployment gate.
+- Files and contract owner: canonical state, issue, decision, launch-checklist, QA, and iteration evidence only; no application or migration source changed.
+- Starting state: PR #1 squash-merged at `cf126c3c4a408007eacf7d337f485be69e23517c`; Vercel Git disconnected; local `autonomous/bookswap-product` tree identical to `origin/main` and clean.
+- Production identity: the intended Supabase and Vercel projects were identified privately and are separate from development. The current published release predates the launch-readiness branch, and Vercel Git remains disconnected.
+- Gate findings at that time: production migration reconciliation, backup/restore evidence, hosted Auth and environment verification, canonical domain, and alert/incident ownership remain incomplete. The provider-credential finding is superseded by the following AI-free product-alignment entry.
+- Validation: format, lint, strict TypeScript, unit 61/61, static migrations 22, dependency baseline 7, secrets 189, development env guard, real development authorization 10/10, build 40/40, performance 5/5, and Chromium 28/28 passed. Live npm advisory lookup was not authorized; no pass claimed.
+- External mutation: none. No production migration, fixture, Auth/Storage/env setting change, Git reconnection, deployment, smoke/authorization test, or rollback occurred. The old production release remains unchanged.
+- Decision: deployment gate failed safely. DR-006 defines migration/backup/restore approval; DR-007 defines controlled one-time release requirements. Evidence changes must go through a follow-up PR; stop before merge and production operations.
+
+### 2026-07-28 — AI-free product alignment
+
+- Goal / acceptance IDs: remove AI/OpenAI from the launch architecture and align the free marketplace/business model without deployment or schema changes.
+- Files and contract owner: root owns `lib/moderation.ts`, its listing/chat consumers, environment examples, related tests, privacy/admin copy, and canonical product/security/launch records for this focused local-only iteration.
+- Starting branch/commit/status: clean `autonomous/bookswap-product` at `992a8f4`; production Supabase/Vercel, migrations, remote branches, and Vercel Git connection are out of scope.
+- Approved decisions: no AI/OpenAI; normal-user listing and messaging remain free; no commission, integrated payment, VIP listing, subscription, or display ads at launch; paid listing promotion, professional seller plans, and direct sponsorships are future candidates only.
+- Changes: removed external moderation requests/config, image-classification preflight behavior, and the unused `/api/moderate` route; retained deterministic text checks/audit, upload security, rate limits, reporting, admin review/removal/ban/appeal/audit, authorization, and RLS. Updated Azerbaijani privacy/admin copy and all canonical product, decision, security, launch, and monetization records.
+- Migrations/backend: no migration created or applied; production and Vercel were untouched. The guarded development authorization rerun passed 10/10 and cleaned its temporary fixtures.
+- Validation: format pass; lint pass; strict TypeScript pass; unit 59/59; static migrations 22; dependency baseline 7; secrets 189 paths; development environment guard pass; real authorization 10/10; build without the removed key 39/39 pages; performance 5/5; final Chromium 28/28. One stale E2E label was fixed; the known intermittent React 418 appeared once on an unchanged test, assertions stayed intact, and the final full suite passed.
+- Evidence updated: README, privacy copy, PROJECT_STATE, ISSUE_QUEUE, ACCEPTANCE_MATRIX, ARCHITECTURE_DECISIONS, DECISION_REQUESTS, PRODUCT_SPEC, LOCALIZATION_INVENTORY, QA_EVIDENCE, launch checklist, market research, security model, and this log.
+- Ownership released. Local commit only; no push, merge, PR, deployment, Git reconnection, production environment change, or production Supabase action authorized.
+
+### 2026-07-28 — Public integration safety review
+
+- Scope: review the complete branch diff and every changed public document before the authorized push and pull request.
+- Sanitization: removed unnecessary production/development project identifiers, deployment identifiers, aliases, exact schema/account counts, and precise rollback references from the proposed public diff.
+- Preserved facts: production migration reconciliation, backup/restore evidence, hosted Auth/environment verification, canonical domain, operations ownership, post-deploy evidence, and legal facts remain explicitly unresolved.
+- Validation: format check, lint, strict TypeScript, unit 59/59, static migrations 22, dependency baseline 7, secret scan 188 paths, environment guard, real development authorization 10/10 with fixture cleanup, build 39/39 pages, performance 5/5, and Chromium 28/28 passed.
+- Safety boundary: no secret value, ignored environment file, fixture, migration, production setting, Git connection, or deployment was changed.

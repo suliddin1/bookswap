@@ -635,7 +635,6 @@ export const AZ_COPY = {
     rateLimitUnavailable:
       "Təhlükəsizlik yoxlaması hazırda əlçatan deyil. Bir az sonra yenidən cəhd et.",
     uniqueImages: "Elan şəkilləri təkrarlanmamalıdır.",
-    textOrImageRequired: "Mətn və ya şəkil tələb olunur.",
     authActionNotFound: "Bu giriş əməliyyatı tapılmadı.",
     invalidQuery: "Axtarış sorğusu çox uzundur.",
     invalidFilter: "Filtr dəyəri etibarlı deyil.",
@@ -718,12 +717,12 @@ export const AZ_COPY = {
     complete: "Tamamla",
     privacyReject: "Rədd et",
     privacyEmpty: "Açıq məxfilik sorğusu yoxdur.",
-    automatedModeration: "Avtomatlaşdırılmış moderasiya qərarları",
-    moderationListLabel: "Avtomatlaşdırılmış moderasiya qərarları siyahısı",
-    automatedModerationBody:
-      "Nəticələr və provayder diaqnostikası yoxlama üçün saxlanılır. Göndərilən mətn və şəkil ünvanları bu reyestrdə saxlanılmır.",
+    contentRuleDecisions: "Məzmun qaydası qərarları",
+    contentRuleListLabel: "Məzmun qaydası qərarları siyahısı",
+    contentRuleDecisionsBody:
+      "Dar və şəffaf yerli qayda nəticələri yoxlama üçün saxlanılır. Göndərilən mətn bu reyestrdə saxlanılmır; şəkil məzmunu avtomatik qiymətləndirilmir.",
     deletedAccount: "Silinmiş hesab",
-    moderationEmpty: "Hələ avtomatlaşdırılmış moderasiya qərarı yoxdur.",
+    moderationEmpty: "Hələ məzmun qaydası qərarı yoxdur.",
     securityNote:
       "İdarəetmə endpoint-ləri qorunan məlumatı qaytarmazdan və ya dəyişməzdən əvvəl daxil olmuş istifadəçinin verilənlər bazasındakı rolunu yoxlayır.",
     unknownValue: "Naməlum",
@@ -888,6 +887,8 @@ const moderationProviderLabels: Record<string, string> = {
 };
 
 const moderationReasonLabels: Record<string, string> = {
+  LOCAL_RULES_PASSED: "Dar yerli qaydalar pozuntu tapmayıb",
+  SENSITIVE_AUTH_CODE_REQUEST: "Məxfi giriş kodu istəyi rədd edilib",
   PROVIDER_NOT_CONFIGURED: "Moderasiya provayderi konfiqurasiya edilməyib",
   LOCAL_MARKETPLACE_RULE: "BookSwap bazar qaydası ilə rədd edilib",
   PROVIDER_APPROVED: "Provayder məzmunu təsdiqləyib",
@@ -900,6 +901,7 @@ const moderationReasonLabels: Record<string, string> = {
 };
 
 const moderationCategoryLabels: Record<string, string> = {
+  "credential-theft": "Məxfi giriş məlumatı istəyi",
   harassment: "Təqib",
   "harassment/threatening": "Hədə-qorxu ilə təqib",
   hate: "Nifrət məzmunu",
@@ -947,10 +949,8 @@ const apiErrorLabels: Record<string, string> = {
   INVALID_IMAGE_CONTENT: AZ_COPY.listingForm.invalidImageContent,
   INVALID_IMAGE_PATH: AZ_COPY.api.invalidImagePath,
   LISTING_LOCKED: "Kilidlənmiş elanı redaktə etmək mümkün deyil.",
-  MODERATION_UNAVAILABLE:
-    "Məzmun yoxlaması hazırda əlçatan deyil. Bir az sonra yenidən cəhd et.",
   MODERATION_AUDIT_UNAVAILABLE:
-    "Məzmun yoxlamasını qeyd etmək mümkün olmadı. Bir az sonra yenidən cəhd et.",
+    "Məzmun qaydası yoxlamasını qeyd etmək mümkün olmadı. Bir az sonra yenidən cəhd et.",
   CONTENT_REJECTED:
     "Məzmun BookSwap qaydalarına uyğun olmadığı üçün qəbul edilmədi.",
   ADMIN_REQUIRED: "Bu əməliyyat üçün idarəçi icazəsi tələb olunur.",

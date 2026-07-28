@@ -2,7 +2,6 @@ import { ApiError, apiError, listingInput } from "@/lib/api";
 import { randomUUID } from "node:crypto";
 import {
   assertModerationApproved,
-  moderateAndRecordImage,
   moderateAndRecordText,
 } from "@/lib/moderation";
 import { requireSupabaseAdmin, requireSupabaseClient } from "@/lib/supabase";
@@ -121,21 +120,16 @@ export async function POST(request: Request) {
     assertOwnedListingImages(input.images, user.id);
     supabase = requireSupabaseAdmin();
     const requestId = randomUUID();
-    const checks = await Promise.all([
-      moderateAndRecordText(supabase, `${input.title}\n${input.description}`, {
+    const check = await moderateAndRecordText(
+      supabase,
+      `${input.title}\n${input.description}`,
+      {
         actorId: user.id,
         requestId,
         surface: "listing_create",
-      }),
-      ...input.images.map((imageUrl) =>
-        moderateAndRecordImage(supabase!, imageUrl, {
-          actorId: user.id,
-          requestId,
-          surface: "listing_create",
-        }),
-      ),
-    ]);
-    checks.forEach(assertModerationApproved);
+      },
+    );
+    assertModerationApproved(check);
     await drainListingImageCleanupJobs(supabase, user.id);
     const { data, error } = await supabase
       .from("listings")

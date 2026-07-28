@@ -85,16 +85,6 @@ export const profileInput = z
     city: z.string().trim().min(2).max(80),
   })
   .strict();
-export const moderationInput = z
-  .object({
-    text: z.string().max(4000).optional(),
-    imageUrl: z.string().url().optional(),
-  })
-  .strict()
-  .refine(
-    (value) => value.text || value.imageUrl,
-    AZ_COPY.api.textOrImageRequired,
-  );
 const adminActionReason = z.string().trim().min(10).max(1000);
 export const adminModerationInput = z
   .object({

@@ -8,7 +8,7 @@ Only facts or authority that cannot be derived safely from the repository remain
 
 Status: **RESOLVED** on 28 July 2026.
 
-The ignored local environment targets `bookswap-development` (`uibatsbzjswmtdvdrlxj`). The public key was verified as `anon`, the private test key as `service_role`, and neither value was printed or committed. The guarded matrix refuses any other project, creates temporary actors, exercises anonymous/owner/unrelated/banned/moderator/admin/stale-account behavior, and removes its fixtures.
+The ignored local environment targets the dedicated development project. The public key was verified as `anon`, the private test key as `service_role`, and neither value nor project identifier was printed or committed. The guarded matrix refuses any other project, creates temporary actors, exercises anonymous/owner/unrelated/banned/moderator/admin/stale-account behavior, and removes its fixtures.
 
 Completion evidence:
 
@@ -50,22 +50,44 @@ Supabase leaked-password protection is a paid-plan option. Choose one:
 
 No homemade leaked-password database is permitted. Optional CAPTCHA should be enabled only for high-risk anonymous Auth flows after provider, privacy basis, keys, and accessibility fallback are approved; the repository does not claim CAPTCHA is enabled.
 
+Observed 28 July 2026: the intended production project is active and reports leaked-password protection disabled. All other hosted Auth settings remain unverified. In Supabase Dashboard, open **Authentication > URL Configuration**, **Sign In / Providers > Email**, **Sessions**, **Rate Limits**, and **Attack Protection**; record settings without copying secrets. Set the production Site URL to the approved HTTPS canonical origin and permit only required production callback paths. Remove localhost/preview redirects from production unless an owner records a narrow reason. Enforce MFA for every administrator before public launch.
+
 ## DR-004 — Production operations ownership
 
-Status: production/deployment-only.
+Status: production/deployment-only. The intended production Supabase and Vercel projects are identified privately. Ownership, recovery, domain, alert, and release decisions remain open.
 
 Name the production Supabase/Vercel projects, domain, region/data-residency decision, deployment approver, incident commander, on-call/alert destination, log owner/retention, backup retention, restore target, support/privacy mailbox owners, moderation SLA, and secret-rotation owner. Verify backups and restore in production; repository procedures are not proof that either is enabled.
 
-## DR-005 — Optional provider credentials
+## DR-005 — Optional operational provider decisions
 
-Status: production/deployment-only unless the feature is enabled.
+Status: production/deployment-only. Core listing and chat safety requires no external AI/content-classification service or key.
 
 - Choose and configure a real error-monitoring/log destination, or retain provider-neutral structured platform logs.
-- Provide moderation credentials only if external automated moderation is approved; local rules remain available and provider failure stays fail-closed for protected content.
 - Provide Resend credentials only if notification email is enabled and templates/privacy/retention are approved.
 - Enable `WEB_VITALS_ENABLED=true` only after log access, retention, alert queries, and privacy scope are approved.
+- Enable CAPTCHA only after provider, privacy basis, keys, and an accessible fallback are approved for specific high-risk anonymous Auth flows.
 
 No fake DSN, token, or API key may be committed.
+
+## DR-006 — Production migration baseline and recovery approval
+
+Status: launch-blocking production decision.
+
+Production migration history and schema differ from the immutable repository migration set, and production is non-disposable. Before any schema write:
+
+1. In Supabase **Database > Backups**, record the actual available recovery options; do not claim Free-plan recovery that is not displayed.
+2. Create an encrypted logical export with the Supabase CLI/`pg_dump`, plus a separate `listing-images` object inventory/copy, and store both outside the project account.
+3. Restore into an isolated non-production project and run `supabase/tests/launch_readiness.sql`, row/count/integrity checks, and `npm.cmd run test:authorization`; delete only disposable restore-test fixtures.
+4. Compare the production baseline schema with the repository's initial migrations. Only after exact equivalence is reviewed, repair the migration-history baseline; never rerun table or type creation blindly.
+5. Approve and record the remaining ordered migration range, maintenance window, forward-fix owner, previous Vercel production deployment, and data-loss tolerance.
+
+No production reset is permitted.
+
+## DR-007 — Controlled production release approval
+
+Status: blocked until DR-002, DR-003, DR-004, and DR-006 are resolved. DR-005 services are optional and do not block launch when left disabled.
+
+In Vercel **Settings > Environment Variables**, verify by name only that Production has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `NEXT_PUBLIC_SITE_URL`. Confirm the Supabase values belong to the intended production project, keep the service role server-only, and do not reuse development values. Leave Git disconnected. After migrations/Auth/Storage/recovery/alerts and all repository gates pass, authorize one explicit deployment of a reviewed `main` commit through the controlled Vercel deployment tool. Record the resulting release evidence and retain the previously verified production release as the application rollback candidate, noting that an app rollback does not reverse database changes.
 
 ## Resolved product decisions
 
@@ -73,4 +95,8 @@ No fake DSN, token, or API key may be committed.
 - Payment, escrow, shipping, delivery, and handover are participant responsibilities.
 - Automated exchange matching, wanted-title matching, shelves, social reading, and edition intelligence are post-launch.
 - A dedicated `sale/exchange/both` schema is not included: the current product coherently supports sale, and no public copy promises a full exchange platform.
+- No AI/OpenAI service is part of launch. Listing/chat safety is deterministic and human-review-backed; it does not claim semantic image understanding.
+- Normal-user listings and messages are free. There is no commission, integrated payment, VIP listing, subscription/Pro tier, or display advertising at launch.
+- Paid listing promotion, professional seller plans, and direct sponsorships are future candidates only and are not implemented or promised.
+- Revisit monetization only after measurable listing supply, buyer activity, and seller demand exist; require a separate product/legal/fairness decision before implementation.
 - No paid service, production project, or deployment was authorized by this readiness run.

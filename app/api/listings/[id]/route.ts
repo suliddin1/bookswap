@@ -8,7 +8,6 @@ import { logServerError } from "@/lib/server-log";
 import { randomUUID } from "node:crypto";
 import {
   assertModerationApproved,
-  moderateAndRecordImage,
   moderateAndRecordText,
   planListingUpdateModeration,
 } from "@/lib/moderation";
@@ -90,8 +89,6 @@ export async function PATCH(
       currentStatus: existing.status,
       requestedStatus: input.status,
       textChanged: input.title !== undefined || input.description !== undefined,
-      currentImages: existing.images,
-      requestedImages: input.images,
     });
     if (moderationPlan.moderateText) {
       checks.push(
@@ -105,16 +102,6 @@ export async function PATCH(
             targetId: id,
           },
         ),
-      );
-    }
-    for (const imageUrl of moderationPlan.imageUrls) {
-      checks.push(
-        moderateAndRecordImage(supabase, imageUrl, {
-          actorId: user.id,
-          requestId,
-          surface: "listing_update",
-          targetId: id,
-        }),
       );
     }
     (await Promise.all(checks)).forEach(assertModerationApproved);

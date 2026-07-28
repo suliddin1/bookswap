@@ -1,8 +1,16 @@
 # QA evidence
 
-Evidence date: 2026-07-27 (Asia/Baku). Repository: D:\Codex Projects\2HandedBook, branch autonomous/bookswap-product, current slice base 0076d2a.
+Evidence date: 2026-07-28 (Asia/Baku). Repository: `C:\Users\Lenovo\Documents\2HandedBook`, branch `autonomous/bookswap-product`.
 
-No production database, deployment, remote branch, or protected secondary checkout was touched. The current account-mutation response-boundary slice made two additive code-level requester acknowledgement changes but no backend/database/Auth/row/Storage/provider/external mutation; all authenticated responses were browser-local fixtures, and the authorized development project remains in the clean state recorded by the query-plan slice. No credential was written to tracked files. Generated build and browser outputs remain ignored and are not part of the checkpoint.
+No production database, production deployment, migration, or Vercel Git setting was touched. No credential was written to tracked files. Generated build and browser diagnostics remained ignored and were removed after verification.
+
+## PR #2 profile/privacy hydration stabilization - current evidence
+
+PR #2 CI passed 27/28 Chromium tests and recorded React production error #418 in the profile/privacy cross-identity flow. GitHub retained no Playwright trace, screenshot, video, or other artifact for that run. CI-equivalent optimized-production reproduction proved the failure was real in the harness: the unchanged flow failed 4/10 with one worker, later failed 2/20 and 3/20 with one worker, and failed 2/8 with four workers. Navigation-aware error capture placed failures on the second or third viewport's `/profile` or `/user-rights` document. A focused authenticated `/user-rights` hydration test passed 20/20, showing that a clean first document had deterministic server/client markup and waited for the privacy form, empty history, and editable details control before asserting zero page/console errors.
+
+The concrete cause was test lifecycle contamination, not an application markup defect: one Playwright `page` was reused for four unrelated viewport cases while each profile and privacy document received a 200%-text `<style>` injection and was followed immediately by another full navigation. Under cached assets or parallel load, React could hydrate the next root while browser/test-owned root state from the reused document lifecycle was still settling, producing the host-root `HTML` mismatch. A temporary shared-auth/hydration application experiment did not stabilize the reused-page parallel run (6/8), so it was fully removed. Creating and closing one clean Playwright page per viewport retained every request, ownership, focus, 200%-text reflow, localization, and zero-error assertion while removing the invalid cross-viewport lifecycle coupling. With the application code restored, the corrected flow passed 8/8 with four workers; the dedicated hydration-ready regression passed 20/20 with four workers; and the complete Chromium suite passed 29/29 with four workers. No retry, sleep, skipped case, warning suppression, or weakened assertion was added.
+
+PR review also identified a backwards-compatibility display regression: the immutable moderation schema still permits legacy `unavailable`, `openai`, and `none` audit values, and existing reason/category values may remain in historical rows. Azerbaijani display labels were restored without restoring any AI runtime path, and focused unit assertions cover representative legacy outcome, provider, reason, and category values. The final local gate is format pass; lint pass with zero warnings; strict TypeScript pass; Vitest 59/59; static migration check 22/22; patched dependency baseline 7/7; environment identity guard pass; secret scan 188 repository files; optimized Next.js build pass with 39 generated pages; bundle budgets 5/5; and Chromium 29/29. Real backend authorization was not rerun because neither authorization code nor database policy changed; the previously verified development 10/10 result remains the canonical backend evidence.
 
 ## P1 profile-save and privacy-submission acknowledgement coverage - current evidence
 
@@ -682,3 +690,71 @@ Browser coverage includes mobile navigation, keyboard entry/focus, reduced motio
 - The suite used temporary seller, buyer, unrelated, banned, moderator-normal, admin, and stale identities and cleaned its fixtures. Keys stayed in ignored local files and were not printed or committed.
 - No production Supabase/Vercel project, data, domain, backup/restore, Auth paid control, MFA enforcement, CAPTCHA, provider alert, deployment, field performance, or production smoke was configured or verified.
 - Legal pages are structured Azerbaijani drafts; operator/contact/jurisdiction/age/retention/effective-date facts and counsel approval remain external launch blockers.
+
+## 2026-07-28 — Production infrastructure gate (authoritative current evidence)
+
+No production write, migration, fixture, Auth/Storage/environment setting change, Git reconnection, or deployment occurred. The gate stopped before irreversible work.
+
+### Production identity and live-state evidence
+
+- The intended production Supabase and Vercel projects were identified through authenticated, read-only checks and are separate from the guarded development environment.
+- The published release predates the launch-readiness branch. Vercel Git remains disconnected, and no release was created for the current repository state.
+- Production migration history and schema differ from the immutable repository migrations. Production is non-disposable; no row content or identity personal data was read.
+- Storage ownership policy alignment and hosted authentication controls, including administrator MFA and leaked-password protection, require owner verification.
+- Backup/PITR availability, encrypted logical export, Storage copy, and successful isolated restore evidence remain incomplete. Production migration execution was therefore prohibited by the repository gate.
+- Optional notification email is not enabled, and no external AI/content-classification provider is required by listing or chat launch flows.
+- Alert recipients, retention, uptime monitoring, canonical domain, and incident ownership remain unverified.
+
+### Fresh repository validation
+
+```text
+npm.cmd run format:check                 PASS — all matched files use Prettier
+npm.cmd run lint                         PASS — zero warnings
+npm.cmd run typecheck                    PASS — strict TypeScript, zero diagnostics
+npm.cmd test                             PASS — 3 files, 61/61 tests
+npm.cmd run test:database:static         PASS — 22 migrations
+npm.cmd run test:dependencies            PASS — 7 patched package locations
+npm.cmd run test:secrets                 PASS — 189 repository files
+npm.cmd run test:env -- --authorization  PASS — guarded development identity and key roles
+npm.cmd run test:authorization           PASS — real development backend, 10/10; fixtures cleaned
+npm.cmd run build                        PASS — Next 15.5.21, 40/40 pages
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 28/28
+```
+
+The first authorization invocation was blocked by sandbox network access before fixture creation; the authorized network rerun passed 10/10. `npm.cmd audit --audit-level=high` could not reach the registry in the sandbox, and the external retry was denied because transmitting the dependency tree to npm lacked separate payload authorization. The local patched-version baseline passed; no live advisory pass is claimed. Supabase CLI, Docker, Podman, and `psql` remain unavailable, so no local reset or isolated restore dry run was possible on this workstation.
+
+### Gate result
+
+**FAILED SAFELY / NO DEPLOYMENT.** Required blockers are migration-history reconciliation, encrypted backup plus isolated restore, hosted Auth/MFA/redirect verification, production variable scope/role verification, canonical domain, alert/incident ownership, post-deploy smoke/authorization evidence, and separate legal placeholder completion. External AI moderation credentials were removed by the later AI-free product-alignment iteration and are not a current blocker. The old production deployment remains unchanged and is the application rollback candidate only; no database rollback was needed.
+
+## 2026-07-28 — AI-free product alignment (authoritative current evidence)
+
+This section supersedes prior provider-moderation requirements. No production, deployment, remote Git, Vercel Git, migration, or schema operation occurred.
+
+### Runtime and product evidence
+
+- Removed the external moderation adapter, network request, key/configuration references, multimodal image checks, and unused authenticated `/api/moderate` preflight route.
+- Listing creation/publication and chat still run strict Zod validation, ownership/account checks, durable rate limits, and a content-minimized local-rule audit. Normal text is accepted without credentials or network access; one deliberately narrow rule rejects requests for CVV/PIN/OTP-style secrets.
+- Image content is not semantically classified. Existing upload controls still enforce authenticated owner path, count, size, MIME type, file signature, replacement/deletion ownership, and cleanup behavior.
+- Reports, admin-only moderation/removal/ban actions, appeals, RLS/grants, real authorization, and immutable admin audit boundaries are unchanged. The historical `moderation_decisions` table/migration remains immutable; current runtime writes only `local_rules` text outcomes.
+- Launch decisions now state that normal-user listings and messages are free; there is no commission, integrated payment, VIP listing, subscription/Pro tier, or display advertising. Paid listing promotion, professional seller plans, and direct sponsorships are future candidates only.
+
+### Final validation
+
+```text
+npm.cmd run format:check          PASS — all matched files use Prettier
+npm.cmd run lint                  PASS — zero warnings
+npm.cmd run typecheck             PASS — strict TypeScript, zero diagnostics
+npm.cmd test                      PASS — 3 files, 59/59 tests
+npm.cmd run test:database:static  PASS — 22 immutable migrations
+npm.cmd run test:dependencies     PASS — 7 patched package locations
+npm.cmd run test:secrets          PASS — 189 repository paths; deleted working-tree paths skipped safely
+npm.cmd run test:env              PASS — intended development ref; public/service-role presence guarded
+npm.cmd run test:authorization    PASS — real development backend 10/10; temporary fixtures cleaned
+OPENAI_API_KEY unset + npm build  PASS — Next 15.5.21, 39/39 pages; deleted preflight route absent
+npm.cmd run test:performance      PASS — 5/5 gzip budgets
+npm.cmd run test:e2e              PASS — Chromium 28/28
+```
+
+The first authorization and build attempts were blocked by sandbox network policy; approved reruns reached only the guarded development backend and existing Google font host and passed. The first E2E run found a real stale administrator-navigation label and was fixed. A later run encountered the previously documented intermittent React 418 in an unchanged profile test; no assertion was weakened, and the final complete 28-test suite passed. No live external dependency advisory query, production smoke test, semantic image review, or claim of comprehensive deterministic content understanding is included.

@@ -67,6 +67,16 @@ Vercel rollback restores application code/config version; it does not reverse da
 - Public production smoke and real-backend authorization matrix pass; production data is not used as test fixtures.
 - After representative traffic, evaluate mobile/desktop p75 LCP, CLS, and INP. Synthetic budget tests do not replace field evidence.
 
+## Observed production gate — 28 July 2026
+
+- The intended production database and hosting projects are separate from the guarded development environment.
+- Production is non-disposable, and its migration history/schema have not been reconciled with the immutable repository migrations.
+- Encrypted export, Storage copy, provider recovery, and successful isolated restore evidence remain incomplete. This fails the pre-migration gate.
+- Storage ownership policy alignment, hosted Auth controls, administrator MFA, and Vercel Production variable names/scopes require owner verification.
+- The existing production release predates the launch-readiness branch. Vercel Git remains disconnected, no custom domain is verified, and this change does not deploy or promote a release.
+- Listing/chat content checks are deterministic repository code and require no external AI key. Notification email remains disabled until its separately documented operational requirements are met.
+- The gate stopped before every production mutation. Follow DR-006 and DR-007 in `docs/ai/DECISION_REQUESTS.md`; do not deploy until backup/restore, migration baseline, Auth, Storage, variables, canonical domain, operational ownership, and legal facts are complete.
+
 ## Failed release and incident recovery
 
 - Contain: disable affected feature or roll back application; preserve audit/log evidence.

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type Route } from "@playwright/test";
 import { AZ_COPY } from "../../lib/i18n";
 
 async function horizontalOverflow(page: Page) {
@@ -1248,10 +1248,43 @@ test("profile and privacy controls expose keyboard focus and 200% reflow", async
   expect(await horizontalOverflow(page)).toEqual([]);
 });
 
-test("profile save and privacy submission reject cross-identity acknowledgements", async ({
+test("authenticated privacy controls hydrate before interaction", async ({
   page,
 }) => {
   await installAuthenticatedUiFixture(page);
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  let privacyGetCount = 0;
+
+  page.on("pageerror", (error) =>
+    pageErrors.push(error.stack ?? error.message),
+  );
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  await page.route("**/api/privacy-requests", async (route) => {
+    privacyGetCount += 1;
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ data: [] }),
+    });
+  });
+
+  await page.goto("/user-rights");
+  await expect(
+    page.getByRole("heading", { name: AZ_COPY.privacyRequests.recent }),
+  ).toBeVisible();
+  await expect(page.getByText(AZ_COPY.privacyRequests.empty)).toBeVisible();
+  await expect(page.getByLabel(AZ_COPY.privacyRequests.details)).toBeEditable();
+
+  expect(privacyGetCount).toBe(1);
+  expect(pageErrors).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
+test("profile save and privacy submission reject cross-identity acknowledgements", async ({
+  browser,
+}) => {
   const ownerId = "11111111-1111-4111-8111-111111111111";
   const wrongOwnerId = "99999999-9999-4999-8999-999999999999";
   const profileRequests: Array<Record<string, unknown>> = [];
@@ -1266,12 +1299,7 @@ test("profile save and privacy submission reject cross-identity acknowledgements
   const firstPrivacyGate = new Promise<void>((resolve) => {
     releasePrivacy = resolve;
   });
-  page.on("pageerror", (error) => pageErrors.push(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error") consoleErrors.push(message.text());
-  });
-
-  await page.route("**/api/profile", async (route) => {
+  const handleProfileRoute = async (route: Route) => {
     if (route.request().method() === "PATCH") {
       const submitted = JSON.parse(
         route.request().postData() ?? "{}",
@@ -1298,8 +1326,8 @@ test("profile save and privacy submission reject cross-identity acknowledgements
         },
       }),
     });
-  });
-  await page.route("**/api/privacy-requests", async (route) => {
+  };
+  const handlePrivacyRoute = async (route: Route) => {
     if (route.request().method() === "POST") {
       const submitted = JSON.parse(
         route.request().postData() ?? "{}",
@@ -1326,7 +1354,7 @@ test("profile save and privacy submission reject cross-identity acknowledgements
       contentType: "application/json",
       body: JSON.stringify({ data: [] }),
     });
-  });
+  };
 
   const viewports = [
     { width: 1440, height: 900 },
@@ -1337,7 +1365,20 @@ test("profile save and privacy submission reject cross-identity acknowledgements
 
   for (let index = 0; index < viewports.length; index += 1) {
     const viewport = viewports[index];
-    await page.setViewportSize(viewport);
+    const page = await browser.newPage({ viewport });
+    let navigationContext = `profile viewport ${index + 1}`;
+    await installAuthenticatedUiFixture(page);
+    page.on("pageerror", (error) =>
+      pageErrors.push(
+        `${navigationContext} (${new URL(page.url()).pathname}): ${error.stack ?? error.message}`,
+      ),
+    );
+    page.on("console", (message) => {
+      if (message.type() === "error") consoleErrors.push(message.text());
+    });
+    await page.route("**/api/profile", handleProfileRoute);
+    await page.route("**/api/privacy-requests", handlePrivacyRoute);
+
     await page.goto("/profile");
     await page.getByRole("tab", { name: AZ_COPY.profile.tabs.profile }).click();
     const nameInput = page.getByLabel(AZ_COPY.profile.name, { exact: true });
@@ -1368,6 +1409,7 @@ test("profile save and privacy submission reject cross-identity acknowledgements
     await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
     expect(await horizontalOverflow(page)).toEqual([]);
 
+    navigationContext = `privacy viewport ${index + 1}`;
     await page.goto("/user-rights");
     const details = page.getByLabel(AZ_COPY.privacyRequests.details);
     const submittedDetails = `Şəxsi məlumat sorğusu ${index + 1} üçün kifayət qədər ətraflı mətn.`;
@@ -1401,6 +1443,7 @@ test("profile save and privacy submission reject cross-identity acknowledgements
     expect(await horizontalOverflow(page)).toEqual([]);
     await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
     expect(await horizontalOverflow(page)).toEqual([]);
+    await page.close();
   }
 
   expect(profileRequests).toHaveLength(viewports.length);
@@ -2144,10 +2187,10 @@ test("administrator actions keep context, focus, targets, and 200% reflow", asyn
 
   const moderationLink = page
     .getByRole("navigation", { name: "İdarəetmə bölmələri" })
-    .getByRole("link", { name: "Avtomatlaşdırılmış moderasiya qərarları" });
+    .getByRole("link", { name: AZ_COPY.admin.contentRuleDecisions });
   await moderationLink.click();
   const moderationHeading = page.getByRole("heading", {
-    name: "Avtomatlaşdırılmış moderasiya qərarları",
+    name: AZ_COPY.admin.contentRuleDecisions,
   });
   await expect(moderationHeading).toBeFocused();
   expect(
