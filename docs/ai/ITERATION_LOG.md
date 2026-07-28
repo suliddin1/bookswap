@@ -1,5 +1,19 @@
 # Iteration log
 
+## 2026-07-28 - Profile/privacy hydration stabilization
+
+Goal / acceptance IDs: Build/accessibility/performance, Account/privacy, Authentication; permanently explain and stabilize the intermittent React hydration failure in PR #2 without weakening console/page-error assertions, ownership checks, or authenticated profile/privacy behavior.
+
+Ownership: root exclusively owns the affected profile/privacy Playwright flow, its real application-ready signal, narrowly related auth/session hydration behavior, focused regression evidence, and canonical QA/iteration updates. Database migrations, RLS, production Supabase, Vercel Production, Vercel Git connection, deployment, and unrelated product scope remain unchanged.
+
+Starting evidence: PR #2 CI passed every step except Chromium E2E, where the profile/privacy cross-identity test reached 27/28 and recorded React hydration error #418. No CI Playwright artifact was uploaded. The unchanged test had passed locally 28/28, but CI-equivalent production stress reproduced #418 alongside resource-pressure failures, and a one-worker 10-run isolation still reproduced #418 four times.
+
+Root cause and implementation: navigation-aware capture placed the mismatch on later `/profile` and `/user-rights` viewport documents while a focused clean-document hydration case passed 20/20. The test reused one Playwright page across four independent viewport cases, injected a 200%-text style into each root document, and immediately reused that lifecycle for the next full navigation. A temporary application-level shared-auth/hydration experiment did not stabilize the four-worker reused-page case and was removed. The permanent test now creates and closes one clean page per viewport, retaining all request, ownership, duplicate-action, focus, localization, reflow, disclosure, and zero-error checks. A focused regression waits for authenticated privacy history and editable form controls before asserting a single protected read and zero React/console errors. Diagnostic errors now include viewport/navigation and URL context without suppressing them.
+
+Review compatibility: legacy moderation audit values remain permitted by immutable schema and may exist in historical rows. Their Azerbaijani outcome/provider/reason/category labels and focused unit assertions were restored without restoring any AI runtime or provider dependency.
+
+Verification: corrected cross-identity flow 8/8 with four workers after the application experiment was removed; hydration-ready privacy regression 20/20 with four workers; full Chromium 29/29 with four workers; format, lint, strict TypeScript, Vitest 59/59, 22-migration static check, 7-package dependency baseline, guarded development environment, 188-file secret scan, 39-page optimized build, and 5/5 bundle budgets pass. Production Supabase, migrations, Vercel Production, and Vercel Git remain untouched.
+
 ## 2026-07-27 - Full non-deployment launch-readiness ownership
 
 Goal / acceptance IDs: all launch-critical non-deployment requirements, with particular ownership of P0-005, P1-001, P1-002, P1-005, P1-006, P1-010, P1-012, P1-013, P1-016, and P1-017; preserve every already completed product and safety contract while reclassifying advanced exchange, matching, wanted-list, shelf, social, and edition-intelligence work as post-launch unless a complete safe implementation already exists.

@@ -738,15 +738,21 @@ describe("marketplace input validation", () => {
       }),
     ).toContain(AZ_COPY.admin.unknownValue);
     expect(formatModerationOutcome("approved")).toBe("Təsdiqlənib");
+    expect(formatModerationOutcome("unavailable")).toBe(
+      "Yoxlama əlçatan olmayıb",
+    );
     expect(formatModerationSurface("chat_message")).toBe("Söhbət mesajı");
     expect(formatModerationContentType("image")).toBe("Şəkil");
     expect(formatModerationProvider("local_rules")).toBe("Yerli qaydalar");
+    expect(formatModerationProvider("openai")).toBe("OpenAI Moderations");
     expect(formatModerationReason("LOCAL_RULES_PASSED")).toContain(
       "yerli qaydalar",
     );
+    expect(formatModerationReason("PROVIDER_FLAGGED")).toContain("işarələyib");
     expect(formatModerationCategory("credential-theft")).toContain(
       "giriş məlumatı",
     );
+    expect(formatModerationCategory("violence")).toBe("Zorakılıq");
     expect(formatAdminAuditAction("unknown.action")).toBe(
       AZ_COPY.admin.unknownValue,
     );

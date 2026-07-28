@@ -69,12 +69,12 @@ Local `supabase db reset` remains unexecuted on this workstation because Docker/
 - Development environment identity and credential-role/project guard: pass without printing values
 - Migration static check: 22 migrations pass
 - Dependency patched-version baseline: 7/7 pass
-- Secret scan: 189 repository files pass
+- Secret scan: 188 repository files pass
 - Development database structural/behavioral checks: pass
 - Format/lint/strict TypeScript: pass
 - Production build: pass, 39/39 static pages generated
 - Bundle budgets: 5/5 pass
-- Chromium browser/E2E: 28/28 pass
+- Chromium browser/E2E: 29/29 pass, including isolated authenticated privacy hydration readiness and cross-identity profile/privacy coverage
 - Real multi-actor backend authorization: 10/10 pass against `uibatsbzjswmtdvdrlxj`; temporary fixtures cleaned
 
 ## Remaining external requirements

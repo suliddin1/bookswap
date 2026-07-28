@@ -865,6 +865,7 @@ const adminWorkflowStatusLabels: Record<string, string> = {
 const moderationOutcomeLabels: Record<string, string> = {
   approved: "Təsdiqlənib",
   rejected: "Rədd edilib",
+  unavailable: "Yoxlama əlçatan olmayıb",
 };
 
 const moderationSurfaceLabels: Record<string, string> = {
@@ -881,15 +882,39 @@ const moderationContentTypeLabels: Record<string, string> = {
 
 const moderationProviderLabels: Record<string, string> = {
   local_rules: "Yerli qaydalar",
+  openai: "OpenAI Moderations",
+  none: "Provayder yoxdur",
 };
 
 const moderationReasonLabels: Record<string, string> = {
   LOCAL_RULES_PASSED: "Dar yerli qaydalar pozuntu tapmayıb",
   SENSITIVE_AUTH_CODE_REQUEST: "Məxfi giriş kodu istəyi rədd edilib",
+  PROVIDER_NOT_CONFIGURED: "Moderasiya provayderi konfiqurasiya edilməyib",
+  LOCAL_MARKETPLACE_RULE: "BookSwap bazar qaydası ilə rədd edilib",
+  PROVIDER_APPROVED: "Provayder məzmunu təsdiqləyib",
+  PROVIDER_FLAGGED: "Provayder məzmunu işarələyib",
+  PROVIDER_RESPONSE_INVALID: "Provayder cavabı etibarsız olub",
+  PROVIDER_REQUEST_FAILED: "Provayder sorğusu uğursuz olub",
+  PROVIDER_RATE_LIMITED: "Provayder sorğu həddini tətbiq edib",
+  PROVIDER_UNREACHABLE: "Provayderlə əlaqə qurulmayıb",
+  PROVIDER_TIMED_OUT: "Provayder sorğusunun vaxtı bitib",
 };
 
 const moderationCategoryLabels: Record<string, string> = {
   "credential-theft": "Məxfi giriş məlumatı istəyi",
+  harassment: "Təqib",
+  "harassment/threatening": "Hədə-qorxu ilə təqib",
+  hate: "Nifrət məzmunu",
+  "hate/threatening": "Hədə-qorxu ilə nifrət məzmunu",
+  illicit: "Qanunsuz fəaliyyət",
+  "illicit/violent": "Zorakı qanunsuz fəaliyyət",
+  "self-harm": "Özünə zərər",
+  "self-harm/instructions": "Özünə zərər təlimatı",
+  "self-harm/intent": "Özünə zərər niyyəti",
+  sexual: "Seksual məzmun",
+  "sexual/minors": "Yetkinlik yaşına çatmayanlarla bağlı seksual məzmun",
+  violence: "Zorakılıq",
+  "violence/graphic": "Qrafik zorakılıq",
 };
 
 const apiErrorLabels: Record<string, string> = {
