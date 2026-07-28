@@ -689,14 +689,13 @@ No production write, migration, fixture, Auth/Storage/environment setting change
 
 ### Production identity and live-state evidence
 
-- Supabase project `bookswap`, ref `lnhublqrtkdrrafghvki`, region `eu-central-1`, status active/healthy, PostgreSQL 17.6; separate from guarded development ref `uibatsbzjswmtdvdrlxj`.
-- Current Vercel production deployment `dpl_3YJ15xSUXwLvT82Q2ZDc8E9BRR7f` is READY, target `production`, source SHA `941b0c75c0a952c3d68d4a0dee4a1fad541107e4`. Its deployed client bundle embeds `lnhublqrtkdrrafghvki`, confirming the intended production pairing without exposing a key.
-- Vercel aliases: `bookswap-fawn.vercel.app`, `bookswap-suliddin1s-projects.vercel.app`, `bookswap-git-main-suliddin1s-projects.vercel.app`. The public alias returns the old English 24-page release. No deployment exists for merged SHA `cf126c3c4a408007eacf7d337f485be69e23517c`; Git remains disconnected.
-- Production migration history: 2 legacy entries. Repository: 22 immutable files. Production currently has 8 public RLS tables, 23 public indexes, 28 public constraints, one Auth identity/profile, zero listings/messages/reviews/favorites/reports/notifications/Storage objects, and the expected `listing-images` bucket limits. No row content or identity PII was read.
-- Production Security Advisor: one warning, leaked-password protection disabled. Performance Advisor reports legacy per-row `auth.uid()` policy warnings plus unused-index information. These are superseded by unapplied repository migrations, not evidence the launch schema is present.
-- Organization plan: Free. No provider backup/PITR, encrypted logical export, Storage copy, or successful isolated restore was evidenced. Production migration execution was therefore prohibited by the repository gate.
-- No Supabase Edge Function is deployed in production or development. Optional notification email is not enabled.
-- Vercel seven-day grouped runtime query returned no runtime error clusters and one production HTTP 200 log. Alert recipients, retention, uptime monitoring, and incident ownership remain unverified.
+- The intended production Supabase and Vercel projects were identified through authenticated, read-only checks and are separate from the guarded development environment.
+- The published release predates the launch-readiness branch. Vercel Git remains disconnected, and no release was created for the current repository state.
+- Production migration history and schema differ from the immutable repository migrations. Production is non-disposable; no row content or identity personal data was read.
+- Storage ownership policy alignment and hosted authentication controls, including administrator MFA and leaked-password protection, require owner verification.
+- Backup/PITR availability, encrypted logical export, Storage copy, and successful isolated restore evidence remain incomplete. Production migration execution was therefore prohibited by the repository gate.
+- Optional notification email is not enabled, and no external AI/content-classification provider is required by listing or chat launch flows.
+- Alert recipients, retention, uptime monitoring, canonical domain, and incident ownership remain unverified.
 
 ### Fresh repository validation
 
