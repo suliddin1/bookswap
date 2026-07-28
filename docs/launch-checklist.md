@@ -29,7 +29,7 @@ Never run destructive authorization fixtures against production.
 
 ## Merge safety with Vercel Git integration
 
-The `bookswap` Vercel project is connected directly to `suliddin1/bookswap`. Repository history confirms that feature-branch pushes create Preview deployments and pushes to `main` create Production deployments. GitHub Actions performs validation only; it does not own the current Vercel deployment path.
+The `bookswap` Vercel project is connected directly to `suliddin1/bookswap`. Repository history confirms that feature-branch pushes create Preview deployments and pushes to `main` create Production deployments. GitHub Actions performs validation only; it does not own the current Vercel deployment path. CI uses non-secret public fixture values so mocked browser flows can initialize the Supabase client; it receives no service-role key and is not real-backend authorization evidence.
 
 Before merging a release PR when production publication is not authorized:
 

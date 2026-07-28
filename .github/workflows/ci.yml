@@ -8,6 +8,9 @@ on:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-fixture.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-fixture-public-anon-key
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
