@@ -1,19 +1,18 @@
 # BookSwap project state
 
-Updated: 28 July 2026
+Updated: 29 July 2026
 
 ## Current verdict
 
-**Not production-ready; conditionally non-deployment ready.** All identified safe repository-side launch-critical work is implemented, and the guarded real development authorization matrix passes. The remaining non-deployment launch blocker is owner/counsel-supplied legal facts and approval. The production gate was inspected on 28 July 2026 and failed before migration or deployment because backup/restore evidence, migration-history reconciliation, hosted Auth settings, required environment values, operational ownership, and post-deploy verification are incomplete. External AI/moderation credentials are no longer part of the product or launch gate.
+**Not production-ready; conditionally non-deployment ready.** All identified safe repository-side launch-critical work is implemented, and the guarded real development authorization matrix passes. The remaining non-deployment launch blocker is owner/counsel-supplied legal facts and approval. A production backup/migration rehearsal inspection on 29 July established the exact legacy history baseline and classified all 22 immutable migrations, but stopped before backup because no restorable export, managed Auth recovery, encrypted destination, or isolated restore could be produced in this environment. Hosted Auth settings, required environment values, operational ownership, and post-deploy verification also remain incomplete. External AI/moderation credentials are not part of the product or launch gate.
 
 ## Authoritative workspace and Git baseline
 
 - Writable repository: `C:\Users\Lenovo\Documents\2HandedBook`
 - Source restored from: `D:\Codex Projects\2HandedBook` (D was read-only and is not modified)
-- Branch: `autonomous/bookswap-product` (the merged tree is identical to `origin/main`; production-gate evidence is being prepared as a follow-up PR)
-- Continuation baseline: `5e36c584ca12780226f8b18ae7876335a0bbe82f`
-- Merged `main`: `cf126c3c4a408007eacf7d337f485be69e23517c` (PR #1 squash merge; GitHub Actions passed)
-- Readiness history: inspect `git log --oneline 5e36c58..HEAD`
+- Current local branch: `ops/production-migration-rehearsal`
+- Current baseline: clean `main` and `origin/main` at `6235bfeb115516e0a2180525c77d99443033bc60`
+- This branch is local-only; no push, PR, merge, deployment, or production mutation is authorized.
 
 ## Launch product scope
 
@@ -35,6 +34,7 @@ Automated exchange matching, wanted-title matching, reader shelves, social readi
 - Azerbaijani launch drafts for Terms, Privacy, Marketplace Rules, Safety, prohibited content, reporting/moderation, appeals, participant transaction responsibility, minors placeholder, account deletion/privacy, and accessible footer/sitemap links.
 - Local Supabase Postgres 17 config, repeatable static migration check, transactional SQL launch test, guarded real-backend authorization suite, dependency baseline, and repository secret scan.
 - Provider-neutral monitoring/incident guidance plus backup, restore, forward-fix, Vercel rollback, Storage, secret-rotation, and failed-release procedures.
+- Sanitized production inventory, exact legacy migration fingerprints, an ordered 22-migration risk classification, read-only precondition SQL, immutable fingerprint guard, and a backup/restore/reconciliation runbook. These are preparation, not recovery evidence.
 - AI-free content safety: deterministic boundary validation, one narrow credential-theft text rule, durable rate limits, existing upload checks, user reporting, admin review/removal/ban/audit, and no external content-classification request. Image content is not claimed to be semantically understood.
 
 ## Development Supabase status
@@ -42,7 +42,7 @@ Automated exchange matching, wanted-title matching, reader shelves, social readi
 - The guarded authorization environment is a dedicated, healthy non-production project.
 - Public local URL/key: correct and guarded; ignored `.env.local` is not committed
 - Service-role test key: available only in ignored `.env.test.local`; verified as `service_role` for the intended project and not committed
-- Remote migrations: 22, including both 28 July hardening migrations
+- Remote migrations: 22, including both 28 July hardening migrations; their stored SQL fingerprints match all repository files, but their remote timestamp versions were generated independently of repository filenames
 - Data: temporary authorization fixtures were cleaned; no production data was used
 - Security Advisor after migration: zero findings
 - Structural SQL: public tables without RLS = 0; launch constraints/indexes present; browser Storage mutation policies = 0; anon/authenticated rate-RPC execute = false; service-role execute = true; fixed search path present
@@ -55,9 +55,12 @@ Local `supabase db reset` remains unexecuted on this workstation because Docker/
 
 - The intended production database and hosting projects are separate from the guarded development environment.
 - The currently published release predates the launch-readiness branch. Vercel Git remains disconnected, no custom launch domain is verified, and this repository change does not promote a release.
-- Production migration history and schema have not been reconciled with the immutable repository migrations. Production is not disposable, so blind migration pushes and resets are prohibited.
+- Production contains two legacy history rows whose SQL fingerprints exactly match repository migrations 1 and 3. Migration 2 is unrecorded but its objects are already represented by the exact legacy initial schema. Migrations 4–22 are absent from production. This evidence supports a history-only baseline repair followed by 19 ordered migrations, but only after the same sequence passes on an isolated restore.
+- Sanitized aggregate inventory found PostgreSQL 17.6, one matching Auth/profile pair, no marketplace transaction rows, and an empty `listing-images` bucket. All migration precondition violation counts were zero. These observations lower data-conflict risk but do not replace a backup or maintenance-window rehearsal.
+- Production remains non-disposable. Blind migration pushes, migration-history edits without exact review, and every production reset are prohibited.
 - Storage ownership policy alignment, hosted authentication configuration, administrator MFA, leaked-password protection, network controls, and email delivery require owner verification.
-- Backup availability, encrypted export, Storage backup, and successful isolated restore evidence remain incomplete. No migration may proceed until the recovery gate is satisfied.
+- Default `supabase db dump` excludes managed `auth` and `storage` schemas. No logical archive/checksum, managed Auth recovery, encrypted off-project copy, or successful isolated restore exists. A zero-object Storage observation is inventory only, not a completed backup. No migration may proceed until the recovery gate is satisfied.
+- This workstation lacks the Supabase CLI, Docker/Podman, PostgreSQL client tools, a database connection secret, and an approved encrypted destination. The existing empty development project already has non-canonical 22-row history and was not authorized for reset/reprovision, so it was not used as a restore target.
 - Production environment variables must be verified by name, scope, and role without copying values into public records. Listing and chat safety require no external AI key.
 - Alert routing, retention, uptime evidence, incident ownership, canonical domain, and post-deploy verification remain incomplete.
 - Deployment gate result: **failed safely**. No migration, Auth/Storage setting change, environment mutation, Git reconnection, production deployment, production authorization fixture, or rollback was performed.
@@ -68,14 +71,15 @@ Local `supabase db reset` remains unexecuted on this workstation because Docker/
 - Unit/adversarial tests: 59/59 pass
 - Development environment identity and credential-role/project guard: pass without printing values
 - Migration static check: 22 migrations pass
+- Production rehearsal static guard: all 22 normalized fingerprints pass; read-only SQL/runbook required; zero backup artifacts in repository
 - Dependency baseline: 7/7 pinned security versions pass; the live production-only npm audit is 0, while the full development tree has 13 high findings that all trace to one newly published `brace-expansion` denial-of-service advisory in the ESLint-only toolchain. No compatible 1.x fix exists yet; the known development-only path is guarded and does not block launch.
-- Secret scan: 188 repository files pass
+- Secret scan: 192 repository files pass
 - Development database structural/behavioral checks: pass
 - Format/lint/strict TypeScript: pass
 - Production build: pass, 39/39 static pages generated
 - Bundle budgets: 5/5 pass
 - Chromium browser/E2E: 29/29 pass, including isolated authenticated privacy hydration readiness and cross-identity profile/privacy coverage
-- Real multi-actor backend authorization: 10/10 pass against `uibatsbzjswmtdvdrlxj`; temporary fixtures cleaned
+- Real multi-actor backend authorization: 10/10 pass against the guarded development project; temporary fixtures cleaned
 
 ## Remaining external requirements
 
@@ -83,6 +87,6 @@ Launch blockers:
 
 1. owner supplies legal identity/contact/age/retention/appeal facts, replaces placeholders, and obtains qualified counsel approval.
 
-Production/deployment-only requirements include project/domain/environment configuration, Auth dashboard controls and leaked-password decision, admin MFA enforcement, backup/restore evidence, alert routing, field performance, deployment, and production smoke/authorization verification. Optional email/CAPTCHA/telemetry services may remain disabled.
+Production/deployment-only requirements include a complete database/Auth/Storage backup and measured isolated restore, migration-history reconciliation rehearsal, project/domain/environment configuration, Auth dashboard controls and leaked-password decision, admin MFA enforcement, alert routing, field performance, deployment, and production smoke/authorization verification. Optional email/CAPTCHA/telemetry services may remain disabled.
 
 Exact actions are in `docs/ai/DECISION_REQUESTS.md`; prioritized status is in `docs/ai/ISSUE_QUEUE.md`.

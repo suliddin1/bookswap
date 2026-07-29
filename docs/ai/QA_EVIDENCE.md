@@ -800,3 +800,54 @@ npm.cmd run test:e2e              PASS — Chromium 28/28
 ```
 
 The first authorization and build attempts were blocked by sandbox network policy; approved reruns reached only the guarded development backend and existing Google font host and passed. The first E2E run found a real stale administrator-navigation label and was fixed. A later run encountered the previously documented intermittent React 418 in an unchanged profile test; no assertion was weakened, and the final complete 28-test suite passed. No live external dependency advisory query, production smoke test, semantic image review, or claim of comprehensive deterministic content understanding is included.
+
+## 2026-07-29 — Production backup and migration rehearsal inspection
+
+**Result: repository preparation PASS; recovery and migration rehearsal BLOCKED; production unchanged.** This section is aggregate/catalog evidence only. It contains no credential, project reference, personal row, object content, or backup artifact.
+
+### Read-only production evidence
+
+- PostgreSQL 17.6; database approximately 11 MB. One Auth account has one matching public profile. Listings, rooms, messages, reviews, notifications, favorites, and reports all have zero rows.
+- The public `listing-images` bucket has a 5 MiB JPEG/PNG/WebP configuration and zero objects/bytes. This is an inventory observation, not a Storage copy or completed backup.
+- Every observed public application table has RLS enabled. Production retains the legacy grants/policies and does not yet contain migrations 4–22.
+- All aggregate migration preconditions returned zero violations: Auth/profile correspondence; user and listing bounds; room participant/seller integrity; favorite visibility; report reason/target/duplicate-open groups; review comment length; and Storage objects.
+- Security Advisor still reports leaked-password protection disabled. Performance Advisor reports legacy `auth.uid()` init-plan opportunities and unused indexes; no advisor fix was applied.
+
+### History fingerprint evidence
+
+- Legacy production version `20260615051127` (`bookswap_initial_schema`) normalizes to 6819 characters and SHA-256 `95c30fe9550a05fbc9edf0daff61d1960931955a82b6709bbde54251b4f76968`, exactly matching repository `202606140001_init.sql`.
+- Legacy production version `20260615051302` (`production_hardening`) normalizes to 916 characters and SHA-256 `2903172dd9d5bb97cd01eaba88c8e56a779c4adeef1f7ebf3140286bc17a7362`, exactly matching repository `202606150001_production_hardening.sql`.
+- Repository `202606140002_marketplace_upgrade.sql` is not recorded remotely, but its catalog effects are already represented in the exact legacy initial schema. Its normalized SHA-256 is `1bd601d9fdf05aded9fe03881acacbd8ff224203e0a5d883120607daa2a8253e`.
+- The development project records all 22 migration names under generated timestamp versions; every stored normalized SQL fingerprint exactly matches its repository file. This supports, but does not prove, earlier invocation-time version assignment as the mismatch cause.
+- Reconciliation design: on an isolated restore only, mark the two legacy versions reverted; mark canonical migrations 1–3 applied after a second equivalence review; require `db push --dry-run` to show exactly the remaining 19 files; then apply migrations 4–22 in immutable order.
+
+### Backup/restore blockers and non-actions
+
+- Supabase CLI, Docker/Podman, PostgreSQL client tools, a database connection secret, and an approved encrypted off-repository destination are unavailable on this workstation.
+- Default `supabase db dump` excludes managed `auth` and `storage`; with one Auth account present, a public-schema dump alone would not prove recovery.
+- An empty non-production project was observed but not used: it already contains a non-canonical 22-row history and no reset/reprovision was authorized. No paid project was created.
+- No database archive, checksum, encryption proof, object copy, isolated restore, Auth recovery, migration-history repair, dry run, migration application, RPO/RTO measurement, production fixture, DDL/DML, Auth/Storage change, Vercel change, deploy, push, PR, or merge occurred.
+
+### Repository artifacts and final validation
+
+- Added the sanitized assessment `docs/ai/PRODUCTION_MIGRATION_REHEARSAL.md`, operator procedure `docs/production-migration-runbook.md`, read-only aggregate SQL `supabase/tests/production_rehearsal_read_only.sql`, and deterministic 22-fingerprint/backup-artifact guard `scripts/check-production-rehearsal.mjs`.
+- Existing 22 migration SQL files, generated database types, application/API code, package lock, Supabase/Vercel settings, and remote systems were unchanged.
+
+```text
+npm.cmd run format:check                 PASS — all matched files use Prettier
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 59/59 tests
+npm.cmd run test:database:static         PASS — 22 immutable migrations
+npm.cmd run test:production-rehearsal    PASS — 22 fingerprints; 0 repo backup artifacts
+npm.cmd run test:dependencies            PASS — 7 pinned package locations; known dev-only advisory unchanged
+npm.cmd run test:secrets                 PASS — 192 repository files
+npm.cmd run test:env -- --authorization  PASS — guarded development identity/roles
+npm.cmd run test:authorization           PASS — guarded development backend 10/10; fixtures cleaned
+npm.cmd run build                        PASS — Next 15.5.21, 39/39 pages
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 29/29
+git diff --check                         PASS
+```
+
+The first authorization invocation was blocked by sandbox network access before fixture creation. The approved network rerun targeted only the guarded development backend and passed 10/10 with cleanup. No SQL restore test or PostgreSQL parse/execute proof is claimed because the required database tools and isolated target were unavailable.
