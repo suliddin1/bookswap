@@ -1,6 +1,6 @@
 # Non-deployment and production launch checklist
 
-Updated: 28 July 2026
+Updated: 29 July 2026
 
 This document separates repository-prepared procedures from production facts that an owner must verify. A checked repository item is never evidence that production infrastructure is enabled.
 
@@ -12,6 +12,7 @@ This document separates repository-prepared procedures from production facts tha
 - Require zero Supabase Security Advisor findings. Treat unused-index notices on an empty development database as non-actionable until representative traffic exists.
 - Require all legal placeholders to be replaced and counsel-reviewed.
 - Inspect `git diff`, generated artifacts, ignored env files, and the final secret scan; commit locally only after all achievable gates pass.
+- Run `npm run test:production-rehearsal`; preserve all backup files outside the repository. Follow `docs/production-migration-runbook.md` for the isolated exercise.
 
 ## Pre-migration backup and change control
 
@@ -20,8 +21,8 @@ Before any production migration, the owner must:
 1. identify the exact project ref and migration range;
 2. stop concurrent schema changes and record approver/ticket;
 3. verify the provider backup/PITR setting and most recent successful recovery point;
-4. create a logical schema/data export using the approved Supabase CLI or `pg_dump` process, encrypt it, and store it outside the database account;
-5. separately inventory Storage objects because database backup does not by itself prove file-object recovery;
+4. create a logical schema/data export using the approved Supabase CLI and a PostgreSQL 17 full logical archive, checksum and encrypt them, and store them outside the database account; default `supabase db dump` excludes managed `auth` and `storage`, so separately prove managed Auth recovery;
+5. separately inventory/copy Storage objects because database metadata does not by itself prove file-object recovery; a zero-object observation needs a signed manifest but is not a database backup;
 6. restore the backup into an isolated non-production target and run row-count, foreign-key, RLS, authorization, and application smoke checks;
 7. apply migrations in filename order and run `supabase/tests/launch_readiness.sql` plus targeted post-migration queries.
 
@@ -29,7 +30,7 @@ Never run destructive authorization fixtures against production.
 
 ## Merge safety with Vercel Git integration
 
-The `bookswap` Vercel project is connected directly to `suliddin1/bookswap`. Repository history confirms that feature-branch pushes create Preview deployments and pushes to `main` create Production deployments. GitHub Actions performs validation only; it does not own the current Vercel deployment path. CI uses non-secret public fixture values so mocked browser flows can initialize the Supabase client; it receives no service-role key and is not real-backend authorization evidence.
+The `bookswap` Vercel project was historically connected directly to `suliddin1/bookswap`, but the Git integration is currently disconnected. Repository history confirms that while connected, feature-branch pushes created Preview deployments and pushes to `main` created Production deployments. GitHub Actions performs validation only; it does not own the current Vercel deployment path. CI uses non-secret public fixture values so mocked browser flows can initialize the Supabase client; it receives no service-role key and is not real-backend authorization evidence.
 
 Before merging a release PR when production publication is not authorized:
 
@@ -76,6 +77,14 @@ Vercel rollback restores application code/config version; it does not reverse da
 - The existing production release predates the launch-readiness branch. Vercel Git remains disconnected, no custom domain is verified, and this change does not deploy or promote a release.
 - Listing/chat content checks are deterministic repository code and require no external AI key. Notification email remains disabled until its separately documented operational requirements are met.
 - The gate stopped before every production mutation. Follow DR-006 and DR-007 in `docs/ai/DECISION_REQUESTS.md`; do not deploy until backup/restore, migration baseline, Auth, Storage, variables, canonical domain, operational ownership, and legal facts are complete.
+
+## Production migration rehearsal inspection — 29 July 2026
+
+- Read-only normalized fingerprints prove the legacy history entries match the repository's reviewed initial baseline. An intermediate repository migration is not recorded separately, but its catalog effects are already represented by that baseline.
+- Production lacks the later ordered hardening migrations. The reviewed plan is history-only canonical baselining for the initial set, followed by only the remaining ordered migrations—first on an isolated restore, never by blind production push.
+- Production aggregate preconditions showed internally consistent Auth/profile state and no reviewed data conflicts; no Storage object content existed at inspection time. State can change and must be rerun immediately before backup/rehearsal/production.
+- No backup file, checksum, encryption artifact, managed Auth recovery, isolated restore, migration repair, migration application, smoke test, or measured RPO/RTO was produced. The gate remains failed.
+- Follow `docs/production-migration-runbook.md` and `docs/ai/PRODUCTION_MIGRATION_REHEARSAL.md`. No production reset, fixture, deployment, or Git reconnection is permitted by this evidence work.
 
 ## Failed release and incident recovery
 

@@ -24,6 +24,7 @@
     "test:env": "node scripts/validate-development-env.mjs",
     "test:authorization": "node scripts/run-authorization-tests.mjs",
     "test:database:static": "node scripts/check-migrations.mjs",
+    "test:production-rehearsal": "node scripts/check-production-rehearsal.mjs",
     "test:dependencies": "node scripts/check-dependency-security.mjs",
     "test:secrets": "node scripts/check-secrets.mjs",
     "test:performance": "node scripts/check-performance-budgets.mjs",

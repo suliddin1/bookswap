@@ -1,6 +1,6 @@
 # QA evidence
 
-Evidence date: 2026-07-28 (Asia/Baku). Repository: `C:\Users\Lenovo\Documents\2HandedBook`, branch `main`.
+Evidence date: 2026-07-28 (Asia/Baku). Repository: authoritative BookSwap checkout, branch `main`.
 
 No production database, production deployment, migration, or Vercel Git setting was touched. No credential was written to tracked files. Generated build and browser diagnostics remained ignored and were removed after verification.
 
@@ -670,7 +670,7 @@ This section supersedes earlier current-status/blocker summaries in this histori
 
 ### Environment and repository
 
-- Writable repository: `C:\Users\Lenovo\Documents\2HandedBook`; read-only D source was not modified.
+- Authoritative BookSwap checkout was writable; the separate source checkout remained read-only and untouched.
 - Branch/baseline: `autonomous/bookswap-product` from `5e36c584ca12780226f8b18ae7876335a0bbe82f`.
 - `npm run test:env -- --authorization` passed with project name `bookswap-development`, ref `uibatsbzjswmtdvdrlxj`, correct public configuration, and both required key roles present. No values were printed.
 - `npm run test:authorization` passed 10/10 against the real development backend. The exact-project confirmation guard remained active, and temporary fixtures were cleaned.
@@ -800,3 +800,53 @@ npm.cmd run test:e2e              PASS — Chromium 28/28
 ```
 
 The first authorization and build attempts were blocked by sandbox network policy; approved reruns reached only the guarded development backend and existing Google font host and passed. The first E2E run found a real stale administrator-navigation label and was fixed. A later run encountered the previously documented intermittent React 418 in an unchanged profile test; no assertion was weakened, and the final complete 28-test suite passed. No live external dependency advisory query, production smoke test, semantic image review, or claim of comprehensive deterministic content understanding is included.
+
+## 2026-07-29 — Production backup and migration rehearsal inspection
+
+**Result: repository preparation PASS; recovery and migration rehearsal BLOCKED; production unchanged.** This section is aggregate/catalog evidence only. It contains no credential, project reference, personal row, object content, or backup artifact.
+
+### Read-only production evidence
+
+- PostgreSQL major version aligns with the repository target, the footprint is small, and aggregate Auth/profile correspondence is internally consistent. No current rows conflicted with the reviewed migration preconditions.
+- No Storage object content existed at inspection time. This is an inventory observation, not a Storage copy or completed backup; bucket configuration still requires post-rehearsal verification.
+- Every observed public application table has RLS enabled. Production retains the legacy grants/policies and does not yet contain migrations 4–22.
+- All aggregate migration preconditions returned zero violations: Auth/profile correspondence; user and listing bounds; room participant/seller integrity; favorite visibility; report reason/target/duplicate-open groups; review comment length; and Storage objects.
+- Platform advisors still require hosted Auth and legacy performance/security configuration review; no advisor-driven change was applied.
+
+### History fingerprint evidence
+
+- Two legacy production history entries have exact normalized SQL matches to the repository's initial-schema and production-hardening migrations. Exact remote history versions and observed fingerprints are retained only in private operator evidence.
+- Repository `202606140002_marketplace_upgrade.sql` is not recorded separately, but its catalog effects are already represented in the exact legacy initial schema.
+- The development project records all 22 migration names under generated timestamp versions; every stored normalized SQL fingerprint exactly matches its repository file. This supports, but does not prove, earlier invocation-time version assignment as the mismatch cause.
+- Reconciliation design: on an isolated restore only, use privately verified legacy versions to repair history; mark the three canonical baseline migrations applied after a second equivalence review; require `db push --dry-run` to show only the remaining ordered files; then apply them in immutable order.
+
+### Backup/restore blockers and non-actions
+
+- The rehearsal environment lacked the required Supabase/PostgreSQL tools, secure database connection, and approved encrypted off-repository destination.
+- Default `supabase db dump` excludes managed `auth` and `storage`; with one Auth account present, a public-schema dump alone would not prove recovery.
+- An existing non-production environment was not used because reset/reprovision was not authorized. No paid project was created.
+- No database archive, checksum, encryption proof, object copy, isolated restore, Auth recovery, migration-history repair, dry run, migration application, RPO/RTO measurement, production fixture, DDL/DML, Auth/Storage change, Vercel change, deploy, push, PR, or merge occurred.
+
+### Repository artifacts and final validation
+
+- Added the sanitized assessment `docs/ai/PRODUCTION_MIGRATION_REHEARSAL.md`, operator procedure `docs/production-migration-runbook.md`, read-only aggregate SQL `supabase/tests/production_rehearsal_read_only.sql`, and deterministic 22-fingerprint/backup-artifact guard `scripts/check-production-rehearsal.mjs`.
+- Existing 22 migration SQL files, generated database types, application/API code, package lock, Supabase/Vercel settings, and remote systems were unchanged.
+
+```text
+npm.cmd run format:check                 PASS — all matched files use Prettier
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 59/59 tests
+npm.cmd run test:database:static         PASS — 22 immutable migrations
+npm.cmd run test:production-rehearsal    PASS — 22 fingerprints; 0 repo backup artifacts
+npm.cmd run test:dependencies            PASS — 7 pinned package locations; known dev-only advisory unchanged
+npm.cmd run test:secrets                 PASS — 192 repository files
+npm.cmd run test:env -- --authorization  PASS — guarded development identity/roles
+npm.cmd run test:authorization           PASS — guarded development backend 10/10; fixtures cleaned
+npm.cmd run build                        PASS — Next 15.5.21, 39/39 pages
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 29/29
+git diff --check                         PASS
+```
+
+The first authorization invocation was blocked by sandbox network access before fixture creation. The approved network rerun targeted only the guarded development backend and passed 10/10 with cleanup. No SQL restore test or PostgreSQL parse/execute proof is claimed because the required database tools and isolated target were unavailable.

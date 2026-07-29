@@ -1,6 +1,6 @@
 # Owner decisions and external actions
 
-Updated: 28 July 2026
+Updated: 29 July 2026
 
 Only facts or authority that cannot be derived safely from the repository remain here. Exchange matching, wanted titles, reader shelves, and social reading are intentionally post-launch and require no launch decision.
 
@@ -73,15 +73,19 @@ No fake DSN, token, or API key may be committed.
 
 Status: launch-blocking production decision.
 
-Production migration history and schema differ from the immutable repository migration set, and production is non-disposable. Before any schema write:
+Read-only evidence now identifies the mismatch precisely. Production's legacy migration SQL exactly fingerprint-matches the reviewed repository baseline; an intermediate migration is not recorded separately, but its effects are already represented in the initial schema. Later ordered hardening migrations remain unapplied. The development project's stored SQL also matches the repository files while its timestamp versions differ, supporting an invocation-time versioning root-cause inference. Production is non-disposable, and no history repair or schema write has occurred.
+
+Before any schema write:
 
 1. In Supabase **Database > Backups**, record the actual available recovery options; do not claim Free-plan recovery that is not displayed.
-2. Create an encrypted logical export with the Supabase CLI/`pg_dump`, plus a separate `listing-images` object inventory/copy, and store both outside the project account.
-3. Restore into an isolated non-production project and run `supabase/tests/launch_readiness.sql`, row/count/integrity checks, and `npm.cmd run test:authorization`; delete only disposable restore-test fixtures.
-4. Compare the production baseline schema with the repository's initial migrations. Only after exact equivalence is reviewed, repair the migration-history baseline; never rerun table or type creation blindly.
-5. Approve and record the remaining ordered migration range, maintenance window, forward-fix owner, previous Vercel production deployment, and data-loss tolerance.
+2. Provide a PostgreSQL 17/Docker-capable operator environment, database connection secret through the approved secret manager, an encrypted destination outside the repository/project account, and an approved fresh/disposable restore target. Do not send secrets in chat.
+3. Create and checksum the portable logical bundle and a full logical archive. Default `supabase db dump` excludes managed `auth` and `storage`; separately prove provider-supported Auth recovery. Create a separate `listing-images` inventory/copy even when the signed inventory is zero objects.
+4. Restore into an isolated target, compare counts/checksums/Auth profiles, and verify the legacy SQL fingerprints with `supabase/tests/production_rehearsal_read_only.sql`.
+5. On that target only, use privately verified legacy versions to repair history and mark the reviewed canonical baseline applied. Require `supabase db push --dry-run` to list only the remaining ordered migrations, then rehearse them in filename order.
+6. Run SQL structure/integrity/advisor checks, restored Auth and at least two-user authorization, and application smoke; record measured RPO/RTO. Delete only disposable rehearsal fixtures.
+7. Approve and record the production maintenance window, write freeze, forward-fix owner, previous Vercel production deployment, and data-loss tolerance.
 
-No production reset is permitted.
+Follow `docs/production-migration-runbook.md` and the sanitized evidence in `docs/ai/PRODUCTION_MIGRATION_REHEARSAL.md`. No production reset is permitted. An existing development project is never automatically disposable; reset/reprovision requires explicit owner approval and private history verification.
 
 ## DR-007 — Controlled production release approval
 

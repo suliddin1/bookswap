@@ -6,6 +6,11 @@ test-results
 .playwright
 coverage
 .npm-cache
+backups
+*.backup
+*.dump
+*.gpg
+*.7z
 .DS_Store
 *.tsbuildinfo
 
