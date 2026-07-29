@@ -80,9 +80,9 @@ Vercel rollback restores application code/config version; it does not reverse da
 
 ## Production migration rehearsal inspection — 29 July 2026
 
-- Read-only normalized fingerprints prove the two legacy history rows are exact SQL matches for repository migrations 1 and 3. Migration 2 is not recorded, but its catalog effects are already represented by the exact legacy initial schema.
-- Production lacks migrations 4–22. The reviewed plan is history-only canonical baselining for migrations 1–3, followed by exactly 19 ordered migrations—first on an isolated restore, never by blind production push.
-- Production aggregate preconditions are currently clean: one matching Auth/profile pair, no marketplace transaction rows, zero migration constraint violations, and zero Storage objects. Counts can change and must be rerun immediately before backup/rehearsal/production.
+- Read-only normalized fingerprints prove the legacy history entries match the repository's reviewed initial baseline. An intermediate repository migration is not recorded separately, but its catalog effects are already represented by that baseline.
+- Production lacks the later ordered hardening migrations. The reviewed plan is history-only canonical baselining for the initial set, followed by only the remaining ordered migrations—first on an isolated restore, never by blind production push.
+- Production aggregate preconditions showed internally consistent Auth/profile state and no reviewed data conflicts; no Storage object content existed at inspection time. State can change and must be rerun immediately before backup/rehearsal/production.
 - No backup file, checksum, encryption artifact, managed Auth recovery, isolated restore, migration repair, migration application, smoke test, or measured RPO/RTO was produced. The gate remains failed.
 - Follow `docs/production-migration-runbook.md` and `docs/ai/PRODUCTION_MIGRATION_REHEARSAL.md`. No production reset, fixture, deployment, or Git reconnection is permitted by this evidence work.
 

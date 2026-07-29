@@ -6,13 +6,11 @@ Updated: 29 July 2026
 
 **Not production-ready; conditionally non-deployment ready.** All identified safe repository-side launch-critical work is implemented, and the guarded real development authorization matrix passes. The remaining non-deployment launch blocker is owner/counsel-supplied legal facts and approval. A production backup/migration rehearsal inspection on 29 July established the exact legacy history baseline and classified all 22 immutable migrations, but stopped before backup because no restorable export, managed Auth recovery, encrypted destination, or isolated restore could be produced in this environment. Hosted Auth settings, required environment values, operational ownership, and post-deploy verification also remain incomplete. External AI/moderation credentials are not part of the product or launch gate.
 
-## Authoritative workspace and Git baseline
+## Authoritative repository and Git baseline
 
-- Writable repository: `C:\Users\Lenovo\Documents\2HandedBook`
-- Source restored from: `D:\Codex Projects\2HandedBook` (D was read-only and is not modified)
-- Current local branch: `ops/production-migration-rehearsal`
-- Current baseline: clean `main` and `origin/main` at `6235bfeb115516e0a2180525c77d99443033bc60`
-- This branch is local-only; no push, PR, merge, deployment, or production mutation is authorized.
+- Authoritative repository: the current BookSwap GitHub checkout
+- The rehearsal evidence was prepared on a focused branch from a synchronized, clean `main` baseline.
+- Publishing or merging the documentation does not authorize deployment, Vercel Git reconnection, backup/restore execution, or any production mutation.
 
 ## Launch product scope
 
@@ -56,11 +54,11 @@ Local `supabase db reset` remains unexecuted on this workstation because Docker/
 - The intended production database and hosting projects are separate from the guarded development environment.
 - The currently published release predates the launch-readiness branch. Vercel Git remains disconnected, no custom launch domain is verified, and this repository change does not promote a release.
 - Production contains two legacy history rows whose SQL fingerprints exactly match repository migrations 1 and 3. Migration 2 is unrecorded but its objects are already represented by the exact legacy initial schema. Migrations 4–22 are absent from production. This evidence supports a history-only baseline repair followed by 19 ordered migrations, but only after the same sequence passes on an isolated restore.
-- Sanitized aggregate inventory found PostgreSQL 17.6, one matching Auth/profile pair, no marketplace transaction rows, and an empty `listing-images` bucket. All migration precondition violation counts were zero. These observations lower data-conflict risk but do not replace a backup or maintenance-window rehearsal.
+- Sanitized aggregate inventory found a small legacy baseline with internally consistent Auth/profile state, no observed migration-precondition conflicts, and no Storage object content at inspection time. These observations lower data-conflict risk but do not replace a backup or maintenance-window rehearsal.
 - Production remains non-disposable. Blind migration pushes, migration-history edits without exact review, and every production reset are prohibited.
 - Storage ownership policy alignment, hosted authentication configuration, administrator MFA, leaked-password protection, network controls, and email delivery require owner verification.
 - Default `supabase db dump` excludes managed `auth` and `storage` schemas. No logical archive/checksum, managed Auth recovery, encrypted off-project copy, or successful isolated restore exists. A zero-object Storage observation is inventory only, not a completed backup. No migration may proceed until the recovery gate is satisfied.
-- This workstation lacks the Supabase CLI, Docker/Podman, PostgreSQL client tools, a database connection secret, and an approved encrypted destination. The existing empty development project already has non-canonical 22-row history and was not authorized for reset/reprovision, so it was not used as a restore target.
+- The rehearsal environment lacked the required Supabase/PostgreSQL tooling, secure database connection, approved encrypted destination, and approved clean restore target. The existing development environment was not authorized for reset/reprovision and was not used as a restore target.
 - Production environment variables must be verified by name, scope, and role without copying values into public records. Listing and chat safety require no external AI key.
 - Alert routing, retention, uptime evidence, incident ownership, canonical domain, and post-deploy verification remain incomplete.
 - Deployment gate result: **failed safely**. No migration, Auth/Storage setting change, environment mutation, Git reconnection, production deployment, production authorization fixture, or rollback was performed.

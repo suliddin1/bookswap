@@ -1,6 +1,6 @@
 # QA evidence
 
-Evidence date: 2026-07-28 (Asia/Baku). Repository: `C:\Users\Lenovo\Documents\2HandedBook`, branch `main`.
+Evidence date: 2026-07-28 (Asia/Baku). Repository: authoritative BookSwap checkout, branch `main`.
 
 No production database, production deployment, migration, or Vercel Git setting was touched. No credential was written to tracked files. Generated build and browser diagnostics remained ignored and were removed after verification.
 
@@ -670,7 +670,7 @@ This section supersedes earlier current-status/blocker summaries in this histori
 
 ### Environment and repository
 
-- Writable repository: `C:\Users\Lenovo\Documents\2HandedBook`; read-only D source was not modified.
+- Authoritative BookSwap checkout was writable; the separate source checkout remained read-only and untouched.
 - Branch/baseline: `autonomous/bookswap-product` from `5e36c584ca12780226f8b18ae7876335a0bbe82f`.
 - `npm run test:env -- --authorization` passed with project name `bookswap-development`, ref `uibatsbzjswmtdvdrlxj`, correct public configuration, and both required key roles present. No values were printed.
 - `npm run test:authorization` passed 10/10 against the real development backend. The exact-project confirmation guard remained active, and temporary fixtures were cleaned.
@@ -807,25 +807,24 @@ The first authorization and build attempts were blocked by sandbox network polic
 
 ### Read-only production evidence
 
-- PostgreSQL 17.6; database approximately 11 MB. One Auth account has one matching public profile. Listings, rooms, messages, reviews, notifications, favorites, and reports all have zero rows.
-- The public `listing-images` bucket has a 5 MiB JPEG/PNG/WebP configuration and zero objects/bytes. This is an inventory observation, not a Storage copy or completed backup.
+- PostgreSQL major version aligns with the repository target, the footprint is small, and aggregate Auth/profile correspondence is internally consistent. No current rows conflicted with the reviewed migration preconditions.
+- No Storage object content existed at inspection time. This is an inventory observation, not a Storage copy or completed backup; bucket configuration still requires post-rehearsal verification.
 - Every observed public application table has RLS enabled. Production retains the legacy grants/policies and does not yet contain migrations 4–22.
 - All aggregate migration preconditions returned zero violations: Auth/profile correspondence; user and listing bounds; room participant/seller integrity; favorite visibility; report reason/target/duplicate-open groups; review comment length; and Storage objects.
-- Security Advisor still reports leaked-password protection disabled. Performance Advisor reports legacy `auth.uid()` init-plan opportunities and unused indexes; no advisor fix was applied.
+- Platform advisors still require hosted Auth and legacy performance/security configuration review; no advisor-driven change was applied.
 
 ### History fingerprint evidence
 
-- Legacy production version `20260615051127` (`bookswap_initial_schema`) normalizes to 6819 characters and SHA-256 `95c30fe9550a05fbc9edf0daff61d1960931955a82b6709bbde54251b4f76968`, exactly matching repository `202606140001_init.sql`.
-- Legacy production version `20260615051302` (`production_hardening`) normalizes to 916 characters and SHA-256 `2903172dd9d5bb97cd01eaba88c8e56a779c4adeef1f7ebf3140286bc17a7362`, exactly matching repository `202606150001_production_hardening.sql`.
-- Repository `202606140002_marketplace_upgrade.sql` is not recorded remotely, but its catalog effects are already represented in the exact legacy initial schema. Its normalized SHA-256 is `1bd601d9fdf05aded9fe03881acacbd8ff224203e0a5d883120607daa2a8253e`.
+- Two legacy production history entries have exact normalized SQL matches to the repository's initial-schema and production-hardening migrations. Exact remote history versions and observed fingerprints are retained only in private operator evidence.
+- Repository `202606140002_marketplace_upgrade.sql` is not recorded separately, but its catalog effects are already represented in the exact legacy initial schema.
 - The development project records all 22 migration names under generated timestamp versions; every stored normalized SQL fingerprint exactly matches its repository file. This supports, but does not prove, earlier invocation-time version assignment as the mismatch cause.
-- Reconciliation design: on an isolated restore only, mark the two legacy versions reverted; mark canonical migrations 1–3 applied after a second equivalence review; require `db push --dry-run` to show exactly the remaining 19 files; then apply migrations 4–22 in immutable order.
+- Reconciliation design: on an isolated restore only, use privately verified legacy versions to repair history; mark the three canonical baseline migrations applied after a second equivalence review; require `db push --dry-run` to show only the remaining ordered files; then apply them in immutable order.
 
 ### Backup/restore blockers and non-actions
 
-- Supabase CLI, Docker/Podman, PostgreSQL client tools, a database connection secret, and an approved encrypted off-repository destination are unavailable on this workstation.
+- The rehearsal environment lacked the required Supabase/PostgreSQL tools, secure database connection, and approved encrypted off-repository destination.
 - Default `supabase db dump` excludes managed `auth` and `storage`; with one Auth account present, a public-schema dump alone would not prove recovery.
-- An empty non-production project was observed but not used: it already contains a non-canonical 22-row history and no reset/reprovision was authorized. No paid project was created.
+- An existing non-production environment was not used because reset/reprovision was not authorized. No paid project was created.
 - No database archive, checksum, encryption proof, object copy, isolated restore, Auth recovery, migration-history repair, dry run, migration application, RPO/RTO measurement, production fixture, DDL/DML, Auth/Storage change, Vercel change, deploy, push, PR, or merge occurred.
 
 ### Repository artifacts and final validation

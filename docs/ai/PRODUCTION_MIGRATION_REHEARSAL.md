@@ -9,7 +9,7 @@
 
 **BLOCKED before backup and restore; production remains unchanged and is not launch-ready.** Read-only inventory, schema/history fingerprinting, migration classification, precondition queries, and a reviewable runbook are complete. No logical database file, encryption checksum, off-project Storage copy, isolated restore, migration application, Auth exercise, or application smoke was produced in this environment.
 
-The stop is intentional. This workstation has no Supabase CLI, Docker/Podman, PostgreSQL 17 client tools, database password/connection URL, or approved encrypted backup destination. The available connector supports aggregate/catalog inspection but cannot create a restorable logical archive. An existing empty non-production project was observed, but it is not a clean restore target: it already has all 22 migrations recorded under generated remote versions, and no reset/reprovision action was authorized.
+The stop is intentional. The rehearsal environment had no Supabase/PostgreSQL backup toolchain, secure database connection, approved encrypted backup destination, or approved clean restore target. The available connector supports aggregate/catalog inspection but cannot create a restorable logical archive. An existing non-production environment was not authorized for reset/reprovision and was not used as a restore target.
 
 ## Safety record
 
@@ -17,36 +17,29 @@ The stop is intentional. This workstation has no Supabase CLI, Docker/Podman, Po
 - No production DDL, DML, migration repair, fixture, Auth/Storage configuration change, object transfer, deployment, Vercel mutation, push, PR, or merge occurred.
 - No credential, project reference, connection URL, user data, Storage object content, or backup artifact was printed or committed.
 - Historical migrations were not edited. No speculative reconciliation migration was created.
-- The organization was observed on the Free plan. Dashboard backup/PITR availability was not visible through the connector and is therefore unverified, not assumed absent or present.
+- Dashboard backup/PITR availability was not visible through the connector and is therefore unverified, not assumed absent or present.
 
 ## Sanitized production inventory
 
-| Item                | Read-only observation                                                                                     |
-| ------------------- | --------------------------------------------------------------------------------------------------------- |
-| PostgreSQL          | 17.6; database approximately 11 MB                                                                        |
-| Auth/profile        | 1 Auth account and 1 matching public profile                                                              |
-| Marketplace data    | listings, rooms, messages, reviews, notifications, favorites, and reports all contain 0 rows              |
-| Storage             | one public `listing-images` bucket; 0 objects and 0 bytes; 5 MiB JPEG/PNG/WebP configuration              |
-| Public schema       | users, listings, chat_rooms, messages, reviews, notifications, favorites, reports                         |
-| RLS                 | enabled on every observed public application table                                                        |
-| Realtime            | messages and notifications in the publication                                                             |
-| Public functions    | only `handle_new_user()`; security definer                                                                |
-| Production advisors | leaked-password protection disabled warning; legacy policy init-plan and unused-index performance notices |
+| Area                | Read-only observation                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Database            | PostgreSQL major version aligns with the repository target; current footprint is small                        |
+| Auth/profile        | aggregate Auth/profile correspondence is internally consistent                                                |
+| Marketplace data    | no rows conflicted with the reviewed migration preconditions                                                  |
+| Storage             | no object content existed at inspection time; bucket configuration still requires post-rehearsal verification |
+| Access controls     | RLS is present on observed application tables, while legacy grants/policies still require ordered hardening   |
+| Realtime/functions  | legacy publication and function posture exists; later repository hardening remains unapplied                  |
+| Platform advisories | hosted Auth and legacy performance/security configuration still require owner review before launch            |
 
-The production schema is the legacy baseline. It still has broad legacy table grants and browser Storage mutation policies. It does not contain the privacy, audit, moderation, chat-read, cleanup-job, protected mutation, catalog RPC, durable limiter, or launch-hardening contracts from migrations 4–22.
+The production schema is the legacy baseline. It still has legacy grants and browser Storage mutation policies and does not contain the later privacy, audit, moderation, chat-read, cleanup-job, protected-mutation, catalog, limiter, and launch-hardening contracts.
 
 All observed precondition aggregates were zero: Auth/profile mismatch; user length checks; listing bounds/enums/image count; self-room and listing/seller mismatch; hidden favorite targets; report reason/target/duplicate-open groups; review comment violations; and Storage objects.
 
 ## Migration-history diagnosis
 
-Production contains two legacy migration rows:
+Production contains two legacy migration-history entries. Their normalized SQL fingerprints exactly match the repository's initial-schema and production-hardening migrations. The intermediate marketplace-upgrade migration is not recorded separately, but its tables, constraints, indexes, triggers, and policies are already represented by the exact initial-schema baseline.
 
-| Remote version   | Remote name               | Normalized length | Normalized SHA-256                                                 | Repository equivalence                                     |
-| ---------------- | ------------------------- | ----------------: | ------------------------------------------------------------------ | ---------------------------------------------------------- |
-| `20260615051127` | `bookswap_initial_schema` |              6819 | `95c30fe9550a05fbc9edf0daff61d1960931955a82b6709bbde54251b4f76968` | exact SQL match to `202606140001_init.sql`                 |
-| `20260615051302` | `production_hardening`    |               916 | `2903172dd9d5bb97cd01eaba88c8e56a779c4adeef1f7ebf3140286bc17a7362` | exact SQL match to `202606150001_production_hardening.sql` |
-
-`202606140002_marketplace_upgrade.sql` is not recorded by name/version, but its tables, constraints, indexes, triggers, and policies are already represented by the exact initial-schema baseline. Its normalized fingerprint is `1bd601d9fdf05aded9fe03881acacbd8ff224203e0a5d883120607daa2a8253e`.
+The exact remote history versions and observed fingerprints belong in private encrypted operator evidence, not public repository documentation. The repository's own deterministic migration fingerprints remain public and guarded by `npm run test:production-rehearsal` because they are derived entirely from committed SQL.
 
 The non-production development project records all 22 migration names under server-generated timestamps. Every stored normalized SQL fingerprint matches the repository file with the same name. The evidence supports this root-cause inference: earlier remote migration execution assigned invocation-time versions instead of preserving repository filename versions. The exact historical command is unavailable, so the inference must not be promoted to certainty.
 
@@ -93,7 +86,7 @@ No class-2 SQL is justified by current evidence. The only planned reconciliation
 1. Produce and checksum an encrypted off-repository backup plus a separate Storage inventory/copy. Because default `supabase db dump` excludes `auth` and `storage`, obtain a provider-supported managed-schema/Auth recovery path or prove a PostgreSQL full archive restore as well; the single Auth account makes this a real gate.
 2. Restore to a newly created/disposable Supabase project or an explicitly approved reset/reprovisioned target. The existing development project is only a candidate, not a confirmed target.
 3. Restore the two legacy migration-history rows and verify their normalized hashes using `supabase/tests/production_rehearsal_read_only.sql`.
-4. On the isolated target only, mark legacy versions `20260615051127` and `20260615051302` reverted, then mark canonical versions `202606140001`, `202606140002`, and `202606150001` applied.
+4. On the isolated target only, use the privately recorded legacy history versions as inputs: mark those legacy versions reverted, then mark the three reviewed canonical baseline migrations applied.
 5. Require `supabase db push --dry-run` to list exactly the remaining 19 repository migrations, beginning `20260712155914` and ending `20260728071355`.
 6. Apply only those 19 migrations in filename order; record timing, locks, errors, and advisor output.
 7. Run structural SQL, counts/integrity, RLS/grants/Storage/Realtime checks, two-user authorization, Auth/login, and application smoke tests against the isolated target.

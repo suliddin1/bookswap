@@ -27,6 +27,8 @@ $env:PRODUCTION_DB_URL = '<percent-encoded session-pooler or direct URL from Con
 $env:RESTORE_DB_URL = '<percent-encoded isolated-target URL>'
 $env:RESTORE_PROJECT_REF = '<isolated-target ref>'
 $env:BACKUP_DIR = '<absolute encrypted destination outside the repository>'
+$env:LEGACY_INITIAL_VERSION = '<legacy initial-schema version from private evidence>'
+$env:LEGACY_HARDENING_VERSION = '<legacy hardening version from private evidence>'
 ```
 
 Before continuing, resolve `$env:BACKUP_DIR` and verify it is not inside the workspace, cloud-synced personal storage, or a public/shared directory. Clear the process variables when the session ends.
@@ -85,13 +87,13 @@ Encrypt the bundle with the organization's approved authenticated-encryption too
 
 Re-run the read-only inventory. Record bucket configuration, object count, aggregate bytes, and an object-key/checksum manifest in the encrypted evidence store. Never print object contents.
 
-At the 29 July observation, `listing-images` had zero objects. If it is still empty, record a signed zero-object manifest; that is inventory evidence, not a copied-object backup. If non-empty, use the official Storage CLI/S3 download process, preserve paths and content types, checksum every downloaded object, and compare count/bytes/checksums before restore. Database metadata and physical objects are separate recovery surfaces.
+If the fresh inventory is empty, record a signed zero-object manifest; that is inventory evidence, not a copied-object backup. If non-empty, use the official Storage CLI/S3 download process, preserve paths and content types, checksum every downloaded object, and compare count/bytes/checksums before restore. Database metadata and physical objects are separate recovery surfaces.
 
 Do not enable S3 or create access keys without explicit owner approval. If enabled for the exercise, store credentials only in the approved secret manager and revoke them after verification.
 
 ## 4. Prepare an isolated restore target
 
-Preferred target: a fresh disposable Supabase project in the same major Postgres version and region, created only with billing approval. Alternative: an explicitly approved reprovision of a named non-production project. The current development project must not be assumed disposable merely because aggregate row counts are zero; it already has a non-canonical 22-row migration history.
+Preferred target: a fresh disposable Supabase project in the same major Postgres version and region, created only with billing approval. Alternative: an explicitly approved reprovision of a named non-production project. An existing development project must never be assumed disposable from aggregate counts alone; verify its ownership, history, and reset authorization explicitly.
 
 Record the target's empty-state inventory. Enable only required non-default extensions. Keep email delivery and all external side effects disabled. Do not connect Vercel or a production domain.
 
@@ -120,7 +122,7 @@ supabase migration list --linked
 After a second reviewer confirms exact fingerprint and catalog equivalence, repair history metadata without executing the first three SQL files:
 
 ```powershell
-supabase migration repair 20260615051127 20260615051302 --status reverted --linked
+supabase migration repair "$env:LEGACY_INITIAL_VERSION" "$env:LEGACY_HARDENING_VERSION" --status reverted --linked
 supabase migration repair 202606140001 202606140002 202606150001 --status applied --linked
 supabase migration list --linked
 supabase db push --dry-run --linked

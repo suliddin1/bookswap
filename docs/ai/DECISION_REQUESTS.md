@@ -73,7 +73,7 @@ No fake DSN, token, or API key may be committed.
 
 Status: launch-blocking production decision.
 
-Read-only evidence now identifies the mismatch precisely. Production's two legacy migration SQL blobs exactly fingerprint-match repository migrations `202606140001` and `202606150001`; the unrecorded `202606140002` effects are already represented in the legacy initial schema. Production lacks migrations 4–22. The development project's stored SQL also exactly matches all 22 files, but its timestamp versions differ, supporting an invocation-time versioning root-cause inference. Production is non-disposable, and no history repair or schema write has occurred.
+Read-only evidence now identifies the mismatch precisely. Production's legacy migration SQL exactly fingerprint-matches the reviewed repository baseline; an intermediate migration is not recorded separately, but its effects are already represented in the initial schema. Later ordered hardening migrations remain unapplied. The development project's stored SQL also matches the repository files while its timestamp versions differ, supporting an invocation-time versioning root-cause inference. Production is non-disposable, and no history repair or schema write has occurred.
 
 Before any schema write:
 
@@ -81,11 +81,11 @@ Before any schema write:
 2. Provide a PostgreSQL 17/Docker-capable operator environment, database connection secret through the approved secret manager, an encrypted destination outside the repository/project account, and an approved fresh/disposable restore target. Do not send secrets in chat.
 3. Create and checksum the portable logical bundle and a full logical archive. Default `supabase db dump` excludes managed `auth` and `storage`; separately prove provider-supported Auth recovery. Create a separate `listing-images` inventory/copy even when the signed inventory is zero objects.
 4. Restore into an isolated target, compare counts/checksums/Auth profiles, and verify the legacy SQL fingerprints with `supabase/tests/production_rehearsal_read_only.sql`.
-5. On that target only, mark the two legacy versions reverted and canonical migrations 1–3 applied. Require `supabase db push --dry-run` to list exactly migrations 4–22, then rehearse those 19 in filename order.
+5. On that target only, use privately verified legacy versions to repair history and mark the reviewed canonical baseline applied. Require `supabase db push --dry-run` to list only the remaining ordered migrations, then rehearse them in filename order.
 6. Run SQL structure/integrity/advisor checks, restored Auth and at least two-user authorization, and application smoke; record measured RPO/RTO. Delete only disposable rehearsal fixtures.
 7. Approve and record the production maintenance window, write freeze, forward-fix owner, previous Vercel production deployment, and data-loss tolerance.
 
-Follow `docs/production-migration-runbook.md` and the sanitized evidence in `docs/ai/PRODUCTION_MIGRATION_REHEARSAL.md`. No production reset is permitted. The observed empty development project is not automatically disposable because it already contains a non-canonical 22-row migration history; reset/reprovision requires explicit owner approval.
+Follow `docs/production-migration-runbook.md` and the sanitized evidence in `docs/ai/PRODUCTION_MIGRATION_REHEARSAL.md`. No production reset is permitted. An existing development project is never automatically disposable; reset/reprovision requires explicit owner approval and private history verification.
 
 ## DR-007 — Controlled production release approval
 
