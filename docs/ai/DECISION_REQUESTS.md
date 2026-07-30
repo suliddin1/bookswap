@@ -50,7 +50,7 @@ Supabase leaked-password protection is a paid-plan option. Choose one:
 
 No homemade leaked-password database is permitted. Optional CAPTCHA should be enabled only for high-risk anonymous Auth flows after provider, privacy basis, keys, and accessibility fallback are approved; the repository does not claim CAPTCHA is enabled.
 
-Observed 28 July 2026: the intended production project is active and reports leaked-password protection disabled. All other hosted Auth settings remain unverified. In Supabase Dashboard, open **Authentication > URL Configuration**, **Sign In / Providers > Email**, **Sessions**, **Rate Limits**, and **Attack Protection**; record settings without copying secrets. Set the production Site URL to the approved HTTPS canonical origin and permit only required production callback paths. Remove localhost/preview redirects from production unless an owner records a narrow reason. Enforce MFA for every administrator before public launch.
+Observed 30 July 2026 on the clean beta project: the canonical HTTPS Site URL, three exact required redirects, email confirmation, secure password change, 12-character letters/digits policy, refresh-token rotation, and configured Auth rate limits were pushed through the pinned CLI. No localhost redirect remains on beta. Custom SMTP/Send Email Hook is not configured and is handled by DR-009. Before public launch, record the leaked-password decision and enforce MFA for every administrator.
 
 ## DR-004 — Production operations ownership
 
@@ -89,11 +89,11 @@ Follow `docs/production-migration-runbook.md` and the sanitized evidence in `doc
 
 ## DR-007 — Controlled production release approval
 
-Status: owner-authorized conditionally for friends-only private beta, but currently blocked by application/schema incompatibility. DR-002 and the backup portion of DR-006 are accepted private-beta deferrals, not standalone beta blockers. DR-005 services remain optional.
+Status: owner-authorized conditionally for friends-only private beta. Application/schema compatibility is resolved through the separate clean beta project; friend invitations remain blocked by DR-009. DR-002 and the backup portion of DR-006 are accepted private-beta deferrals, not standalone beta blockers. DR-005 services remain optional.
 
-Read-only Vercel metadata now confirms that Production has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and a non-readable sensitive `SUPABASE_SERVICE_ROLE_KEY`; the Supabase URL targets the intended production project and is distinct from development. `NEXT_PUBLIC_SITE_URL` and `BOOKSWAP_PRIVATE_BETA` are absent. Never expose or attempt to read the sensitive value.
+Vercel Production now has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, non-readable sensitive `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`, and `BOOKSWAP_PRIVATE_BETA` by name/scope. They target the clean beta project and are distinct from development and legacy. Never expose or attempt to read the sensitive value. The repository-compatible active legacy `anon`/`service_role` key formats are used because the installed server client path returned 403 HTML for the modern secret format during preflight.
 
-Leave the Git integration disconnected. A reviewed `main` commit may be deployed through the controlled Vercel CLI only after its database contracts exist safely, all repository gates pass, the canonical HTTPS origin and beta flag are configured, and the exact target is reconfirmed. Record the deployed commit and smoke evidence; retain the old production deployment only as an application rollback candidate, noting that an app rollback cannot reverse database changes.
+Leave the Git integration disconnected. A reviewed `main` commit may be deployed through the controlled Vercel CLI because its database contracts, local/remote verification, canonical HTTPS origin, and beta flag now pass. Record the deployed commit and smoke evidence; retain the old production deployment only as an application rollback candidate, noting that an app rollback cannot reverse database changes. Do not send friend invitations until DR-009 passes.
 
 ## DR-008 — Friends-only private-beta risk decision
 
@@ -102,7 +102,21 @@ Status: **RESOLVED by owner on 30 July 2026.**
 - Defer the encrypted production database/Auth/Storage backup and isolated restore rehearsal. Do not request a database password or Personal Access Token, enable temporary database access, reset a password, retry a dump, restore, or start an encryption-passphrase flow.
 - Accept the missing recovery proof as a temporary friends-only beta risk. Complete a verified encrypted backup before broad public launch, before a destructive or materially risky production migration, or after meaningful real-user data accumulates.
 - Final legal operator/contact/age/retention/counsel facts may remain a public-launch follow-up while the beta is visibly identified, invitation-only, and warns testers not to enter sensitive personal or payment data.
-- This decision does not authorize deploying current code against an incompatible schema. Production lacks migrations 4–22, and the required sequence includes a lock/rewrite-sensitive generated-search rebuild. That compatibility gate remains a hard stop.
+- This decision did not authorize migrating the paused legacy project. The later clean-beta decision supplies an empty, separate 22/22 target instead; legacy data/history remain untouched and still require DR-006 before any future migration.
+
+## DR-009 — Configure friend-facing Auth email
+
+Status: **the only current friends-beta external blocker.**
+
+Supabase's default Auth mail service is restricted to organization-member addresses and is not suitable for invited friends. Keep email confirmation and secure password recovery enabled. The owner must configure either custom SMTP or a Supabase Send Email Hook using an approved transactional-email provider; no credential belongs in Git, chat, Vercel browser code, or repository docs.
+
+Completion evidence required before invitations:
+
+1. In the clean beta project's **Authentication > Email/SMTP** settings, enter provider credentials privately and save them; do not paste them into this task.
+2. Verify sender-domain/provider requirements and delivery to an owner-controlled non-team inbox.
+3. Complete one signup confirmation and one password-recovery round trip through the canonical beta origin.
+4. Confirm generic account-enumeration-safe UI responses and no secret/raw provider detail in logs.
+5. Delete the disposable account and record only pass/fail, timestamp, and provider class—not the email address or credentials.
 
 ## Resolved product decisions
 

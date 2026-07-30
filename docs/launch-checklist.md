@@ -94,15 +94,16 @@ Vercel rollback restores application code/config version; it does not reverse da
 - No backup file, checksum, encryption artifact, managed Auth recovery, isolated restore, migration repair, migration application, smoke test, or measured RPO/RTO was produced. The gate remains failed.
 - Follow `docs/production-migration-runbook.md` and `docs/ai/PRODUCTION_MIGRATION_REHEARSAL.md`. No production reset, fixture, deployment, or Git reconnection is permitted by this evidence work.
 
-## Private-beta finalization gate — 30 July 2026
+## Clean beta provisioning gate — 30 July 2026
 
-- Git began clean and synchronized on `main`; Supabase production/development identities are distinct and healthy; PostgreSQL major version is 17 for both inspected projects.
-- Docker client/engine 29.6.2, PostgreSQL 17 clients, pinned Supabase CLI, and encryption tooling are available outside the repository. Their availability does not authorize the deferred backup.
-- The unlinked local PostgreSQL 17 stack reset successfully through all 22 migrations and seed. Launch SQL, eight representative query plans, local schema lint, and zero-fixture cleanup pass; the stack and generated metadata were removed afterward.
-- Vercel Production targets the intended project and its Supabase URL is production, not development. Public/server key entries exist by name and the server key is sensitive/non-readable. `NEXT_PUBLIC_SITE_URL` and `BOOKSWAP_PRIVATE_BETA` remain unset.
-- The existing `READY` deployment runs an older commit. Current `main` is a materially different application and directly needs catalog RPCs, chat-read state, cleanup/audit structures, and the durable limiter from migrations absent in production.
-- Migration 21 drops and recreates the generated listing search column/index and may lock or rewrite data. The current iteration forbids using that risky sequence without the established recovery gate. Production deployment therefore remains blocked on schema compatibility, not on backup deferral alone.
-- Keep Vercel Git disconnected. Do not mutate the environment or promote a deployment until the compatibility gate and all local checks pass.
+- The owner-designated beta, paused legacy, and development projects are three distinct PostgreSQL 17 targets. Legacy remains untouched and no legacy user, row, history, or Storage object is copied.
+- The clean beta project has exact 22/22 repository migration parity without seed data. Remote launch SQL, schema lint, eight representative query plans, Security Advisor, RLS/grants/Storage structure, and the seven-role 10/10 authorization matrix pass with zero fixture residue.
+- Hosted Auth has the canonical Site URL, three exact required redirects, confirmation enabled, secure password changes, a 12-character letters/digits policy, refresh rotation, and configured rate limits.
+- Vercel Production has the verified beta URL/public/server key entries plus `NEXT_PUBLIC_SITE_URL` and `BOOKSWAP_PRIVATE_BETA`; the server key is sensitive and server-only. No value or project reference is documented.
+- Use the active legacy `anon`/`service_role` key formats with the current client path. The modern secret format returned 403 HTML in the verified admin preflight; the legacy server role returned 200 JSON and passed the full actor matrix.
+- Keep Vercel Git disconnected. Deploy only a clean, pushed, CI-green commit through the controlled Vercel CLI, retain the previous deployment as rollback candidate, and record production smoke evidence.
+- Do not invite friends until custom SMTP or a Send Email Hook is configured and signup confirmation plus password recovery pass through an owner-controlled non-team inbox. Supabase's default mail service is not friend-facing production email.
+- Backup/restore remains deferred only for this friends beta. It is still mandatory before broad public launch, destructive/materially risky migration, or meaningful real-user data accumulation.
 
 ## Failed release and incident recovery
 

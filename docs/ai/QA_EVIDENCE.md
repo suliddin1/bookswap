@@ -864,3 +864,46 @@ git diff --check                         PASS
 ```
 
 The first authorization invocation was blocked by sandbox network access before fixture creation. The approved network rerun targeted only the guarded development backend and passed 10/10 with cleanup. No SQL restore test or PostgreSQL parse/execute proof is claimed because the required database tools and isolated target were unavailable.
+
+## 2026-07-30 — Clean beta backend and pre-deployment verification
+
+**Result: clean beta schema/authorization PASS; repository release gates PASS; friend invitations BLOCKED only by transactional Auth email; deployment evidence pending.** No project reference, URL, API key, credential, email address, personal row, or Storage content is retained here.
+
+### Identity, migration, and hosted configuration evidence
+
+- Authenticated metadata independently identified one active/healthy `bookswap-beta`, one active/healthy `bookswap-development`, and one inactive legacy `bookswap`; all are distinct PostgreSQL 17 projects. Legacy remained paused and untouched.
+- An ACL-restricted workspace outside Git was linked only to the exact beta target. The 22 migration copies matched repository SHA-256 values, `db push --dry-run` listed exactly the canonical 22 files, and the push applied 22/22 in order without seed data.
+- Migration parity is exact from `202606140001_init` through `20260728071355_clarify_private_rate_limit_policy`. Thirteen public application tables have RLS; required extensions, constraints, indexes, triggers, grants, Realtime publication, and fixed-search-path functions pass the aggregate probes.
+- `listing-images` is public-read, limited to 5 MiB JPEG/PNG/WebP, has zero objects, and has zero browser mutation policies. Security Advisor reports zero findings. Remaining performance notices are INFO-only unused-index notices expected on an empty project.
+- Remote `launch_readiness.sql`, schema lint, and eight representative query plans pass. The 60,000-listing plan fixture and all associated users/reviews were cleaned; aggregate Auth/application/limiter/Storage counts returned to zero.
+- Hosted Auth was configured with the canonical HTTPS Site URL, three exact redirect URLs, 12-character letters/digits policy, confirmation, secure password changes, refresh rotation, and rate limits. The external config copy was restored byte-for-byte to the repository source afterward; repository `supabase/config.toml` was unchanged.
+- Vercel Production now contains exactly the five required names: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, sensitive `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`, and `BOOKSWAP_PRIVATE_BETA`. Values were streamed in memory and never printed or written to Git.
+- Modern secret-key preflight returned 403 HTML while the repository-compatible legacy `service_role` returned 200 JSON. The Vercel public/server entries were therefore set to the active legacy `anon`/`service_role` pair; the full remote actor matrix then passed.
+
+### Remote authorization and cleanup evidence
+
+- Seven disposable roles—seller, buyer, unrelated, banned, moderator, admin, and stale—exercised the existing ten-case authorization matrix on beta. All 10/10 passed: public/draft visibility, safe profile mutation, protected listing ownership, favorites, chat sender/participant isolation, notifications, review eligibility, reports/privacy, admin audit boundaries, direct Storage denial, and stale-user rejection.
+- The ephemeral test file and process-level credentials were removed. Auth users, public application rows, limiter rows, and Storage objects returned to zero. The immutable test audit row was identified by its complete deterministic fixture predicate and removed only on beta with a transaction-local trigger bypass; a final aggregate check returned zero.
+- Reserved-domain signup probes were rejected as invalid email before mail delivery and created no user. They do not prove SMTP delivery. Current official Supabase guidance says the default provider only sends to organization-member addresses, so custom SMTP or a Send Email Hook plus an owner-controlled inbox round trip remains the only friends-beta external blocker.
+
+### Repository verification
+
+```text
+npm.cmd run format:check                 PASS — all matched files use Prettier
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 62/62 tests
+npm.cmd run test:database:static         PASS — 22 immutable migrations
+npm.cmd run test:production-rehearsal    PASS — 22 fingerprints; 0 repo backup artifacts
+npm.cmd run test:dependencies            PASS — 7 pinned package locations
+npm.cmd run test:secrets                 PASS — 194 repository files
+npm.cmd run test:env                     PASS — guarded development public target; no server key printed
+npm.cmd run build                        PASS — private-beta production build; 39/39 pages
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 30/30
+npm.cmd audit --omit=dev --audit-level=high PASS — 0 production vulnerabilities
+beta remote authorization matrix        PASS — 7 roles, 10/10, zero residual users/rows/objects
+beta remote launch/query plans           PASS — launch SQL plus 8/8 plans, zero fixture residue
+```
+
+The first local build attempt was blocked only by sandbox denial of the existing Google Fonts fetch; the approved network run compiled 39/39 pages. A generated ignored Supabase linkage file caused the first format check to fail, was privately verified as beta-only metadata, and was deleted before the passing rerun. No assertion, RLS rule, grant, or security boundary was weakened.
