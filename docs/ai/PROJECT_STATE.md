@@ -1,16 +1,16 @@
 # BookSwap project state
 
-Updated: 29 July 2026
+Updated: 30 July 2026
 
 ## Current verdict
 
-**Not production-ready; conditionally non-deployment ready.** All identified safe repository-side launch-critical work is implemented, and the guarded real development authorization matrix passes. The remaining non-deployment launch blocker is owner/counsel-supplied legal facts and approval. A production backup/migration rehearsal inspection on 29 July established the exact legacy history baseline and classified all 22 immutable migrations, but stopped before backup because no restorable export, managed Auth recovery, encrypted destination, or isolated restore could be produced in this environment. Hosted Auth settings, required environment values, operational ownership, and post-deploy verification also remain incomplete. External AI/moderation credentials are not part of the product or launch gate.
+**Friends-only private-beta finalization is repository-ready but production promotion is blocked by application/schema incompatibility.** The owner has explicitly deferred the encrypted production backup/restore rehearsal and accepted that temporary recovery risk for the private beta; the backup is not itself classified as a private-beta blocker. The existing Vercel Production deployment is healthy but runs an older application commit. Current `main` requires schema contracts from migrations 4–22 that production does not have, including the catalog RPCs, chat-read state, cleanup/audit tables, and durable rate limiter. The immutable sequence also includes a documented lock/rewrite-sensitive generated-search-column rebuild, so neither those migrations nor current-code deployment can be treated as safe without the established migration gate. Public launch additionally remains blocked by recovery evidence, legal facts, hosted controls, operations ownership, and post-deploy evidence.
 
 ## Authoritative repository and Git baseline
 
 - Authoritative repository: the current BookSwap GitHub checkout
-- The rehearsal evidence was prepared on a focused branch from a synchronized, clean `main` baseline.
-- Publishing or merging the documentation does not authorize deployment, Vercel Git reconnection, backup/restore execution, or any production mutation.
+- This finalization started from synchronized, clean `main` at `39108b7dd21724a91ad8d81ccf8fbf3ec2e96714`.
+- The owner authorizes focused repository commits/push and a controlled deployment only if every compatibility and safety gate passes. Backup/restore retry, production history repair, and risky production migrations are not authorized.
 
 ## Launch product scope
 
@@ -47,44 +47,49 @@ Automated exchange matching, wanted-title matching, reader shelves, social readi
 - Real limiter behavior: allow/allow/deny at threshold 2; retry value valid; fixture removed
 - Generated TypeScript type for `consume_rate_limit`: matches `lib/database.types.ts`
 
-Local `supabase db reset` remains unexecuted on this workstation because Docker/Podman and `psql` are absent. `supabase/config.toml`, corrected seed ordering, and `supabase/tests/launch_readiness.sql` are prepared. The actual migrations were nevertheless executed successfully on the authorized empty development backend.
+PostgreSQL 17 clients and Docker Desktop are now installed outside the repository, and the Docker 29.6.2 engine is reachable through its user-local CLI. A fresh local reset applied all 22 migrations plus seed on PostgreSQL 17; `launch_readiness.sql`, the corrected representative query-plan gate, local schema lint, migration count, and fixture cleanup all pass. The local stack was then stopped and its generated metadata removed.
 
 ## Observed production infrastructure gate
 
 - The intended production database and hosting projects are separate from the guarded development environment.
-- The currently published release predates the launch-readiness branch. Vercel Git remains disconnected, no custom launch domain is verified, and this repository change does not promote a release.
+- The currently published release is `READY` but predates the launch-readiness work by 181 changed files. It is not accepted as the current private-beta release. Vercel Git remains disconnected.
 - Production contains two legacy history rows whose SQL fingerprints exactly match repository migrations 1 and 3. Migration 2 is unrecorded but its objects are already represented by the exact legacy initial schema. Migrations 4–22 are absent from production. This evidence supports a history-only baseline repair followed by 19 ordered migrations, but only after the same sequence passes on an isolated restore.
 - Sanitized aggregate inventory found a small legacy baseline with internally consistent Auth/profile state, no observed migration-precondition conflicts, and no Storage object content at inspection time. These observations lower data-conflict risk but do not replace a backup or maintenance-window rehearsal.
 - Production remains non-disposable. Blind migration pushes, migration-history edits without exact review, and every production reset are prohibited.
 - Storage ownership policy alignment, hosted authentication configuration, administrator MFA, leaked-password protection, network controls, and email delivery require owner verification.
-- Default `supabase db dump` excludes managed `auth` and `storage` schemas. No logical archive/checksum, managed Auth recovery, encrypted off-project copy, or successful isolated restore exists. A zero-object Storage observation is inventory only, not a completed backup. No migration may proceed until the recovery gate is satisfied.
-- The rehearsal environment lacked the required Supabase/PostgreSQL tooling, secure database connection, approved encrypted destination, and approved clean restore target. The existing development environment was not authorized for reset/reprovision and was not used as a restore target.
-- Production environment variables must be verified by name, scope, and role without copying values into public records. Listing and chat safety require no external AI key.
+- Default `supabase db dump` excludes managed `auth` and `storage` schemas. No logical archive/checksum, managed Auth recovery, encrypted off-project copy, or successful isolated restore exists. The owner has deferred that work for the friends-only beta while preserving it as mandatory before broad public launch, destructive/materially risky production migration, or meaningful real-user data accumulation.
+- The local Supabase CLI, PostgreSQL 17 tools, Docker engine, and encryption tool are now available; the repository-external encrypted destination is empty. No backup, restore, password prompt, or encrypted artifact was attempted in this finalization run.
+- Vercel Production has the Supabase URL, public key, and a non-readable sensitive server key by name/scope. Their URL targets the intended production project and not development. `NEXT_PUBLIC_SITE_URL` and the private-beta flag are not configured, and no environment value was printed.
 - Alert routing, retention, uptime evidence, incident ownership, canonical domain, and post-deploy verification remain incomplete.
-- Deployment gate result: **failed safely**. No migration, Auth/Storage setting change, environment mutation, Git reconnection, production deployment, production authorization fixture, or rollback was performed.
+- Deployment gate result: **blocked safely on schema compatibility**. Deploying current code would make core catalog and protected mutation paths depend on missing production contracts; applying the full immutable migration sequence would cross the explicitly disallowed risky-migration boundary.
 
 ## Validation snapshot
 
 - Strict TypeScript: pass
-- Unit/adversarial tests: 59/59 pass
+- Unit/adversarial tests: 62/62 pass
 - Development environment identity and credential-role/project guard: pass without printing values
 - Migration static check: 22 migrations pass
 - Production rehearsal static guard: all 22 normalized fingerprints pass; read-only SQL/runbook required; zero backup artifacts in repository
 - Dependency baseline: 7/7 pinned security versions pass; the live production-only npm audit is 0, while the full development tree has 13 high findings that all trace to one newly published `brace-expansion` denial-of-service advisory in the ESLint-only toolchain. No compatible 1.x fix exists yet; the known development-only path is guarded and does not block launch.
-- Secret scan: 192 repository files pass
-- Development database structural/behavioral checks: pass
+- Secret scan: pass after project-identifier sanitization and backup-artifact cleanup
+- Local and development database structural/behavioral checks: pass; local 22/22 migration reset, two SQL gates, schema lint, and zero query-plan fixture residue
 - Format/lint/strict TypeScript: pass
 - Production build: pass, 39/39 static pages generated
 - Bundle budgets: 5/5 pass
-- Chromium browser/E2E: 29/29 pass, including isolated authenticated privacy hydration readiness and cross-identity profile/privacy coverage
+- Chromium browser/E2E: 30/30 pass with the private-beta marker/noindex check; exact beta reflow coverage includes 320, 375, 1024, and 1440 px widths
 - Real multi-actor backend authorization: 10/10 pass against the guarded development project; temporary fixtures cleaned
 
 ## Remaining external requirements
 
-Launch blockers:
+Private-beta promotion blocker:
 
-1. owner supplies legal identity/contact/age/retention/appeal facts, replaces placeholders, and obtains qualified counsel approval.
+1. safely reconcile the production legacy history and supply the schema contracts required by current `main`; the required ordered migration set includes a materially risky step that this iteration may not apply without the separately restored recovery/change-control gate.
 
-Production/deployment-only requirements include a complete database/Auth/Storage backup and measured isolated restore, migration-history reconciliation rehearsal, project/domain/environment configuration, Auth dashboard controls and leaked-password decision, admin MFA enforcement, alert routing, field performance, deployment, and production smoke/authorization verification. Optional email/CAPTCHA/telemetry services may remain disabled.
+Owner-accepted private-beta deferrals:
+
+- encrypted database/Auth/Storage backup and isolated restore rehearsal;
+- final legal operator/contact/age/retention/counsel facts, provided the beta remains clearly labeled, invitation-only, and testers avoid sensitive or payment data.
+
+Public-launch requirements still include those deferred items plus hosted Auth controls, administrator MFA, canonical domain, alert/incident ownership, field performance, and production smoke/authorization evidence. Optional email/CAPTCHA/telemetry services may remain disabled.
 
 Exact actions are in `docs/ai/DECISION_REQUESTS.md`; prioritized status is in `docs/ai/ISSUE_QUEUE.md`.

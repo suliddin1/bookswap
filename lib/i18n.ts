@@ -2,6 +2,11 @@ export const DOCUMENT_LANGUAGE = "az";
 export const APP_LOCALE = "az-AZ";
 
 export const AZ_COPY = {
+  privateBeta: {
+    label: "Dostlarla özəl beta",
+    notice:
+      "Yalnız dəvətli sınaq üçündür. Test elanlarından və test mesajlarından istifadə et; həssas şəxsi və ödəniş məlumatı daxil etmə.",
+  },
   metadata: {
     title: "BookSwap | Kitabına ikinci həyat ver",
     description:

@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Database } from "@/lib/database.types";
@@ -16,7 +16,10 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const publicKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const runRemote = process.env.RUN_REMOTE_AUTHORIZATION_TESTS === "1";
-const expectedUrl = "https://uibatsbzjswmtdvdrlxj.supabase.co";
+const expectedUrlSha256 =
+  "5e74aa476bfdc401db2cf40f68dc08c349df0d763cb9188d0763a07097cb7163";
+const expectedConfirmationSha256 =
+  "c20585ead668991423a9cc51342a5b511f80a39d69d9ba342df46de28434bf3f";
 const password = `BookSwap!${randomUUID()}Aa1`;
 const suffix = randomUUID();
 
@@ -28,6 +31,10 @@ let activeListingId = "";
 let draftListingId = "";
 let roomId = "";
 let reportId = "";
+
+function sha256(value: string) {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
 
 function apiRequest(
   path: string,
@@ -69,10 +76,11 @@ async function createRole(role: TestRole) {
 
 describe.skipIf(!runRemote)("development authorization matrix", () => {
   beforeAll(async () => {
-    if (url !== expectedUrl)
-      throw new Error(`Refusing unexpected Supabase URL: ${url || "missing"}`);
+    if (sha256(url) !== expectedUrlSha256)
+      throw new Error("Refusing an unexpected Supabase target");
     if (
-      process.env.BOOKSWAP_REMOTE_TEST_CONFIRMATION !== "bookswap-development"
+      sha256(process.env.BOOKSWAP_REMOTE_TEST_CONFIRMATION ?? "") !==
+      expectedConfirmationSha256
     )
       throw new Error("Missing development-project confirmation");
     if (!publicKey || !serviceKey) throw new Error("Missing test credentials");

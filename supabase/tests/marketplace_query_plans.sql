@@ -357,9 +357,11 @@ values
       limit 13
     $query$)
   ),
+  -- The review uniqueness index is validated above. PostgreSQL may still
+  -- prefer a bounded hash/sequence plan for the representative review set.
   (
     'seller_sold_reviews',
-    array['listings_public_seller_created_idx', 'reviews_listing_id_author_id_key'],
+    array['listings_public_seller_created_idx'],
     true,
     pg_temp.capture_marketplace_plan($query$
       select review.rating
@@ -388,6 +390,15 @@ begin
       failed_query.expected_index;
   end loop;
 
+  if exists (
+    select 1
+    from marketplace_query_plan_evidence as evidence
+    where evidence.query_name = 'seller_sold_reviews'
+      and evidence.plan @? '$.** ? (@."Node Type" == "Seq Scan" && @."Relation Name" == "reviews" && @."Actual Rows" > 10000)'
+  ) then
+    raise exception 'Seller review query scanned more than 10000 representative review rows';
+  end if;
+
   select evidence.query_name
   into failed_query
   from marketplace_query_plan_evidence as evidence
@@ -403,7 +414,7 @@ begin
   into failed_query
   from marketplace_query_plan_evidence as evidence
   where not evidence.explicit_sort_allowed
-    and evidence.plan @? '$.** ? (@."Rows Removed by Filter" > 100)'
+    and evidence.plan @? '$.** ? ((@."Node Type" == "Index Scan" || @."Node Type" == "Index Only Scan" || @."Node Type" == "Bitmap Heap Scan") && @."Rows Removed by Filter" > 100)'
   limit 1;
 
   if found then

@@ -1,8 +1,16 @@
-# Non-deployment and production launch checklist
+# Private-beta and public launch checklist
 
-Updated: 29 July 2026
+Updated: 30 July 2026
 
 This document separates repository-prepared procedures from production facts that an owner must verify. A checked repository item is never evidence that production infrastructure is enabled.
+
+## Friends-only private-beta boundary
+
+- The owner has deferred encrypted backup/restore rehearsal and accepted that temporary recovery risk for this private beta. Do not request database/PAT secrets, enable temporary database access, reset passwords, dump, restore, or retry encryption in this run.
+- The beta must be visibly labeled, remain direct-link/invitation-only, send `noindex`/`nofollow`, and warn testers to use test listings/messages without sensitive personal or payment data. `noindex` is not access control.
+- Legal operator/contact/age/retention/counsel facts remain mandatory before broad public launch but do not independently block this clearly labeled friends beta.
+- Backup/restore evidence becomes mandatory before broad public launch, destructive/materially risky production migrations, or meaningful real-user data accumulation.
+- Deferral does not waive application/schema compatibility. Never deploy current code while production lacks its required contracts, and never apply a risky migration merely to unblock deployment.
 
 ## Repository-prepared release gate
 
@@ -10,9 +18,9 @@ This document separates repository-prepared procedures from production facts tha
 - With local Docker available, run `supabase db reset`, then execute `supabase/tests/launch_readiness.sql` and `supabase/tests/marketplace_query_plans.sql` with `psql -v ON_ERROR_STOP=1`.
 - With the guarded development credentials, run `npm run test:authorization` and retain only pass/fail evidence—never credentials or private fixture content.
 - Require zero Supabase Security Advisor findings. Treat unused-index notices on an empty development database as non-actionable until representative traffic exists.
-- Require all legal placeholders to be replaced and counsel-reviewed.
+- Require all legal placeholders to be replaced and counsel-reviewed before broad public launch. For friends beta, require the explicit beta warning and no sensitive/payment data.
 - Inspect `git diff`, generated artifacts, ignored env files, and the final secret scan; commit locally only after all achievable gates pass.
-- Run `npm run test:production-rehearsal`; preserve all backup files outside the repository. Follow `docs/production-migration-runbook.md` for the isolated exercise.
+- Run `npm run test:production-rehearsal` as a repository safety/fingerprint guard. The actual backup/restore exercise remains deferred by owner decision and must not be retried in this run.
 
 ## Pre-migration backup and change control
 
@@ -85,6 +93,16 @@ Vercel rollback restores application code/config version; it does not reverse da
 - Production aggregate preconditions showed internally consistent Auth/profile state and no reviewed data conflicts; no Storage object content existed at inspection time. State can change and must be rerun immediately before backup/rehearsal/production.
 - No backup file, checksum, encryption artifact, managed Auth recovery, isolated restore, migration repair, migration application, smoke test, or measured RPO/RTO was produced. The gate remains failed.
 - Follow `docs/production-migration-runbook.md` and `docs/ai/PRODUCTION_MIGRATION_REHEARSAL.md`. No production reset, fixture, deployment, or Git reconnection is permitted by this evidence work.
+
+## Private-beta finalization gate — 30 July 2026
+
+- Git began clean and synchronized on `main`; Supabase production/development identities are distinct and healthy; PostgreSQL major version is 17 for both inspected projects.
+- Docker client/engine 29.6.2, PostgreSQL 17 clients, pinned Supabase CLI, and encryption tooling are available outside the repository. Their availability does not authorize the deferred backup.
+- The unlinked local PostgreSQL 17 stack reset successfully through all 22 migrations and seed. Launch SQL, eight representative query plans, local schema lint, and zero-fixture cleanup pass; the stack and generated metadata were removed afterward.
+- Vercel Production targets the intended project and its Supabase URL is production, not development. Public/server key entries exist by name and the server key is sensitive/non-readable. `NEXT_PUBLIC_SITE_URL` and `BOOKSWAP_PRIVATE_BETA` remain unset.
+- The existing `READY` deployment runs an older commit. Current `main` is a materially different application and directly needs catalog RPCs, chat-read state, cleanup/audit structures, and the durable limiter from migrations absent in production.
+- Migration 21 drops and recreates the generated listing search column/index and may lock or rewrite data. The current iteration forbids using that risky sequence without the established recovery gate. Production deployment therefore remains blocked on schema compatibility, not on backup deferral alone.
+- Keep Vercel Git disconnected. Do not mutate the environment or promote a deployment until the compatibility gate and all local checks pass.
 
 ## Failed release and incident recovery
 

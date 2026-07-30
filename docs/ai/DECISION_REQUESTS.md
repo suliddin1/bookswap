@@ -1,6 +1,6 @@
 # Owner decisions and external actions
 
-Updated: 29 July 2026
+Updated: 30 July 2026
 
 Only facts or authority that cannot be derived safely from the repository remain here. Exchange matching, wanted titles, reader shelves, and social reading are intentionally post-launch and require no launch decision.
 
@@ -20,7 +20,7 @@ Completion evidence:
 
 ## DR-002 — Insert legal identity and contact facts
 
-Status: launch-blocking; legal structure and Azerbaijani-first drafts complete.
+Status: public-launch blocking; explicitly deferred for the clearly labeled friends-only private beta.
 
 Provide and have qualified Azerbaijani counsel approve every value below. Do not publish placeholders:
 
@@ -71,7 +71,7 @@ No fake DSN, token, or API key may be committed.
 
 ## DR-006 — Production migration baseline and recovery approval
 
-Status: launch-blocking production decision.
+Status: deferred/risk-accepted for friends-only private beta; mandatory before broad public launch or any destructive/materially risky production migration.
 
 Read-only evidence now identifies the mismatch precisely. Production's legacy migration SQL exactly fingerprint-matches the reviewed repository baseline; an intermediate migration is not recorded separately, but its effects are already represented in the initial schema. Later ordered hardening migrations remain unapplied. The development project's stored SQL also matches the repository files while its timestamp versions differ, supporting an invocation-time versioning root-cause inference. Production is non-disposable, and no history repair or schema write has occurred.
 
@@ -89,9 +89,20 @@ Follow `docs/production-migration-runbook.md` and the sanitized evidence in `doc
 
 ## DR-007 — Controlled production release approval
 
-Status: blocked until DR-002, DR-003, DR-004, and DR-006 are resolved. DR-005 services are optional and do not block launch when left disabled.
+Status: owner-authorized conditionally for friends-only private beta, but currently blocked by application/schema incompatibility. DR-002 and the backup portion of DR-006 are accepted private-beta deferrals, not standalone beta blockers. DR-005 services remain optional.
 
-In Vercel **Settings > Environment Variables**, verify by name only that Production has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `NEXT_PUBLIC_SITE_URL`. Confirm the Supabase values belong to the intended production project, keep the service role server-only, and do not reuse development values. Leave Git disconnected. After migrations/Auth/Storage/recovery/alerts and all repository gates pass, authorize one explicit deployment of a reviewed `main` commit through the controlled Vercel deployment tool. Record the resulting release evidence and retain the previously verified production release as the application rollback candidate, noting that an app rollback does not reverse database changes.
+Read-only Vercel metadata now confirms that Production has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and a non-readable sensitive `SUPABASE_SERVICE_ROLE_KEY`; the Supabase URL targets the intended production project and is distinct from development. `NEXT_PUBLIC_SITE_URL` and `BOOKSWAP_PRIVATE_BETA` are absent. Never expose or attempt to read the sensitive value.
+
+Leave the Git integration disconnected. A reviewed `main` commit may be deployed through the controlled Vercel CLI only after its database contracts exist safely, all repository gates pass, the canonical HTTPS origin and beta flag are configured, and the exact target is reconfirmed. Record the deployed commit and smoke evidence; retain the old production deployment only as an application rollback candidate, noting that an app rollback cannot reverse database changes.
+
+## DR-008 — Friends-only private-beta risk decision
+
+Status: **RESOLVED by owner on 30 July 2026.**
+
+- Defer the encrypted production database/Auth/Storage backup and isolated restore rehearsal. Do not request a database password or Personal Access Token, enable temporary database access, reset a password, retry a dump, restore, or start an encryption-passphrase flow.
+- Accept the missing recovery proof as a temporary friends-only beta risk. Complete a verified encrypted backup before broad public launch, before a destructive or materially risky production migration, or after meaningful real-user data accumulates.
+- Final legal operator/contact/age/retention/counsel facts may remain a public-launch follow-up while the beta is visibly identified, invitation-only, and warns testers not to enter sensitive personal or payment data.
+- This decision does not authorize deploying current code against an incompatible schema. Production lacks migrations 4–22, and the required sequence includes a lock/rewrite-sensitive generated-search rebuild. That compatibility gate remains a hard stop.
 
 ## Resolved product decisions
 

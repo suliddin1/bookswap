@@ -5,6 +5,12 @@
 - Branch: `ops/production-migration-rehearsal`
 - Repository baseline: `6235bfeb115516e0a2180525c77d99443033bc60`
 
+## Owner deferral recorded 30 July 2026
+
+The owner has explicitly deferred this encrypted backup/restore rehearsal for the friends-only private beta. Do not request or use a production database password or Personal Access Token, enable Temporary Database Access, reset a password, retry `pg_dump`, restore data, or start another encryption-passphrase flow in the private-beta finalization run.
+
+This is an owner-accepted temporary recovery risk, not by itself a friends-beta blocker. A verified encrypted database/Auth/Storage recovery exercise remains mandatory before broad public launch, before any destructive or materially risky production migration, or after meaningful real-user data accumulates. The deferral does not make the legacy production schema compatible with current application code and does not authorize migration-history repair or migrations 4–22.
+
 ## Verdict
 
 **BLOCKED before backup and restore; production remains unchanged and is not launch-ready.** Read-only inventory, schema/history fingerprinting, migration classification, precondition queries, and a reviewable runbook are complete. No logical database file, encryption checksum, off-project Storage copy, isolated restore, migration application, Auth exercise, or application smoke was produced in this environment.

@@ -2649,6 +2649,40 @@ test("responses include baseline security headers", async ({ request }) => {
   );
 });
 
+test("private beta is visibly labeled and excluded from crawlers", async ({
+  page,
+  request,
+}) => {
+  test.skip(
+    process.env.BOOKSWAP_PRIVATE_BETA !== "true",
+    "Private-beta behavior is enabled only for the beta release gate.",
+  );
+
+  await page.goto("/");
+  const notice = page.getByRole("complementary", {
+    name: AZ_COPY.privateBeta.label,
+  });
+  await expect(notice).toContainText(AZ_COPY.privateBeta.notice);
+  for (const viewport of [
+    { width: 320, height: 800 },
+    { width: 375, height: 812 },
+    { width: 1024, height: 768 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await expect(notice).toBeVisible();
+    expect(await horizontalOverflow(page)).toEqual([]);
+  }
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    /noindex.*nofollow|nofollow.*noindex/i,
+  );
+
+  const robotsResponse = await request.get("/robots.txt");
+  expect(robotsResponse.ok()).toBe(true);
+  expect(await robotsResponse.text()).toContain("Disallow: /");
+});
+
 test("direct API validation and authentication errors keep Azerbaijani machine codes", async ({
   request,
 }) => {

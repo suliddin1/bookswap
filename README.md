@@ -42,11 +42,17 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 BOOKSWAP_REMOTE_TEST_CONFIRMATION=
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+BOOKSWAP_PRIVATE_BETA=false
 WEB_VITALS_ENABLED=false
 RESEND_API_KEY=
 ```
 
 Never expose `SUPABASE_SERVICE_ROLE_KEY` or other secret keys to client components.
+
+Set `BOOKSWAP_PRIVATE_BETA=true` only for an explicitly approved friends-only
+deployment. It keeps direct-link access available, displays a beta-data warning,
+and asks crawlers not to index or archive the site. It is not an authentication
+or access-control mechanism.
 
 `WEB_VITALS_ENABLED=true` must be set at build and runtime only for an
 authorized production environment. It enables privacy-minimized LCP, CLS, and
@@ -93,4 +99,4 @@ Real development authorization tests additionally require `.env.test.local` with
 - Marketplace mutations use strict Zod schemas and a concurrency-safe Postgres-backed rate limiter shared across server instances. Protected actions fail closed if the durable store is unavailable; optional Web Vitals telemetry is dropped.
 - The database remains the final authorization layer through RLS and column-level privileges.
 
-See [docs/security-model.md](docs/security-model.md), [docs/market-research.md](docs/market-research.md), and [docs/launch-checklist.md](docs/launch-checklist.md).
+See [docs/security-model.md](docs/security-model.md), [docs/market-research.md](docs/market-research.md), [docs/launch-checklist.md](docs/launch-checklist.md), and the [friends-only beta checklist](docs/private-beta-testing.md).
