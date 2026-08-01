@@ -1756,13 +1756,13 @@ test("messaging and notification controls keep focus, context, and 200% reflow",
   const seller = {
     id: sellerId,
     name: longSellerName,
-    city: "Baku",
+    city: null,
     created_at: timestamp,
   };
   const buyer = {
     id: userId,
     name: "Sınaq oxucusu",
-    city: "Ganja",
+    city: null,
     created_at: timestamp,
   };
   const listing = {

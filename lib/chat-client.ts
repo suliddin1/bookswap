@@ -3,7 +3,7 @@ import type { Listing, ListingStatus } from "@/lib/types";
 type ReaderSummary = {
   id: string;
   name: string;
-  city?: string;
+  city?: string | null;
   created_at?: string;
 };
 
@@ -41,7 +41,9 @@ function isReaderSummary(value: unknown): value is ReaderSummary {
     isRecord(value) &&
     typeof value.id === "string" &&
     typeof value.name === "string" &&
-    (value.city === undefined || typeof value.city === "string") &&
+    (value.city === undefined ||
+      value.city === null ||
+      typeof value.city === "string") &&
     (value.created_at === undefined || isTimestamp(value.created_at))
   );
 }

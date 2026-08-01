@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, MapPin, Send, ShieldCheck } from "lucide-react";
+import { ArrowLeft, MapPin, RotateCw, Send, ShieldCheck } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -18,7 +18,7 @@ import {
   parseChatRoomDetail,
   type ChatRoomDetail,
 } from "@/lib/chat-client";
-import { authFetch } from "@/lib/client-api";
+import { authFetch, LocalizedClientError } from "@/lib/client-api";
 import {
   AZ_COPY,
   formatAzn,
@@ -43,6 +43,16 @@ function responseData(value: unknown) {
   return isRecord(value) ? value.data : undefined;
 }
 
+type RoomLoadFailureKind = "session" | "unavailable" | "retryable";
+
+class RoomLoadError extends Error {
+  override name = "RoomLoadError";
+
+  constructor(readonly kind: RoomLoadFailureKind) {
+    super(kind);
+  }
+}
+
 export function ChatPanel({ roomId }: { roomId: string }) {
   const { user, loading: authLoading } = useAuth();
   const userId = user?.id;
@@ -57,10 +67,13 @@ export function ChatPanel({ roomId }: { roomId: string }) {
     value: string;
   } | null>(null);
   const text = draft?.contextKey === contextKey ? draft.value : "";
-  const [loadFailedForContext, setLoadFailedForContext] = useState<
-    string | null
-  >(null);
-  const loadFailed = Boolean(contextKey && loadFailedForContext === contextKey);
+  const [loadFailureState, setLoadFailureState] = useState<{
+    contextKey: string;
+    kind: RoomLoadFailureKind;
+  } | null>(null);
+  const loadFailure =
+    loadFailureState?.contextKey === contextKey ? loadFailureState : null;
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [sendErrorState, setSendErrorState] = useState<{
     contextKey: string;
     message: string;
@@ -113,11 +126,32 @@ export function ChatPanel({ roomId }: { roomId: string }) {
 
   const fetchRoom = useCallback(
     async (expectedUserId: string, signal?: AbortSignal) => {
-      const response = await authFetch(`/api/chat/rooms/${roomId}`, { signal });
-      const body: unknown = await response.json();
-      if (!response.ok) throw new Error();
+      let response: Response;
+      try {
+        response = await authFetch(`/api/chat/rooms/${roomId}`, { signal });
+      } catch (error) {
+        if (
+          error instanceof LocalizedClientError &&
+          error.code === "AUTH_REQUIRED"
+        )
+          throw new RoomLoadError("session");
+        throw error;
+      }
+      let body: unknown;
+      try {
+        body = await response.json();
+      } catch {
+        throw new RoomLoadError("retryable");
+      }
+      if (!response.ok) {
+        if (response.status === 401) throw new RoomLoadError("session");
+        if (response.status === 403 || response.status === 404)
+          throw new RoomLoadError("unavailable");
+        throw new RoomLoadError("retryable");
+      }
       const parsed = parseChatRoomDetail(responseData(body));
-      if (!parsed || parsed.currentUserId !== expectedUserId) throw new Error();
+      if (!parsed || parsed.currentUserId !== expectedUserId)
+        throw new RoomLoadError("retryable");
       return parsed;
     },
     [roomId],
@@ -128,7 +162,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
     if (!userId || !contextKey) {
       setRoomData(null);
       setDraft(null);
-      setLoadFailedForContext(null);
+      setLoadFailureState(null);
       setSendErrorState(null);
       setReadErrorState(null);
       setSendingForContext(null);
@@ -140,7 +174,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
     const requestContext = contextKey;
     setRoomData(null);
     setDraft(null);
-    setLoadFailedForContext(null);
+    setLoadFailureState(null);
     setSendErrorState(null);
     setReadErrorState(null);
     setSendingForContext(null);
@@ -156,13 +190,16 @@ export function ChatPanel({ roomId }: { roomId: string }) {
           active &&
           !(reason instanceof DOMException && reason.name === "AbortError")
         )
-          setLoadFailedForContext(requestContext);
+          setLoadFailureState({
+            contextKey: requestContext,
+            kind: reason instanceof RoomLoadError ? reason.kind : "retryable",
+          });
       });
     return () => {
       active = false;
       controller.abort();
     };
-  }, [authLoading, contextKey, fetchRoom, markRead, userId]);
+  }, [authLoading, contextKey, fetchRoom, loadAttempt, markRead, userId]);
 
   const roomReady = Boolean(room);
   useEffect(() => {
@@ -213,7 +250,11 @@ export function ChatPanel({ roomId }: { roomId: string }) {
                 void markRead();
             })
             .catch(() => {
-              if (active) setLoadFailedForContext(requestContext);
+              if (active)
+                setReadErrorState({
+                  contextKey: requestContext,
+                  message: AZ_COPY.chat.refreshFailed,
+                });
             });
         }
         subscribedOnce = true;
@@ -257,8 +298,8 @@ export function ChatPanel({ roomId }: { roomId: string }) {
   }, [contextKey, room?.messages.length, room]);
 
   useEffect(() => {
-    if (loadFailed) loadErrorRef.current?.focus();
-  }, [loadFailed]);
+    if (loadFailure) loadErrorRef.current?.focus();
+  }, [loadFailure]);
 
   async function send(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
@@ -349,7 +390,7 @@ export function ChatPanel({ roomId }: { roomId: string }) {
       </div>
     );
 
-  if (loadFailed)
+  if (loadFailure?.kind === "unavailable")
     return (
       <div
         ref={loadErrorRef}
@@ -364,6 +405,52 @@ export function ChatPanel({ roomId }: { roomId: string }) {
           href="/messages"
           headingLevel="h1"
         />
+      </div>
+    );
+
+  if (loadFailure?.kind === "session")
+    return (
+      <div
+        ref={loadErrorRef}
+        className="container-shell py-16"
+        role="alert"
+        tabIndex={-1}
+      >
+        <EmptyState
+          title={AZ_COPY.chat.sessionExpiredTitle}
+          body={AZ_COPY.chat.sessionExpiredBody}
+          action={AZ_COPY.chat.signIn}
+          href={`/login?next=${encodeURIComponent(`/chat/${roomId}`)}`}
+          headingLevel="h1"
+        />
+      </div>
+    );
+
+  if (loadFailure?.kind === "retryable")
+    return (
+      <div
+        ref={loadErrorRef}
+        className="container-shell py-16"
+        role="alert"
+        tabIndex={-1}
+      >
+        <div className="empty-state">
+          <h1 className="display min-w-0 max-w-full break-words text-3xl font-semibold [overflow-wrap:anywhere]">
+            {AZ_COPY.chat.loadFailedTitle}
+          </h1>
+          <p>{AZ_COPY.chat.loadFailedBody}</p>
+          <button
+            type="button"
+            className="btn-primary mt-5"
+            onClick={() => {
+              setLoadFailureState(null);
+              setLoadAttempt((attempt) => attempt + 1);
+            }}
+          >
+            <RotateCw aria-hidden="true" size={16} />
+            {AZ_COPY.chat.retry}
+          </button>
+        </div>
       </div>
     );
 
