@@ -938,7 +938,7 @@ The first local build attempt was blocked only by sandbox denial of the existing
 
 ## 2026-08-01 — P0 iPhone listing-authoring exception
 
-**Result: repository and guarded-development fix PASS; production deployment/post-deploy verification PENDING by explicit prohibition.**
+**Result: repository and guarded-development fix PASS; the pre-release production boundary below is superseded by the completed release evidence in the next section.**
 
 ### Root-cause and reproduction evidence
 
@@ -966,4 +966,17 @@ real fresh-user listing flow           PASS — login/upload/create/render; 0 pa
 git diff --check                       PASS
 ```
 
-No production Auth/Storage/database mutation, deployment, Vercel setting change, push, merge, or remote Git action occurred. P0-001 remains open only for an authorized production release and post-deploy iPhone/WebKit smoke.
+No production Auth/Storage/database mutation, deployment, Vercel setting change, push, merge, or remote Git action occurred during the investigation slice. That historical boundary is superseded by the separately authorized release below.
+
+## 2026-08-01 — P0 mobile listing-authoring production release
+
+**Result: PASS — focused `main` release, canonical Production promotion, guarded Chromium/WebKit smoke, and zero production data residue.**
+
+- Preservation/publication: the validated worktree was branched directly from synchronized `main` without stash/reset/checkout loss. The focused fix commit and a one-line WebKit CI installer correction were published through PR #5 and squash-merged as `606212adbd95e05eaae6113e26d961dd896e9847`. No divergent autonomous history was merged or rewritten.
+- CI: the first PR run proved the workflow installed only Chromium; all Chromium tests passed while WebKit could not launch. The workflow now installs Chromium and WebKit. A later unrelated chat-focus assertion missed once under runner contention and passed on the diagnostic rerun. The exact final `main` SHA then passed the complete GitHub push workflow, including all Chromium and WebKit E2E cases.
+- Local release gates: format, lint, strict non-incremental TypeScript, 66/66 unit/security tests, 22/22 static migrations, rehearsal guard with zero backup artifacts, dependency baseline, 196-file secret scan, guarded development authorization 10/10 with cleanup, 39/39 production build, five performance budgets, 35 passed browser tests plus one expected beta-only skip, mobile WebKit 3/3, production-only audit 0, and diff check all passed.
+- Deployment gate: the linked intended Vercel project and account were accessible; all five required Production variable names existed as encrypted entries; the prior `READY` Production deployment was retained as rollback. The first raw upload ended before artifact creation or alias movement; the compressed retry built 39/39 routes and reached `READY`. Blue/green `/listings/new` returned 200 with the expected security/crawler headers before promotion.
+- Promotion/alias: the new Production deployment was promoted successfully. The canonical HTTPS domain resolved through Vercel DNS to that exact `READY` deployment and `/listings/new` plus the public catalog API returned 200 with expected shapes. The sampled post-deploy error-log query returned no entries.
+- Guarded production smoke: 390×844 Chromium and iPhone 13 WebKit both passed HEIC validation, PNG object-URL preview, intercepted upload, intercepted listing submission, completion, catalog navigation, and detail rendering. Both recorded zero page errors, zero console errors, zero real failed requests, and zero persistent mutations. Two Chromium speculative App Router GET prefetch cancellations were classified separately; WebKit recorded none.
+- Production cleanup: the smoke used an in-memory fake session and fulfilled all write routes in the browser before network dispatch. It created no Auth user, profile, listing, Storage object, favorite, database row, or schema/configuration change, so no production cleanup mutation was required.
+- Residual device boundary: Playwright WebKit exercises iPhone-compatible browser behavior but does not reproduce every physical-iPhone Safari version, camera picker, Photos permission, iCloud/file-provider, memory-pressure, or HEIC metadata path. One owner-observed physical-iPhone pass remains recommended; it is not evidence that the automated production release failed.
