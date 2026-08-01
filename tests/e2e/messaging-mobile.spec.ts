@@ -209,6 +209,7 @@ test("mobile buyer starts, retries, opens, and messages a seller with null profi
   let roomStarts = 0;
   let roomDetailGets = 0;
   let messagePosts = 0;
+  let relatedListingsGets = 0;
   await page.addInitScript((failedRoomId) => {
     const originalFetch = window.fetch.bind(window);
     let failOnce = true;
@@ -238,6 +239,14 @@ test("mobile buyer starts, retries, opens, and messages a seller with null profi
     await route.fulfill({
       contentType: "application/json",
       body: JSON.stringify({ data: { ...listing, reviews: [] } }),
+    });
+  });
+  await page.route(/\/api\/listings(?:\?.*)?$/, async (route) => {
+    relatedListingsGets += 1;
+    expect(route.request().method()).toBe("GET");
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ data: { items: [], nextCursor: null } }),
     });
   });
   await page.route("**/api/favorites?**", async (route) => {
@@ -302,6 +311,7 @@ test("mobile buyer starts, retries, opens, and messages a seller with null profi
     .click();
   await expect(page).toHaveURL(new RegExp(`/chat/${roomId}$`));
   await expect.poll(() => roomStarts).toBe(1);
+  await expect.poll(() => relatedListingsGets).toBeGreaterThan(0);
   await expect(
     page.getByRole("heading", { name: AZ_COPY.chat.loadFailedTitle }),
   ).toBeVisible();
