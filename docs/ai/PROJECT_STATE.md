@@ -6,6 +6,8 @@ Updated: 1 August 2026
 
 **The production-reported P0 iPhone listing-authoring exception is fixed, merged, deployed, and verified on the canonical friends-beta Production alias.** The reproduced unguarded object-URL preview exception and unhandled Supabase Auth lookup rejection are contained; Azerbaijani validation/recovery, an authoring-scoped error boundary, and duplicate-submit protection are active. A fresh normal development user completed real login/upload/create/render with zero residue, the complete local and GitHub Chromium/WebKit gates pass, and guarded post-deploy Chromium plus iPhone WebKit smoke covers HEIC rejection, PNG preview, intercepted upload/submission, catalog navigation, and detail rendering with zero persistent production mutation. Friend self-service Auth remains blocked by external transactional email configuration. The clean beta database, 22 migrations, authorization controls, and production environment values were unchanged. Public launch additionally remains blocked by recovery evidence, legal facts, administrator MFA/hosted controls, operations ownership, and field evidence.
 
+**MSG-001 is fixed and fully verified on the dedicated local branch, but is not yet released.** Production read-only aggregate inspection proved that both existing rooms have nullable buyer and seller `city` values, while the deployed client rejects `null` for that optional field after a successful authorized room read. The repository fix accepts the database contract and distinguishes missing/unauthorized, expired-session, and retryable load failures. Production still requires the focused Git/release workflow below; this investigation made no production mutation or deployment.
+
 ## Authoritative repository and Git baseline
 
 - Authoritative repository: the current BookSwap GitHub checkout
@@ -35,6 +37,7 @@ Automated exchange matching, wanted-title matching, reader shelves, social readi
 - Sanitized production inventory, exact legacy migration fingerprints, an ordered 22-migration risk classification, read-only precondition SQL, immutable fingerprint guard, and a backup/restore/reconciliation runbook. These are preparation, not recovery evidence.
 - AI-free content safety: deterministic boundary validation, one narrow credential-theft text rule, durable rate limits, existing upload checks, user reporting, admin review/removal/ban/audit, and no external content-classification request. Image content is not claimed to be semantically understood.
 - P0 mobile listing resilience: guarded object-URL preview creation/revocation in create and edit flows, explicit Azerbaijani HEIC/HEIF and size validation, duplicate-submit protection, caught Auth lookup rejection, and an authoring-scoped client error boundary.
+- Messaging response resilience: nullable optional participant cities match the database contract; transient detail failures expose an Azerbaijani retry action, expired sessions expose sign-in recovery, and genuine missing/unauthorized rooms retain the non-enumerating unavailable state.
 
 ## Development Supabase status
 

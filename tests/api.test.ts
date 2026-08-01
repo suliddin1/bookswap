@@ -1220,6 +1220,24 @@ describe("marketplace input validation", () => {
         messages: [message],
       },
     );
+    const roomWithMissingOptionalCities = {
+      ...room,
+      buyer: { ...room.buyer, city: null },
+      seller: { ...room.seller, city: null },
+    };
+    expect(parseChatRoomSummaries([roomWithMissingOptionalCities])).toEqual([
+      roomWithMissingOptionalCities,
+    ]);
+    expect(
+      parseChatRoomDetail({
+        ...roomWithMissingOptionalCities,
+        messages: [message],
+      }),
+    ).toMatchObject({
+      buyer: { city: null },
+      seller: { city: null },
+      messages: [message],
+    });
     expect(parseChatMessage(message)).toEqual(message);
     expect(parseChatRoomSummaries([{ ...room, unreadCount: "2" }])).toBeNull();
     expect(

@@ -4,6 +4,12 @@ Updated: 1 August 2026
 
 This queue contains only unresolved work. Completed repository work is summarized in `PROJECT_STATE.md` and evidenced in `QA_EVIDENCE.md`.
 
+## Launch-critical engineering
+
+| ID      | Priority | Defect                                                                                                                              | Required closure evidence                                                                                                                                                                                                                    |
+| ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MSG-001 | P0       | Verified repository fix is not yet released; deployed clients reject nullable participant cities after an authorized 200 room read. | Publish the focused commit through the reviewed release branch, run exact-SHA CI, deploy through the established Vercel workflow, then perform guarded buyer/seller Chromium and iPhone WebKit smoke without persistent production fixtures. |
+
 ## Friends-only private-beta promotion blocker
 
 | ID     | Owner action                                                             | Evidence and boundary                                                                                                                                                                                                                                                                                                                |

@@ -980,3 +980,43 @@ No production Auth/Storage/database mutation, deployment, Vercel setting change,
 - Guarded production smoke: 390×844 Chromium and iPhone 13 WebKit both passed HEIC validation, PNG object-URL preview, intercepted upload, intercepted listing submission, completion, catalog navigation, and detail rendering. Both recorded zero page errors, zero console errors, zero real failed requests, and zero persistent mutations. Two Chromium speculative App Router GET prefetch cancellations were classified separately; WebKit recorded none.
 - Production cleanup: the smoke used an in-memory fake session and fulfilled all write routes in the browser before network dispatch. It created no Auth user, profile, listing, Storage object, favorite, database row, or schema/configuration change, so no production cleanup mutation was required.
 - Residual device boundary: Playwright WebKit exercises iPhone-compatible browser behavior but does not reproduce every physical-iPhone Safari version, camera picker, Photos permission, iCloud/file-provider, memory-pressure, or HEIC metadata path. One owner-observed physical-iPhone pass remains recommended; it is not evidence that the automated production release failed.
+
+## 2026-08-01 — MSG-001 messaging room retrieval fix
+
+**Result: repository/development PASS; production release pending.** No production row, schema, policy, Auth identity, Storage object, environment value, deployment, or Git remote changed.
+
+### Proven root cause and affected path
+
+- Buyer room creation was successful: three concurrent guarded development starts returned HTTP 201 and the same `chat_rooms.id`; `(listing_id, buyer_id)` uniqueness prevented duplicates, and the `initialize_chat_room_reads` trigger created exactly the buyer and seller read-state rows in the insert transaction.
+- Buyer and seller detail routes both returned HTTP 200 with the correct room ID, participant IDs, listing, read state, and messages. Unrelated and anonymous callers received no private data.
+- `public.users.city` is nullable. The detail/list APIs return raw participant summaries, so fresh profiles without optional location carry `city: null`. `lib/chat-client.ts` accepted only an omitted or string city; `parseChatRoomDetail`/`parseChatRoomSummaries` therefore returned `null`. `ChatPanel` collapsed that client-contract failure into the same permanent unavailable state used for a genuine 403/404.
+- Read-only production aggregation independently confirmed two rooms, both with null buyer and seller cities, zero missing-listing rooms, and zero self rooms. Thus both deployed room responses are rejected by the old client contract; no participant row, redirect ID, transaction, RLS, or migration failure was found.
+
+### Security/database verification
+
+- Development and clean-beta production each contain the same 22 named migrations. Messaging policies, grants, triggers, constraints, and relevant function definitions match: participant-only room/message SELECT, active participant message INSERT, authenticated room INSERT, no anon chat grants, distinct participants, unique `(listing_id, buyer_id)`, listing/seller FK, two-row read-state trigger, and participant-validating delivery trigger.
+- There is no conversation-creation RPC. The authenticated server route validates the active listing/seller/account, blocks self-message, and performs one service-side Postgres upsert; trigger effects are atomic with that statement. No migration or generated type change was required.
+- Security Advisor: development zero findings. Production retains only the already tracked leaked-password-protection and MFA warnings; performance findings are INFO-only unused-index notices on the small beta dataset.
+
+### Regression and validation evidence
+
+```text
+npm run lint                           PASS — zero warnings
+npx tsc --noEmit --incremental false  PASS — zero diagnostics
+npm test                               PASS — 3 files, 66/66 tests
+npm run test:authorization             PASS — guarded development 10/10
+npm run test:database:static           PASS — 22 migrations
+npm run test:production-rehearsal      PASS — 22 fingerprints; 0 backup artifacts
+npm run test:dependencies              PASS — 7 guarded packages
+npm run test:secrets                   PASS — 197 files
+npm run build                          PASS — Next 15.5.21, 39/39 routes
+npm run test:performance               PASS — 5/5 budgets
+npm run test:e2e -- --workers=1        PASS — 39 passed, 1 expected beta skip
+mobile messaging regressions           PASS — Chromium 2/2; iPhone 13 WebKit 2/2
+npm run format:check                    PASS
+git diff --check                       PASS
+```
+
+- Guarded actor matrix: seller creates through the protected listing route; buyer opens/reuses the room concurrently; both actors read room/list responses and send messages; refresh reads both messages. Unrelated, anonymous, forged-sender, self-message, banned, expired-session, missing, deleted, draft, and malformed cases fail safely.
+- Mobile matrix covers listing CTA, returned room ID redirect, transient HTTP failure with Azerbaijani retry, null participant fields, conversation render, message submit, expired-session sign-in recovery, and zero page/console errors in Chromium and iPhone WebKit.
+- Development cleanup proof after the final run: Auth users 0, matching profiles 0, listings 0, rooms 0, read states 0, messages 0, notifications 0, task moderation rows 0, task cleanup jobs 0, and fixture Storage objects 0.

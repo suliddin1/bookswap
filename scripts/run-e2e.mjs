@@ -41,9 +41,11 @@ function stopServer() {
 let exitCode = 1;
 try {
   await waitForServer();
-  const test = spawn(node, ["node_modules/@playwright/test/cli.js", "test"], {
-    stdio: "inherit",
-  });
+  const test = spawn(
+    node,
+    ["node_modules/@playwright/test/cli.js", "test", ...process.argv.slice(2)],
+    { stdio: "inherit" },
+  );
   exitCode = await new Promise((resolve) =>
     test.on("exit", (code) => resolve(code ?? 1)),
   );
