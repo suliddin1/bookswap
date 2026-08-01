@@ -4,6 +4,12 @@ Updated: 1 August 2026
 
 This queue contains only unresolved work. Completed repository work is summarized in `PROJECT_STATE.md` and evidenced in `QA_EVIDENCE.md`.
 
+## Production P0 defects
+
+| ID     | Defect                                                                                      | Required closure evidence                                                                                                                                                                                                                                                                                                        |
+| ------ | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P0-001 | Deploy the verified iPhone listing-authoring exception fix and run post-deploy mobile smoke | Repository/development closure passes: exact preview exception reproduced, Auth rejection contained, Azerbaijani recovery added, fresh-user real upload/create/render passed, Chromium/WebKit and complete validation green. Production mutation/deployment was prohibited, so the live artifact remains the final closure gate. |
+
 ## Friends-only private-beta promotion blocker
 
 | ID     | Owner action                                                             | Evidence and boundary                                                                                                                                                                                                                                                                                                                |

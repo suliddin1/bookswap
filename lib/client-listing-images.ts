@@ -15,17 +15,52 @@ export const LISTING_IMAGE_TYPES = [
   "image/webp",
 ] as const;
 
-export function validateListingImageFiles(files: File[]) {
+export function validateListingImageFiles(files: readonly File[]) {
   if (files.length > MAX_LISTING_IMAGES)
     return AZ_COPY.listingForm.invalidImageCount;
-  const invalid = files.find(
+  const unsupported = files.find(
     (file) =>
-      file.size > MAX_LISTING_IMAGE_BYTES ||
       !LISTING_IMAGE_TYPES.includes(
-        file.type as (typeof LISTING_IMAGE_TYPES)[number],
+        file.type.toLowerCase() as (typeof LISTING_IMAGE_TYPES)[number],
       ),
   );
-  return invalid ? AZ_COPY.listingForm.invalidImageFile : null;
+  if (unsupported) return AZ_COPY.listingForm.unsupportedImageFormat;
+  if (files.some((file) => file.size > MAX_LISTING_IMAGE_BYTES))
+    return AZ_COPY.listingForm.imageTooLarge;
+  if (files.some((file) => file.size < 1))
+    return AZ_COPY.listingForm.invalidImageContent;
+  return null;
+}
+
+export function createListingImagePreviewUrls(files: readonly File[]): {
+  urls: string[];
+  error: string | null;
+} {
+  if (!files.length) return { urls: [], error: null };
+  const objectUrl = globalThis.URL?.createObjectURL;
+  if (typeof objectUrl !== "function")
+    return { urls: [], error: AZ_COPY.listingForm.previewUnavailable };
+
+  const urls: string[] = [];
+  try {
+    for (const file of files) urls.push(objectUrl.call(globalThis.URL, file));
+    return { urls, error: null };
+  } catch {
+    revokeListingImagePreviewUrls(urls);
+    return { urls: [], error: AZ_COPY.listingForm.previewUnavailable };
+  }
+}
+
+export function revokeListingImagePreviewUrls(urls: readonly string[]) {
+  const revokeObjectUrl = globalThis.URL?.revokeObjectURL;
+  if (typeof revokeObjectUrl !== "function") return;
+  for (const url of urls) {
+    try {
+      revokeObjectUrl.call(globalThis.URL, url);
+    } catch {
+      // Object URL cleanup is best-effort and must never terminate authoring.
+    }
+  }
 }
 
 export async function uploadListingImages(files: File[]) {

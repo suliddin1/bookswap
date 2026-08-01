@@ -935,3 +935,35 @@ The first local build attempt was blocked only by sandbox denial of the existing
 - The current official Supabase Auth guidance still states that default SMTP refuses non-team addresses and is not production mail delivery. The last verified clean-beta configuration has no custom SMTP/Send Email Hook.
 - The available authenticated connector exposes project/database operations but not Auth config, and CLI `2.101.0` exposes config push but no read-only config pull/dry-run. No provider-presence pass is invented and no config push, token extraction, browser secret inspection, signup probe, or email send was attempted.
 - Before invitations, the owner must privately configure custom SMTP or a Send Email Hook and complete one signup-confirmation plus one recovery round trip through an owner-controlled non-team inbox. Keep confirmation enabled.
+
+## 2026-08-01 — P0 iPhone listing-authoring exception
+
+**Result: repository and guarded-development fix PASS; production deployment/post-deploy verification PENDING by explicit prohibition.**
+
+### Root-cause and reproduction evidence
+
+- The deployed `/listings/new` bundle matched the repository's unguarded preview path. `files.map(file => URL.createObjectURL(file))` ran in a passive React effect outside the upload/publication `try/catch`; a WebKit iPhone 13 reproduction forced the browser API to throw `NotSupportedError`, and the whole authoring surface was replaced by the route error UI before `/api/upload` was called.
+- The real guarded journey also produced a rejected `/auth/v1/user` lookup on WebKit. `useAuth` chained `.then(...)` without `.catch(...)`, leaving a second unhandled client promise. The hook now handles rejection/finalization and ignores completion after unmount.
+- The historical production incident has no retained client stack or source-mapped telemetry, so evidence cannot distinguish which of these two concrete uncaught paths fired on the user's device. Both are fixed; no unsupported causal claim is made about file contents beyond the reproduced object-URL failure.
+
+### Implementation and case matrix
+
+- Shared preview helpers catch missing/throwing object-URL APIs, revoke partial/all URLs best-effort, clear the failed selection, focus the file field, and show Azerbaijani recovery without leaving the form. Create and edit flows share the helper.
+- HEIC/HEIF, zero-byte, oversized, and excessive selections have explicit Azerbaijani validation; JPEG/PNG multi-preview remains functional. Server-side MIME/signature/count/size enforcement and service-only Storage mutation are unchanged.
+- Upload, malformed/failed Storage, expired session, create response, cleanup, duplicate publish tap, completion UI, and detail rendering remain bounded. An authoring-scoped React boundary provides recovery for unexpected render/lifecycle errors.
+- A newly created normal development user (`is_admin=false`, `banned=false`) with null optional city/phone completed real browser login, real PNG Storage upload, listing insert, completion, and detail render at a mobile viewport with zero page errors and zero failed responses. The listing, owner-folder objects, and Auth user were removed; residue verification returned zero listings and zero `listing-p0-*` users. Two stale disposable users from failed harness attempts were identified by the exact prefix and removed before final validation.
+
+### Final validation
+
+```text
+npm run lint                           PASS — zero warnings
+npx tsc --noEmit --incremental false  PASS — zero diagnostics
+npm test                               PASS — 3 files, 66/66 tests
+npm run test:authorization             PASS — guarded development 10/10; fixtures cleaned
+npm run build                          PASS — Next 15.5.21, 39/39 routes
+npm run test:e2e                       PASS — 35 passed, 1 expected private-beta skip; Chromium full suite plus 3/3 mobile WebKit
+real fresh-user listing flow           PASS — login/upload/create/render; 0 page errors, 0 failed responses, 0 residue
+git diff --check                       PASS
+```
+
+No production Auth/Storage/database mutation, deployment, Vercel setting change, push, merge, or remote Git action occurred. P0-001 remains open only for an authorized production release and post-deploy iPhone/WebKit smoke.

@@ -20,6 +20,8 @@ import {
 } from "@/lib/marketplace";
 import {
   cleanupUploadedListingImages,
+  createListingImagePreviewUrls,
+  revokeListingImagePreviewUrls,
   uploadListingImages,
   validateListingImageFiles,
 } from "@/lib/client-listing-images";
@@ -70,11 +72,17 @@ export function ListingWizard() {
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
+  const publishInFlightRef = useRef(false);
 
   useEffect(() => {
-    const urls = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrls(urls);
-    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+    const preview = createListingImagePreviewUrls(files);
+    setPreviewUrls(preview.urls);
+    if (preview.error) {
+      setFiles([]);
+      setInvalidField("files");
+      setError(preview.error);
+    }
+    return () => revokeListingImagePreviewUrls(preview.urls);
   }, [files]);
 
   useEffect(() => {
@@ -109,19 +117,26 @@ export function ListingWizard() {
     }
   }
   function chooseImages(event: ChangeEvent<HTMLInputElement>) {
-    const selected = Array.from(event.target.files ?? []);
-    const validationError = validateListingImageFiles(selected);
-    if (validationError) {
+    try {
+      const selected = Array.from(event.target.files ?? []);
+      const validationError = validateListingImageFiles(selected);
+      if (validationError) {
+        setFiles([]);
+        setInvalidField("files");
+        setError(validationError);
+        event.target.value = "";
+        return;
+      }
+      setInvalidField(null);
+      setError("");
+      setFiles(selected);
+      event.target.value = "";
+    } catch {
       setFiles([]);
       setInvalidField("files");
-      setError(validationError);
+      setError(AZ_COPY.listingForm.previewUnavailable);
       event.target.value = "";
-      return;
     }
-    setInvalidField(null);
-    setError("");
-    setFiles(selected);
-    event.target.value = "";
   }
   function removeImage(index: number) {
     setFiles((current) =>
@@ -174,6 +189,8 @@ export function ListingWizard() {
   }
 
   async function publish() {
+    if (publishInFlightRef.current) return;
+    publishInFlightRef.current = true;
     setBusy(true);
     setError("");
     setInvalidField(null);
@@ -215,6 +232,7 @@ export function ListingWizard() {
       }
       setError(message);
     } finally {
+      publishInFlightRef.current = false;
       setBusy(false);
     }
   }
@@ -573,7 +591,7 @@ export function ListingWizard() {
             type="button"
             disabled={busy}
             className="btn-primary disabled:opacity-50"
-            onClick={() => (step === 3 ? publish() : advance())}
+            onClick={() => (step === 3 ? void publish() : advance())}
           >
             {busy
               ? AZ_COPY.listingForm.publishing

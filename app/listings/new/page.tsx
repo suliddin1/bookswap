@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ListingAuthoringErrorBoundary } from "@/components/listing-authoring-error-boundary";
 import { ListingWizard } from "@/components/listing-wizard";
 import { AZ_COPY } from "@/lib/i18n";
 
@@ -9,5 +10,9 @@ export const metadata: Metadata = {
 };
 
 export default function NewListingPage() {
-  return <ListingWizard />;
+  return (
+    <ListingAuthoringErrorBoundary>
+      <ListingWizard />
+    </ListingAuthoringErrorBoundary>
+  );
 }
