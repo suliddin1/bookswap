@@ -6,6 +6,7 @@ test-results
 .playwright
 coverage
 .npm-cache
+*.log
 backups
 *.backup
 *.dump

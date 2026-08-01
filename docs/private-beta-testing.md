@@ -1,10 +1,10 @@
 # BookSwap friends-only private-beta testing
 
-Updated: 30 July 2026
+Updated: 1 August 2026
 
 ## Access and safety
 
-- Use only the direct HTTPS link sent privately by the owner. The canonical link is recorded after the deployment gate passes; do not share it publicly.
+- The canonical HTTPS deployment gate and read-only smoke have passed. Use only the direct link sent privately by the owner; do not repost it publicly.
 - Wait for the owner to confirm that signup confirmation and password recovery email have been verified. Do not begin account testing while the SMTP gate is unresolved.
 - Treat the site as test software. Use test listings and test messages where practical.
 - Do not enter payment-card details, identity documents, private addresses, confidential messages, or other sensitive personal information.

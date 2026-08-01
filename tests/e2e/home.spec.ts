@@ -2670,8 +2670,21 @@ test("private beta is visibly labeled and excluded from crawlers", async ({
     { width: 1440, height: 900 },
   ]) {
     await page.setViewportSize(viewport);
+    await expect
+      .poll(() => page.evaluate(() => window.innerWidth))
+      .toBe(viewport.width);
     await expect(notice).toBeVisible();
-    expect(await horizontalOverflow(page)).toEqual([]);
+    const noticeBounds = await notice.boundingBox();
+    if (!noticeBounds) throw new Error("Private-beta notice has no layout box");
+    expect(noticeBounds.x).toBeGreaterThanOrEqual(-1);
+    expect(noticeBounds.x + noticeBounds.width).toBeLessThanOrEqual(
+      viewport.width + 1,
+    );
+    const pageWidth = await page.evaluate(() => ({
+      client: document.documentElement.clientWidth,
+      scroll: document.documentElement.scrollWidth,
+    }));
+    expect(pageWidth.scroll).toBeLessThanOrEqual(pageWidth.client + 1);
   }
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",

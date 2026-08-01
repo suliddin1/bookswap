@@ -1,6 +1,6 @@
 # Private-beta and public launch checklist
 
-Updated: 30 July 2026
+Updated: 1 August 2026
 
 This document separates repository-prepared procedures from production facts that an owner must verify. A checked repository item is never evidence that production infrastructure is enabled.
 
@@ -101,7 +101,8 @@ Vercel rollback restores application code/config version; it does not reverse da
 - Hosted Auth has the canonical Site URL, three exact required redirects, confirmation enabled, secure password changes, a 12-character letters/digits policy, refresh rotation, and configured rate limits.
 - Vercel Production has the verified beta URL/public/server key entries plus `NEXT_PUBLIC_SITE_URL` and `BOOKSWAP_PRIVATE_BETA`; the server key is sensitive and server-only. No value or project reference is documented.
 - Use the active legacy `anon`/`service_role` key formats with the current client path. The modern secret format returned 403 HTML in the verified admin preflight; the legacy server role returned 200 JSON and passed the full actor matrix.
-- Keep Vercel Git disconnected. Deploy only a clean, pushed, CI-green commit through the controlled Vercel CLI, retain the previous deployment as rollback candidate, and record production smoke evidence.
+- Vercel Git remains disconnected. The controlled CLI release from the clean, pushed, CI-green `a7a5a68` checkout is `READY` on the canonical HTTPS alias; retain the previous deployment as the application rollback candidate.
+- Direct post-deploy Chromium smoke passes six public routes, eight exact responsive checks, the catalog API, security headers, crawler controls, 29 asset responses, keyboard/mobile navigation, and zero real request, console, page, or runtime failures. Expected canceled Next.js speculative prefetches are recorded separately from failures.
 - Do not invite friends until custom SMTP or a Send Email Hook is configured and signup confirmation plus password recovery pass through an owner-controlled non-team inbox. Supabase's default mail service is not friend-facing production email.
 - Backup/restore remains deferred only for this friends beta. It is still mandatory before broad public launch, destructive/materially risky migration, or meaningful real-user data accumulation.
 

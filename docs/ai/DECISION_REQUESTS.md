@@ -1,6 +1,6 @@
 # Owner decisions and external actions
 
-Updated: 30 July 2026
+Updated: 1 August 2026
 
 Only facts or authority that cannot be derived safely from the repository remain here. Exchange matching, wanted titles, reader shelves, and social reading are intentionally post-launch and require no launch decision.
 
@@ -54,7 +54,7 @@ Observed 30 July 2026 on the clean beta project: the canonical HTTPS Site URL, t
 
 ## DR-004 — Production operations ownership
 
-Status: production/deployment-only. The intended production Supabase and Vercel projects are identified privately. Ownership, recovery, domain, alert, and release decisions remain open.
+Status: public-launch operations work. The intended production Supabase and Vercel projects and the canonical beta alias are identified privately, and the controlled beta release is complete. Recovery, custom-domain ownership, alerting, retention, and incident-ownership decisions remain open.
 
 Name the production Supabase/Vercel projects, domain, region/data-residency decision, deployment approver, incident commander, on-call/alert destination, log owner/retention, backup retention, restore target, support/privacy mailbox owners, moderation SLA, and secret-rotation owner. Verify backups and restore in production; repository procedures are not proof that either is enabled.
 
@@ -89,11 +89,11 @@ Follow `docs/production-migration-runbook.md` and the sanitized evidence in `doc
 
 ## DR-007 — Controlled production release approval
 
-Status: owner-authorized conditionally for friends-only private beta. Application/schema compatibility is resolved through the separate clean beta project; friend invitations remain blocked by DR-009. DR-002 and the backup portion of DR-006 are accepted private-beta deferrals, not standalone beta blockers. DR-005 services remain optional.
+Status: **RESOLVED for deployment on 30 July 2026; invitations remain blocked by DR-009.** Application/schema compatibility is resolved through the separate clean beta project. DR-002 and the backup portion of DR-006 are accepted private-beta deferrals, not standalone beta blockers. DR-005 services remain optional.
 
 Vercel Production now has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, non-readable sensitive `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`, and `BOOKSWAP_PRIVATE_BETA` by name/scope. They target the clean beta project and are distinct from development and legacy. Never expose or attempt to read the sensitive value. The repository-compatible active legacy `anon`/`service_role` key formats are used because the installed server client path returned 403 HTML for the modern secret format during preflight.
 
-Leave the Git integration disconnected. A reviewed `main` commit may be deployed through the controlled Vercel CLI because its database contracts, local/remote verification, canonical HTTPS origin, and beta flag now pass. Record the deployed commit and smoke evidence; retain the old production deployment only as an application rollback candidate, noting that an app rollback cannot reverse database changes. Do not send friend invitations until DR-009 passes.
+Vercel Git remains disconnected. The controlled CLI release launched from the clean synchronized `a7a5a68` checkout, reached `READY`, and owns the canonical HTTPS alias. Direct Chromium smoke passes six public routes, eight responsive checks, catalog API, crawler/security controls, 29 assets, keyboard/mobile navigation, and zero real browser/runtime failures. The CLI deployment has no provider-embedded Git SHA, so source attribution rests on the recorded clean-checkout preflight. Retain the previous production deployment only as an application rollback candidate, noting that an app rollback cannot reverse database changes. Do not send friend invitations until DR-009 passes.
 
 ## DR-008 — Friends-only private-beta risk decision
 
@@ -128,4 +128,4 @@ Completion evidence required before invitations:
 - Normal-user listings and messages are free. There is no commission, integrated payment, VIP listing, subscription/Pro tier, or display advertising at launch.
 - Paid listing promotion, professional seller plans, and direct sponsorships are future candidates only and are not implemented or promised.
 - Revisit monetization only after measurable listing supply, buyer activity, and seller demand exist; require a separate product/legal/fairness decision before implementation.
-- No paid service, production project, or deployment was authorized by this readiness run.
+- No paid service, paused-legacy mutation, backup retry, or production data migration was authorized. The separate clean beta project and the controlled deployment to the existing intended Vercel project were explicitly authorized and completed.

@@ -1,6 +1,6 @@
 # Launch-readiness issue queue
 
-Updated: 30 July 2026
+Updated: 1 August 2026
 
 This queue contains only unresolved work. Completed repository work is summarized in `PROJECT_STATE.md` and evidenced in `QA_EVIDENCE.md`.
 
@@ -30,7 +30,7 @@ This queue contains only unresolved work. Completed repository work is summarize
 | PROD-001 | Before any future legacy-data migration or broad public launch, rehearse the legacy history reconciliation on an isolated restore                                      | The clean beta intentionally contains no legacy data; fingerprints/classification/runbook remain prepared, but no legacy restore/reconciliation rehearsal exists      |
 | PROD-002 | Configure transactional Auth email; before public launch also decide leaked-password protection and enforce admin MFA                                                  | Site URL, exact redirects, confirmation, 12-character policy, secure changes, rotation, and rate limits are configured on beta; external mail delivery remains absent |
 | PROD-003 | Create/checksum an encrypted off-project database backup with managed Auth coverage and a separate Storage inventory/copy; restore it in isolation and measure RPO/RTO | Tooling and an empty encrypted destination now exist, but the owner deferred all backup/auth/password work; no archive or recovery proof exists                       |
-| PROD-006 | Name log retention, uptime/alert destinations, incident owners, and on-call test; then run post-deploy smoke, authorization, accessibility, and performance checks     | Seven-day Vercel runtime query is clean but proves neither alerting nor launch behavior                                                                               |
+| PROD-006 | Name log retention, uptime/alert destinations, incident owners, and on-call test; gather representative field performance before public launch                         | Direct post-deploy browser/API/runtime smoke passes, but platform logs alone do not prove alert delivery, incident ownership, retention, or field performance         |
 
 ## Strong pre-launch recommendations
 

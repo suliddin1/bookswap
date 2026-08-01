@@ -907,3 +907,31 @@ beta remote launch/query plans           PASS — launch SQL plus 8/8 plans, zer
 ```
 
 The first local build attempt was blocked only by sandbox denial of the existing Google Fonts fetch; the approved network run compiled 39/39 pages. A generated ignored Supabase linkage file caused the first format check to fail, was privately verified as beta-only metadata, and was deleted before the passing rerun. No assertion, RLS rule, grant, or security boundary was weakened.
+
+## 2026-08-01 — Private-beta deployment, public smoke, and final cleanup
+
+**Result: production-hosted public surface PASS; friend invitations remain externally blocked by transactional Auth email.** No account was created, no email was sent, and no production database/Auth/Storage mutation occurred during this verification.
+
+### Deployment and observability evidence
+
+- The existing intended Vercel project is linked locally, the expected Next.js project identity matches, and the canonical HTTPS alias resolves to a `READY` Production deployment.
+- The controlled CLI deployment was initiated from the clean, synchronized `a7a5a68` checkout after exact-SHA CI and all repository/remote backend gates passed. The CLI deployment has no provider-embedded Git source SHA, so this is operator preflight attribution rather than a Vercel metadata claim.
+- Direct headless Chromium smoke passed six public pages: home, catalog, login, signed-out favorites, signed-out profile, and privacy. All returned 200, reached network idle, retained `lang=az`, exposed the private-beta notice, and sent `noindex`.
+- Exact-width reflow passed 8/8 checks across home/catalog at 320, 375, 1024, and 1440 px. The mobile menu opened/closed correctly; keyboard Tab reached the skip link and Enter focused the main content.
+- Catalog API returned 200 with the expected empty-safe shape; invalid filter returned the expected localized 400 machine boundary; `robots.txt` and the manifest returned 200; crawler disallow and baseline security headers passed.
+- The final run observed 29 successful script/stylesheet/font/image responses, zero real failed requests, zero unexpected HTTP failures, zero console errors, and zero page errors. Eleven `net::ERR_ABORTED` requests were confirmed as non-navigation GET speculative Next.js route/chunk prefetches and are reported separately, not hidden or counted as application failures.
+- Vercel's 24-hour runtime error summary returned no error cluster. The one-hour status summary contained only successful/cache responses plus the smoke sequence's expected HTTP 400 validation probes; no 5xx appeared.
+- The first final local E2E run was 29/30 because the beta reflow test applied a global per-element bounds helper to the intentionally clipped decorative hero shelf while racing viewport propagation. The test now waits for the exact `window.innerWidth`, checks the beta notice bounds directly, and asserts actual document `scrollWidth`; no UI style or runtime behavior changed. The complete unchanged-functional-scope rerun passed 30/30.
+- Final focused diff gates: format pass; test-file lint zero warnings; strict non-incremental TypeScript pass; Vitest 62/62; static migrations 22/22; rehearsal guard 22/22 with zero repository backup artifacts; dependency baseline 7/7; secret scan 194; private-beta build 39/39; bundle budgets 5/5; Chromium 30/30; production-only npm audit 0; diff check pass.
+
+### Cleanup and residue evidence
+
+- The ACL-restricted external provisioning workspace was resolved to the exact operator path before deletion. Its 29 non-generated files had repository counterparts with 29/29 SHA-256 equality; the remaining ten link metadata files and one branch marker were generated. It contained no `.git`, `.env`, credential-named file, reparse point, or unknown repository-source mismatch, and was removed.
+- The ignored zero-byte Supabase CLI version marker and ignored Playwright last-run receipts were removed. The temporary production-smoke script and now-empty artifact directory were removed after the passing run. Chromium also emitted one non-sensitive transient GPU `debug.log`; it was removed, and root `.gitignore` now rejects `*.log` so runtime diagnostics cannot enter Git accidentally.
+- No backup, dump, decrypted copy, credential file, personal row, Auth identity, Storage object, screenshot, or secret entered the repository. The protected future encrypted-backup destination was not touched.
+
+### Remaining external boundary
+
+- The current official Supabase Auth guidance still states that default SMTP refuses non-team addresses and is not production mail delivery. The last verified clean-beta configuration has no custom SMTP/Send Email Hook.
+- The available authenticated connector exposes project/database operations but not Auth config, and CLI `2.101.0` exposes config push but no read-only config pull/dry-run. No provider-presence pass is invented and no config push, token extraction, browser secret inspection, signup probe, or email send was attempted.
+- Before invitations, the owner must privately configure custom SMTP or a Send Email Hook and complete one signup-confirmation plus one recovery round trip through an owner-controlled non-team inbox. Keep confirmation enabled.

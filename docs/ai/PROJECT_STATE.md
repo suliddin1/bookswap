@@ -1,10 +1,10 @@
 # BookSwap project state
 
-Updated: 30 July 2026
+Updated: 1 August 2026
 
 ## Current verdict
 
-**The clean friends-only beta backend and repository are launch-capable; friend self-service Auth is blocked only by external transactional email configuration.** The owner-created `bookswap-beta` project is separate from the paused legacy project and the development project. All 22 immutable migrations, hosted Auth URL/password settings, Storage configuration, SQL gates, and the seven-role authorization matrix pass there with zero fixture residue. Vercel Production now has the five required beta variables by name/scope, but the current deployment still predates this release. Supabase's default Auth mail service cannot support arbitrary friend addresses; a custom SMTP provider or Send Email Hook must be configured and verified before invitations are sent. The encrypted backup/restore rehearsal remains an owner-accepted private-beta deferral, not this blocker. Public launch additionally remains blocked by recovery evidence, legal facts, administrator MFA/hosted controls, operations ownership, and post-deploy evidence.
+**The clean friends-only beta application is deployed and its public read-only surface is verified; friend self-service Auth is blocked only by external transactional email configuration.** The owner-created clean beta project is separate from the paused legacy project and the development project. All 22 immutable migrations, hosted Auth URL/password settings, Storage configuration, SQL gates, and the seven-role authorization matrix pass there with zero fixture residue. The intended Vercel Production project is `READY` on its canonical HTTPS alias with all five required beta variables by name/scope. Direct Chromium smoke passes the public routes, catalog API, security headers, crawler controls, assets, mobile menu, keyboard entry, and exact beta reflow widths with no real request, console, page, or runtime error. Supabase's default Auth mail service cannot support arbitrary friend addresses; a custom SMTP provider or Send Email Hook must be configured and verified before invitations are sent. The encrypted backup/restore rehearsal remains an owner-accepted private-beta deferral, not this blocker. Public launch additionally remains blocked by recovery evidence, legal facts, administrator MFA/hosted controls, operations ownership, and field evidence.
 
 ## Authoritative repository and Git baseline
 
@@ -56,14 +56,14 @@ PostgreSQL 17 clients and Docker Desktop are now installed outside the repositor
 - Hosted beta evidence: 13 public application tables all have RLS, required constraints/indexes/triggers/extensions are present, browser Storage mutation policies are zero, the public `listing-images` bucket is limited to 5 MiB JPEG/PNG/WebP, and Security Advisor returns zero findings.
 - `launch_readiness.sql`, schema lint, and all eight representative query plans pass remotely. The query-plan fixtures, seven-role authorization fixtures, one immutable test audit row, Auth users, application rows, limiter rows, and Storage objects were all returned to zero.
 - Hosted Auth has the canonical HTTPS Site URL, only the three required exact redirect URLs, 12-character minimum, letters/digits requirement, confirmation enabled, secure password change, refresh rotation, and configured rate limits. Friend email delivery still requires external custom SMTP/Send Email Hook configuration.
-- The currently published Vercel release is `READY` but predates this release and is not accepted as the beta build. Vercel Git remains disconnected.
+- The controlled Vercel CLI release launched from the clean, synchronized `a7a5a68` checkout is `READY`, targets Production, and owns the canonical HTTPS alias. Vercel Git remains disconnected. CLI deployment metadata does not contain a Git source SHA, so the source attribution is the recorded clean-checkout preflight rather than a provider-embedded commit field.
 - The paused legacy project remains non-disposable. Blind migration pushes, migration-history edits without exact review, every reset, and any data migration remain prohibited.
 - Default `supabase db dump` excludes managed `auth` and `storage` schemas. No logical archive/checksum, managed Auth recovery, encrypted off-project copy, or successful isolated restore exists. The owner has deferred that work for the friends-only beta while preserving it as mandatory before broad public launch, destructive/materially risky production migration, or meaningful real-user data accumulation.
 - The local Supabase CLI, PostgreSQL 17 tools, Docker engine, and encryption tool are available; the repository-external encrypted destination remains empty. No backup, restore, password prompt, or encrypted artifact was attempted in this run.
 - Vercel Production has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, sensitive server-only `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`, and `BOOKSWAP_PRIVATE_BETA` by name/scope. They target the verified clean beta project, not development or legacy; no value was printed.
 - The installed client path returned 403 HTML for the modern secret-key format but 200 JSON for the repository-compatible legacy `service_role` key. Vercel therefore uses the active legacy `anon`/`service_role` pair; the service key remains server-only and sensitive.
-- Alert routing, retention, uptime evidence, incident ownership, custom domain ownership, and post-deploy verification remain incomplete.
-- Deployment gate result: **schema compatibility resolved by the clean beta project**. Production deployment and smoke remain to be recorded; friend invitations remain blocked on transactional Auth email delivery.
+- Alert routing, retention, uptime evidence, incident ownership, custom-domain ownership, and representative field performance remain incomplete.
+- Deployment gate result: **schema compatibility, production deployment, and public read-only smoke pass on the clean beta project**. Friend invitations remain blocked on transactional Auth email delivery.
 
 ## Validation snapshot
 
@@ -81,6 +81,8 @@ PostgreSQL 17 clients and Docker Desktop are now installed outside the repositor
 - Chromium browser/E2E: 30/30 pass with the private-beta marker/noindex check; exact beta reflow coverage includes 320, 375, 1024, and 1440 px widths
 - Real multi-actor backend authorization: 10/10 pass against both the guarded development project and the clean beta project; beta used seven roles and finished with zero Auth/application/Storage fixture residue
 - Clean beta remote database: 22/22 migration parity; launch SQL pass; schema lint pass; 8/8 representative query plans pass; Security Advisor 0; performance notices are INFO-only unused indexes on an empty project
+- Canonical production browser smoke: 6/6 public routes, 8/8 responsive route-width checks, 29 successful asset responses, catalog API/robots/manifest/security headers pass, real failed requests 0, console errors 0, page errors 0, unexpected HTTP failures 0
+- Vercel post-deploy observability: runtime error clusters 0; sampled production statuses are 200/304 plus the smoke gate's expected 400 validation probes; 5xx 0
 
 ## Remaining external requirements
 
