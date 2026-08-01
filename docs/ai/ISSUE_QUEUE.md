@@ -1,14 +1,14 @@
 # Launch-readiness issue queue
 
-Updated: 1 August 2026
+Updated: 2 August 2026
 
 This queue contains only unresolved work. Completed repository work is summarized in `PROJECT_STATE.md` and evidenced in `QA_EVIDENCE.md`.
 
 ## Launch-critical engineering
 
-| ID      | Priority | Defect                                                                                                                              | Required closure evidence                                                                                                                                                                                                                    |
-| ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| MSG-001 | P0       | Verified repository fix is not yet released; deployed clients reject nullable participant cities after an authorized 200 room read. | Publish the focused commit through the reviewed release branch, run exact-SHA CI, deploy through the established Vercel workflow, then perform guarded buyer/seller Chromium and iPhone WebKit smoke without persistent production fixtures. |
+| ID      | Priority | Defect                                                                                                                                                                    | Required closure evidence                                                                                                                                                                                                                                                                                           |
+| ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MSG-001 | P0       | The nullable-city messaging fix is live on the canonical alias, but recipient-side confirmation on that alias remains outstanding under explicitly accepted release risk. | Recipient must confirm that the existing conversation opens, the received message is visible, list-to-detail navigation works, and refresh succeeds on `https://bookswap.suliddin.dev`; record exact route/status/client error and roll back to `dpl_6nXYzBLTuEFrKin6n94oUXhhV9Lb` if a broader regression appears. |
 
 ## Friends-only private-beta promotion blocker
 

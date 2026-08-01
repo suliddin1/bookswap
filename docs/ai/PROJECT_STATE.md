@@ -1,12 +1,12 @@
 # BookSwap project state
 
-Updated: 1 August 2026
+Updated: 2 August 2026
 
 ## Current verdict
 
 **The production-reported P0 iPhone listing-authoring exception is fixed, merged, deployed, and verified on the canonical friends-beta Production alias.** The reproduced unguarded object-URL preview exception and unhandled Supabase Auth lookup rejection are contained; Azerbaijani validation/recovery, an authoring-scoped error boundary, and duplicate-submit protection are active. A fresh normal development user completed real login/upload/create/render with zero residue, the complete local and GitHub Chromium/WebKit gates pass, and guarded post-deploy Chromium plus iPhone WebKit smoke covers HEIC rejection, PNG preview, intercepted upload/submission, catalog navigation, and detail rendering with zero persistent production mutation. Friend self-service Auth remains blocked by external transactional email configuration. The clean beta database, 22 migrations, authorization controls, and production environment values were unchanged. Public launch additionally remains blocked by recovery evidence, legal facts, administrator MFA/hosted controls, operations ownership, and field evidence.
 
-**MSG-001 is fixed and fully verified on the dedicated local branch, but is not yet released.** Production read-only aggregate inspection proved that both existing rooms have nullable buyer and seller `city` values, while the deployed client rejects `null` for that optional field after a successful authorized room read. The repository fix accepts the database contract and distinguishes missing/unauthorized, expired-session, and retryable load failures. Production still requires the focused Git/release workflow below; this investigation made no production mutation or deployment.
+**MSG-001 is deployed to the canonical Production alias from `73d0628cd65372c8187198f847062814893cf9be` as Vercel deployment `dpl_ECZ6xdSzhgybz8Jj7Lx8wyDjS3j8`.** The exact deployment is `READY`; canonical HTTP, anonymous authorization, mobile Chromium route smoke, and runtime-error checks pass, with no production data, schema, RLS, grant, Auth, Storage, or environment mutation. The owner explicitly accepted the residual risk that a recipient-side manual smoke could not reach the protected candidate before promotion. Keep MSG-001 open until that recipient confirms on the canonical domain that the nullable-city conversation opens, the received message is visible, list-to-detail navigation works, and refresh remains correct.
 
 ## Authoritative repository and Git baseline
 
