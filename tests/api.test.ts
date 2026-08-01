@@ -111,6 +111,13 @@ import {
   readResponseJson,
 } from "../lib/listing-authoring-responses";
 import {
+  createListingImagePreviewUrls,
+  MAX_LISTING_IMAGE_BYTES,
+  revokeListingImagePreviewUrls,
+  validateListingImageFiles,
+} from "../lib/client-listing-images";
+import { normalizeListing } from "../lib/listings";
+import {
   parseFavoriteLookupResponse,
   parseFavoriteMutationResponse,
   parseReportCreationResponse,
@@ -1876,6 +1883,10 @@ describe("marketplace input validation", () => {
       new URL("../components/edit-listing-form.tsx", import.meta.url),
       "utf8",
     );
+    const clientImages = readFileSync(
+      new URL("../lib/client-listing-images.ts", import.meta.url),
+      "utf8",
+    );
     const migration = readFileSync(
       new URL(
         "../supabase/migrations/20260714052000_add_listing_image_cleanup_jobs.sql",
@@ -1888,10 +1899,12 @@ describe("marketplace input validation", () => {
     expect(uploadRoute).toContain("queueListingImageCleanup");
     expect(listingRoute).toContain("drainListingImageCleanupJobs");
     expect(listingRoute).not.toContain("decodeURIComponent(");
-    expect(wizard).toContain("URL.revokeObjectURL");
+    expect(wizard).toContain("revokeListingImagePreviewUrls");
     expect(wizard).toContain("cleanupUploadedListingImages");
-    expect(editForm).toContain("URL.revokeObjectURL");
+    expect(editForm).toContain("revokeListingImagePreviewUrls");
     expect(editForm).toContain("AZ_COPY.listingForm.removeCurrentPhoto");
+    expect(clientImages).toContain("revokeObjectURL");
+    expect(clientImages).toContain("catch {");
     expect(migration).toContain("after update of images or delete");
     expect(migration).toContain("enable row level security");
     expect(migration).toContain("from anon, authenticated");
@@ -2250,5 +2263,95 @@ describe("marketplace input validation", () => {
     );
     expect(rpcInputHardeningMigration).toContain("if p_sort is null then");
     expect(rpcInputHardeningMigration).toContain("security invoker");
+  });
+});
+
+describe("mobile listing image resilience", () => {
+  const file = (name: string, type: string, size = 1) =>
+    new File([new ArrayBuffer(size)], name, { type });
+
+  it("rejects HEIC, HEIF, empty, oversized, and excessive selections with Azerbaijani copy", () => {
+    expect(validateListingImageFiles([file("iphone.heic", "image/heic")])).toBe(
+      AZ_COPY.listingForm.unsupportedImageFormat,
+    );
+    expect(validateListingImageFiles([file("iphone.heif", "image/heif")])).toBe(
+      AZ_COPY.listingForm.unsupportedImageFormat,
+    );
+    expect(validateListingImageFiles([file("empty.png", "image/png", 0)])).toBe(
+      AZ_COPY.listingForm.invalidImageContent,
+    );
+    expect(
+      validateListingImageFiles([
+        file("large.jpg", "image/jpeg", MAX_LISTING_IMAGE_BYTES + 1),
+      ]),
+    ).toBe(AZ_COPY.listingForm.imageTooLarge);
+    expect(
+      validateListingImageFiles(
+        Array.from({ length: 6 }, (_, index) =>
+          file(`${index}.jpg`, "image/jpeg"),
+        ),
+      ),
+    ).toBe(AZ_COPY.listingForm.invalidImageCount);
+  });
+
+  it("contains object URL creation and cleanup failures", () => {
+    const create = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValueOnce("blob:first")
+      .mockImplementationOnce(() => {
+        throw new DOMException("provider failure", "NotSupportedError");
+      });
+    const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {
+      throw new DOMException("cleanup failure", "InvalidStateError");
+    });
+
+    const preview = createListingImagePreviewUrls([
+      file("one.jpg", "image/jpeg"),
+      file("two.jpg", "image/jpeg"),
+    ]);
+    expect(preview).toEqual({
+      urls: [],
+      error: AZ_COPY.listingForm.previewUnavailable,
+    });
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(revoke).toHaveBeenCalledWith("blob:first");
+    expect(() => revokeListingImagePreviewUrls(["blob:first"])).not.toThrow();
+  });
+
+  it("normalizes nullable database/profile fields before post-submit rendering", () => {
+    const listing = normalizeListing({
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      title: "Null sahəli kitab",
+      author: null,
+      description: null,
+      isbn: null,
+      original_price: null,
+      price: "12.50",
+      images: null,
+      category: null,
+      condition: null,
+      city: null,
+      created_at: null,
+      seller_id: "11111111-1111-4111-8111-111111111111",
+      seller: { id: null, name: null, city: null },
+      favorites: null,
+    });
+
+    expect(listing).toMatchObject({
+      author: "",
+      description: "",
+      images: [],
+      seller: { name: "BookSwap oxucusu" },
+    });
+  });
+
+  it("contains browser Auth lookup rejection and unmount races", () => {
+    const useAuth = readFileSync(
+      new URL("../hooks/use-auth.ts", import.meta.url),
+      "utf8",
+    );
+    expect(useAuth).toContain(".catch(() =>");
+    expect(useAuth).toContain("if (active) setUser(null)");
+    expect(useAuth).toContain("active = false");
   });
 });

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ListingAuthoringErrorBoundary } from "@/components/listing-authoring-error-boundary";
 import { EditListingForm } from "@/components/edit-listing-form";
 import { AZ_COPY } from "@/lib/i18n";
 
@@ -14,5 +15,9 @@ export default async function EditListingPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <EditListingForm id={id} />;
+  return (
+    <ListingAuthoringErrorBoundary>
+      <EditListingForm id={id} />
+    </ListingAuthoringErrorBoundary>
+  );
 }

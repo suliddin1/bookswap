@@ -14,19 +14,33 @@ export function useAuth() {
       setLoading(false);
       return;
     }
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      setLoading(false);
+    let active = true;
+    void supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        if (active) setUser(data.user);
+      })
+      .catch(() => {
+        if (active) setUser(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    const { data } = supabase.auth.onAuthStateChange((_, session) => {
+      if (active) setUser(session?.user ?? null);
     });
-    const { data } = supabase.auth.onAuthStateChange((_, session) =>
-      setUser(session?.user ?? null),
-    );
-    return () => data.subscription.unsubscribe();
+    return () => {
+      active = false;
+      data.subscription.unsubscribe();
+    };
   }, []);
 
   async function signOut() {
-    await getSupabaseClient()?.auth.signOut();
-    window.location.href = "/";
+    try {
+      await getSupabaseClient()?.auth.signOut();
+    } finally {
+      window.location.href = "/";
+    }
   }
 
   return { user, loading, signOut };

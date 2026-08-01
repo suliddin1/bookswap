@@ -8,7 +8,9 @@ import type { Listing } from "@/lib/types";
 import { EmptyState } from "@/components/empty-state";
 import {
   cleanupUploadedListingImages,
+  createListingImagePreviewUrls,
   MAX_LISTING_IMAGES,
+  revokeListingImagePreviewUrls,
   uploadListingImages,
   validateListingImageFiles,
 } from "@/lib/client-listing-images";
@@ -74,29 +76,39 @@ export function EditListingForm({ id }: { id: string }) {
   }, [id]);
 
   useEffect(() => {
-    const urls = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrls(urls);
-    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+    const preview = createListingImagePreviewUrls(files);
+    setPreviewUrls(preview.urls);
+    if (preview.error) {
+      setFiles([]);
+      setError(preview.error);
+    }
+    return () => revokeListingImagePreviewUrls(preview.urls);
   }, [files]);
 
   function chooseImages(event: ChangeEvent<HTMLInputElement>) {
     if (!listing) return;
-    const selected = Array.from(event.target.files ?? []);
-    const validationError = validateListingImageFiles(selected);
-    const existingCount = listing.images?.length ?? 0;
-    if (
-      validationError ||
-      existingCount + selected.length > MAX_LISTING_IMAGES
-    ) {
-      setFiles([]);
-      setError(validationError ?? AZ_COPY.listingForm.maxPhotos);
+    try {
+      const selected = Array.from(event.target.files ?? []);
+      const validationError = validateListingImageFiles(selected);
+      const existingCount = listing.images?.length ?? 0;
+      if (
+        validationError ||
+        existingCount + selected.length > MAX_LISTING_IMAGES
+      ) {
+        setFiles([]);
+        setError(validationError ?? AZ_COPY.listingForm.maxPhotos);
+        event.target.value = "";
+        return;
+      }
+      setFiles(selected);
+      setError("");
+      setSaved(false);
       event.target.value = "";
-      return;
+    } catch {
+      setFiles([]);
+      setError(AZ_COPY.listingForm.previewUnavailable);
+      event.target.value = "";
     }
-    setFiles(selected);
-    setError("");
-    setSaved(false);
-    event.target.value = "";
   }
 
   async function submit(event: FormEvent) {
