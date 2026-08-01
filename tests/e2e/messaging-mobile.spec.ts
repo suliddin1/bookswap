@@ -196,9 +196,14 @@ test("mobile buyer starts, retries, opens, and messages a seller with null profi
   const { listing, room } = fixtureData();
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
+  const failedResponses: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("console", (message) => {
     if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  page.on("response", (response) => {
+    if (response.status() >= 400)
+      failedResponses.push(`${response.status()} ${response.url()}`);
   });
 
   let roomStarts = 0;
@@ -316,8 +321,11 @@ test("mobile buyer starts, retries, opens, and messages a seller with null profi
   await expect(
     page.getByRole("log", { name: AZ_COPY.chat.conversation }),
   ).toContainText("Kitab mövcuddur?");
-  expect(pageErrors).toEqual([]);
-  expect(consoleErrors).toEqual([]);
+  expect({ pageErrors, consoleErrors, failedResponses }).toEqual({
+    pageErrors: [],
+    consoleErrors: [],
+    failedResponses: [],
+  });
 });
 
 test("expired conversation session shows a sign-in recovery path", async ({
