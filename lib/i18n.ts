@@ -2,6 +2,11 @@ export const DOCUMENT_LANGUAGE = "az";
 export const APP_LOCALE = "az-AZ";
 
 export const AZ_COPY = {
+  privateBeta: {
+    label: "Dostlarla özəl beta",
+    notice:
+      "Yalnız dəvətli sınaq üçündür. Test elanlarından və test mesajlarından istifadə et; həssas şəxsi və ödəniş məlumatı daxil etmə.",
+  },
   metadata: {
     title: "BookSwap | Kitabına ikinci həyat ver",
     description:
@@ -28,7 +33,7 @@ export const AZ_COPY = {
   },
   footer: {
     description:
-      "Oxucuları bir-biri ilə birləşdirən kitab bazarı. BookSwap ödənişləri emal etmir və elandakı kitabları təhvil almır.",
+      "BookSwap alıcı ilə satıcını əlaqələndirən platformadır; kitabların satıcısı deyil, ödəniş qəbul etmir və istifadəçilər arasındakı alqı-satqı əməliyyatının tərəfi deyil.",
     marketplace: "Kitab bazarı",
     browse: "Kitablara bax",
     sell: "Kitab sat",
@@ -36,9 +41,9 @@ export const AZ_COPY = {
     faq: "Tez-tez verilən suallar",
     legal: "Hüquqi məlumat",
     rights: "Hüquqlarınız",
-    privacy: "Məxfilik bildirişi",
+    privacy: "Məxfilik siyasəti",
     terms: "İstifadə şərtləri",
-    marketplaceRules: "Kitab bazarı qaydaları",
+    marketplaceRules: "Kitab bazarı və icma qaydaları",
     moderationAppeals: "Moderasiya etirazları",
     userRights: "İstifadəçi hüquqları",
     copyright: "© 2026 BookSwap",
@@ -761,6 +766,7 @@ export const AZ_COPY = {
       "Yanlış və ya natamam məlumatı düzəltmək.",
       "Daşına bilən məlumat çıxarışı istəmək.",
       "Müəyyən məlumat emalına etiraz etmək.",
+      "Fərdi məlumatların emalına verdiyin razılığı geri götürmək.",
       "Hesab və məlumatların silinməsini istəmək.",
       "Moderasiya və hesab məhdudiyyəti barədə izah və yenidən baxış istəmək.",
     ],
@@ -822,6 +828,7 @@ const privacyRequestTypeLabels: Record<string, string> = {
   correction: "Məlumatlarımın düzəldilməsi",
   export: "Məlumatlarımın ixracı",
   deletion: "Hesabımın və məlumatlarımın silinməsi",
+  consent_withdrawal: "Fərdi məlumat razılığının geri götürülməsi",
   objection: "Məlumat emalına etiraz",
   appeal: "Moderasiya qərarına etiraz",
 };

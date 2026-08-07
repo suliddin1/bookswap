@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
 import { AZ_COPY } from "@/lib/i18n";
+import { getLegalIdentity } from "@/lib/legal";
 
 export function SiteFooter() {
+  const legalIdentity = getLegalIdentity();
+
   return (
     <footer className="border-t border-[#5b3c25] bg-[#e8decd] py-12">
       <div className="container-shell grid gap-9 md:grid-cols-[1.4fr_1fr_1fr]">
@@ -16,6 +19,20 @@ export function SiteFooter() {
           <p className="mt-3 max-w-sm text-xs leading-6 text-muted">
             {AZ_COPY.footer.description}
           </p>
+          {legalIdentity.complete ? (
+            <div className="mt-4 max-w-sm space-y-1 text-xs leading-6 text-muted">
+              <p>
+                BookSwap — {legalIdentity.operatorFullName} tərəfindən idarə
+                olunan fərdi layihə.
+              </p>
+              <p>Hüquqi və məxfilik əlaqəsi: {legalIdentity.contactEmail}</p>
+            </div>
+          ) : (
+            <p className="mt-4 max-w-sm text-xs leading-6 text-muted">
+              Hüquqi operator və əlaqə məlumatı ictimai istifadədən əvvəl
+              tamamlanmalıdır.
+            </p>
+          )}
         </div>
         <nav
           className="grid content-start text-xs font-bold text-gray-600"

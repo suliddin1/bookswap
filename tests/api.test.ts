@@ -2251,4 +2251,79 @@ describe("marketplace input validation", () => {
     expect(rpcInputHardeningMigration).toContain("if p_sort is null then");
     expect(rpcInputHardeningMigration).toContain("security invoker");
   });
+
+  it("keeps legal copy, signup consent, and audit storage on one version", () => {
+    const terms = readFileSync(
+      new URL("../app/terms/page.tsx", import.meta.url),
+      "utf8",
+    );
+    const privacy = readFileSync(
+      new URL("../app/privacy/page.tsx", import.meta.url),
+      "utf8",
+    );
+    const rules = readFileSync(
+      new URL("../app/marketplace-rules/page.tsx", import.meta.url),
+      "utf8",
+    );
+    const footer = readFileSync(
+      new URL("../components/site-footer.tsx", import.meta.url),
+      "utf8",
+    );
+    const signup = readFileSync(
+      new URL("../components/auth-panel.tsx", import.meta.url),
+      "utf8",
+    );
+    const authRoute = readFileSync(
+      new URL("../app/api/auth/[action]/route.ts", import.meta.url),
+      "utf8",
+    );
+    const supabaseClients = readFileSync(
+      new URL("../lib/supabase.ts", import.meta.url),
+      "utf8",
+    );
+    const migration = readFileSync(
+      new URL(
+        "../supabase/migrations/20260807090000_add_legal_acceptance_audit.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+
+    expect(terms).toContain('title="İstifadə şərtləri"');
+    expect(terms).toContain("18 yaşı tamam olmuş");
+    expect(terms).toContain("satış komissiyası");
+    expect(terms).toContain("escrow");
+    expect(privacy).toContain("LEGAL_VERSION");
+    expect(rules).toContain('title="Kitab bazarı və icma qaydaları"');
+    for (const href of [
+      "/terms",
+      "/privacy",
+      "/marketplace-rules",
+      "/safety",
+      "/user-rights",
+      "/moderation-appeals",
+    ]) {
+      expect(footer).toContain(`href="${href}"`);
+    }
+    expect(signup).toContain('name="termsAccepted"');
+    expect(signup).toContain('name="privacyAccepted"');
+    expect(signup).toContain("checked={termsAccepted}");
+    expect(signup).toContain("checked={privacyAccepted}");
+    expect(signup).toContain('fetch("/api/auth/signup"');
+    expect(authRoute).toContain("getSupabasePublicServerClient");
+    expect(authRoute).not.toContain("getSupabaseAdmin");
+    expect(supabaseClients).toContain("persistSession: false");
+    expect(supabaseClients).toContain("detectSessionInUrl: false");
+    expect(migration).toContain("create table public.legal_acceptances");
+    expect(migration).toContain("set search_path = ''");
+    expect(migration).toContain("revoke all on table public.legal_acceptances");
+    expect(migration).toContain(
+      'create policy "Users view their own legal acceptances"',
+    );
+    expect(migration).not.toContain("grant insert");
+    expect(migration).not.toContain("grant update");
+    expect(migration).toContain(
+      "grant delete on table public.legal_acceptances to service_role",
+    );
+  });
 });

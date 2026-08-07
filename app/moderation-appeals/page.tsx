@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { InfoPage, InfoSection } from "@/components/info-page";
+import {
+  getLegalIdentity,
+  LEGAL_EFFECTIVE_DATE,
+  LEGAL_VERSION,
+} from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "Moderasiya etirazları",
@@ -9,11 +14,16 @@ export const metadata: Metadata = {
 };
 
 export default function ModerationAppealsPage() {
+  const legal = getLegalIdentity();
+  const contact = legal.complete
+    ? legal.contactEmail
+    : "ictimai istifadədən əvvəl göstəriləcək hüquqi əlaqə";
+
   return (
     <InfoPage
-      eyebrow="Son yenilənmə: [QÜVVƏYƏ MİNMƏ TARİXİ]"
+      eyebrow={`Versiya ${LEGAL_VERSION} · Son yenilənmə: ${LEGAL_EFFECTIVE_DATE}`}
       title="Moderasiya qərarına etiraz."
-      intro="Elanınız, rəyiniz və ya hesabınız barədə moderasiya qərarının səhv olduğunu düşünürsünüzsə, qərarın yenidən nəzərdən keçirilməsini istəyə bilərsiniz. Etiraz əlaqəsi [DƏSTƏK E-POÇTU] kimi ictimai istifadədən əvvəl tamamlanmalıdır."
+      intro={`Elanınız, rəyiniz və ya hesabınız barədə moderasiya qərarının səhv olduğunu düşünürsünüzsə, qərarın yenidən nəzərdən keçirilməsini istəyə bilərsiniz. Hüquqi əlaqə: ${contact}.`}
     >
       <InfoSection
         id="eligible-decisions"
@@ -47,9 +57,8 @@ export default function ModerationAppealsPage() {
       </InfoSection>
       <InfoSection id="timing" title="Müddət və təkrar müraciət">
         <p>
-          Etirazın təqdim və cavab müddəti [ETİRAZ MÜDDƏTİ VƏ CAVAB HƏDƏFİ] kimi
-          hüquqi və əməliyyat sahibi tərəfindən ictimai istifadədən əvvəl
-          müəyyən edilməlidir. Eyni faktlarla ardıcıl təkrar müraciətə
+          Etirazlar mümkün qədər tez və işin mürəkkəbliyinə uyğun müddətdə
+          nəzərdən keçirilir. Eyni faktlarla ardıcıl təkrar müraciətə
           məhdudiyyət qoyula bilər; yeni əhəmiyyətli sübut olduqda yenidən
           baxılma istənilə bilər.
         </p>
@@ -58,9 +67,8 @@ export default function ModerationAppealsPage() {
         <p>
           Etiraz prosesi təcili yardım xidməti deyil. Dərhal təhlükə, hədə-qorxu
           və ya mümkün cinayət halında yerli təcili yardım və hüquq-mühafizə
-          xidmətlərinə müraciət edin. Hüquqi və məxfilik sorğuları [HÜQUQİ
-          OPERATORUN ADI] və [MƏXFİLİK ƏLAQƏSİ] məlumatları tamamlandıqdan sonra
-          həmin kanallara yönəldilməlidir.
+          xidmətlərinə müraciət edin. Hüquqi və məxfilik sorğuları {contact}
+          əlaqəsinə yönəldilə bilər.
         </p>
       </InfoSection>
       <InfoSection id="related-rules" title="Əlaqəli qaydalar">

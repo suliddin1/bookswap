@@ -5,6 +5,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { WebVitalsReporter } from "@/components/web-vitals-reporter";
 import { AZ_COPY, DOCUMENT_LANGUAGE } from "@/lib/i18n";
+import { getLegalIdentity } from "@/lib/legal";
+import { isPrivateBeta } from "@/lib/private-beta";
 import { getSiteUrl } from "@/lib/site-url";
 
 const manrope = Manrope({
@@ -42,6 +44,14 @@ export const metadata: Metadata = {
     title: "BookSwap",
     description: AZ_COPY.metadata.socialDescription,
   },
+  robots: isPrivateBeta()
+    ? {
+        index: false,
+        follow: false,
+        noarchive: true,
+        nocache: true,
+      }
+    : undefined,
 };
 
 export default function RootLayout({
@@ -49,6 +59,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const privateBeta = isPrivateBeta();
+  getLegalIdentity();
+
   return (
     <html lang={DOCUMENT_LANGUAGE} dir="ltr" suppressHydrationWarning>
       <body className={`${manrope.variable} ${fraunces.variable}`}>
@@ -56,6 +69,15 @@ export default function RootLayout({
           {AZ_COPY.navigation.skipToContent}
         </a>
         <SiteHeader />
+        {privateBeta && (
+          <aside
+            aria-label={AZ_COPY.privateBeta.label}
+            className="border-b border-[#d8cbb5] bg-[#f2e4c9] px-4 py-2 text-center text-xs leading-5 text-ink"
+          >
+            <strong>{AZ_COPY.privateBeta.label}.</strong>{" "}
+            {AZ_COPY.privateBeta.notice}
+          </aside>
+        )}
         <main id="main-content" tabIndex={-1}>
           {children}
         </main>

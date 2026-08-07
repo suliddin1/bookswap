@@ -1,14 +1,14 @@
 # Launch-readiness issue queue
 
-Updated: 28 July 2026
+Updated: 7 August 2026
 
 This queue contains only unresolved work. Completed repository work is summarized in `PROJECT_STATE.md` and evidenced in `QA_EVIDENCE.md`.
 
 ## True launch blockers
 
-| ID      | Owner                                   | Blocker                                                                    | Repository preparation                                                                                                                                                                | Completion evidence                                                                                      |
-| ------- | --------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| EXT-002 | Product/legal owner + qualified counsel | Legal operator/contact/jurisdiction/age/retention/appeal facts are unknown | Azerbaijani Terms, Privacy, Marketplace Rules, Safety, prohibited-content, reporting, appeals, transaction responsibility, and deletion drafts complete with centralized placeholders | All placeholders replaced, counsel approval/date/version recorded, routes visually/accessibly reverified |
+| ID      | Owner                                   | Blocker                                                                                                                                                                                                                                    | Repository preparation                                                                                                                                                                            | Completion evidence                                                                                                                                       |
+| ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| EXT-002 | Product/legal owner + qualified counsel | Owner identity/contact are supplied; qualified Azerbaijani legal approval, state-registration/licensing analysis, deployed provider-location review, transactional email decision, and enforceable retention/backup operations remain open | Current Azerbaijani legal copy, 18+ rule, centralized identity/version, separate signup consent, additive immutable audit contract, footer disclosure, provider audit, and internal status record | Counsel approval; external determinations recorded; migration applied/typed/advised on authorized non-production; retention/email/provider facts verified |
 
 ## Production/deployment-only blockers
 

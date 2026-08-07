@@ -1025,14 +1025,20 @@ test("safety and user rights guidance is publicly reachable", async ({
   expect(privacyRequests).toHaveLength(0);
 });
 
-test("legal drafts and moderation appeal path are publicly reachable", async ({
+test("current legal pages and moderation appeal path are publicly reachable", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 800 });
   const routes = [
     { path: "/terms", heading: /İstifadə şərtləri/i },
-    { path: "/privacy", heading: /Məxfilik bildirişi/i },
-    { path: "/marketplace-rules", heading: /Kitab bazarı qaydaları/i },
+    {
+      path: "/privacy",
+      heading: /Məxfilik və fərdi məlumatların emalı siyasəti/i,
+    },
+    {
+      path: "/marketplace-rules",
+      heading: /Kitab bazarı və icma qaydaları/i,
+    },
     {
       path: "/moderation-appeals",
       heading: /Moderasiya qərarına etiraz/i,
@@ -1046,7 +1052,7 @@ test("legal drafts and moderation appeal path are publicly reachable", async ({
       page.getByRole("heading", { level: 1, name: route.heading }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Kitab bazarı qaydaları" }).last(),
+      page.getByRole("link", { name: "Kitab bazarı və icma qaydaları" }).last(),
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Moderasiya etirazları" }).last(),
@@ -2638,6 +2644,106 @@ test("authentication modes and password validation are Azerbaijani", async ({
   expect(await horizontalOverflow(page)).toEqual([]);
   await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
   expect(await horizontalOverflow(page)).toEqual([]);
+});
+
+test("signup requires two separate current legal consents", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const signupBodies: unknown[] = [];
+  await page.route("**/api/auth/signup", async (route) => {
+    signupBodies.push(route.request().postDataJSON());
+    await route.fulfill({
+      status: 202,
+      contentType: "application/json",
+      body: JSON.stringify({ data: null, error: null, accepted: true }),
+    });
+  });
+
+  await page.goto("/login");
+  await page.getByRole("button", { name: "Yeni hesab yarat" }).click();
+  await page.getByLabel("Ad", { exact: true }).fill("Sınaq Oxucusu");
+  await page.getByLabel("E-poçt ünvanı").fill("reader@example.com");
+  await page.getByLabel("Parol", { exact: true }).fill("BookSwapPass123");
+
+  const terms = page.locator('input[name="termsAccepted"]');
+  const privacy = page.locator('input[name="privacyAccepted"]');
+  await expect(terms).not.toBeChecked();
+  await expect(privacy).not.toBeChecked();
+  await expect(terms).toHaveAttribute("required", "");
+  await expect(privacy).toHaveAttribute("required", "");
+
+  const createAccount = page.getByRole("button", { name: "Hesab yarat" });
+  await createAccount.click();
+  await expect(page.locator("#auth-form-error")).toContainText(
+    "18+ yaş təsdiqini",
+  );
+  await expect(terms).toBeFocused();
+  expect(signupBodies).toHaveLength(0);
+
+  await terms.check();
+  await createAccount.click();
+  await expect(page.locator("#auth-form-error")).toContainText(
+    "Məxfilik Siyasətini",
+  );
+  await expect(privacy).toBeFocused();
+  expect(signupBodies).toHaveLength(0);
+
+  await privacy.check();
+  await createAccount.click();
+  await expect(
+    page.getByRole("heading", { name: "E-poçtunuzu yoxlayın." }),
+  ).toBeVisible();
+  expect(signupBodies).toEqual([
+    expect.objectContaining({
+      termsVersion: "2026-08-07",
+      privacyVersion: "2026-08-07",
+      marketplaceRulesVersion: "2026-08-07",
+      age18PlusConfirmed: true,
+      personalDataProcessingConsent: true,
+      crossBorderTransferDisclosedAndConsented: true,
+    }),
+  ]);
+});
+
+test("current legal routes and footer disclosure remain reachable", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/terms");
+  await expect(
+    page.getByRole("heading", { name: "İstifadə şərtləri" }),
+  ).toBeVisible();
+  await expect(page.getByText(/Versiya 2026-08-07/)).toBeVisible();
+  await expect(page.locator("main")).toContainText("18 yaşı tamam olmuş");
+  await expect(page.locator("main")).toContainText("satış komissiyası");
+  await expect(page.locator("main")).toContainText("escrow");
+  await expect(page.locator("footer")).toContainText("Suliddin Musa Əsədzadə");
+  await expect(page.locator("footer")).toContainText("[EMAIL]");
+
+  for (const path of [
+    "/terms",
+    "/privacy",
+    "/marketplace-rules",
+    "/safety",
+    "/user-rights",
+    "/moderation-appeals",
+  ]) {
+    expect((await request.get(path)).status()).toBe(200);
+  }
+
+  await page.goto("/privacy");
+  await expect(
+    page.getByRole("heading", {
+      name: "Məxfilik və fərdi məlumatların emalı siyasəti",
+    }),
+  ).toBeVisible();
+  await expect(page.getByText(/Versiya 2026-08-07/)).toBeVisible();
+
+  await page.goto("/marketplace-rules");
+  await expect(
+    page.getByRole("heading", { name: "Kitab bazarı və icma qaydaları" }),
+  ).toBeVisible();
 });
 
 test("responses include baseline security headers", async ({ request }) => {

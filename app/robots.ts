@@ -1,7 +1,17 @@
 import type { MetadataRoute } from "next";
+import { isPrivateBeta } from "@/lib/private-beta";
 import { getSiteUrl } from "@/lib/site-url";
 
 export default function robots(): MetadataRoute.Robots {
+  if (isPrivateBeta()) {
+    return {
+      rules: {
+        userAgent: "*",
+        disallow: "/",
+      },
+    };
+  }
+
   const base = getSiteUrl();
   return {
     rules: {

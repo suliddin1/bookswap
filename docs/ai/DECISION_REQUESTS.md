@@ -1,6 +1,6 @@
 # Owner decisions and external actions
 
-Updated: 28 July 2026
+Updated: 7 August 2026
 
 Only facts or authority that cannot be derived safely from the repository remain here. Exchange matching, wanted titles, reader shelves, and social reading are intentionally post-launch and require no launch decision.
 
@@ -20,22 +20,17 @@ Completion evidence:
 
 ## DR-002 — Insert legal identity and contact facts
 
-Status: launch-blocking; legal structure and Azerbaijani-first drafts complete.
+Status: **PARTIALLY RESOLVED on 7 August 2026; qualified legal and external compliance review remains launch-blocking.**
 
-Provide and have qualified Azerbaijani counsel approve every value below. Do not publish placeholders:
+Owner-approved repository facts:
 
-- `[HÜQUQİ OPERATORUN ADI]`
-- `[HÜQUQİ ÜNVAN]`
-- `[YURİSDİKSİYA]`
-- `[DƏSTƏK E-POÇTU]`
-- `[MƏXFİLİK ƏLAQƏSİ]`
-- `[QÜVVƏYƏ MİNMƏ TARİXİ]`
-- `[MİNİMUM YAŞ VƏ VALİDEYN RAZILIĞI QAYDASI]`
-- `[ETİRAZ MÜDDƏTİ VƏ CAVAB HƏDƏFİ]`
-- data-retention periods and cross-border processing basis;
-- any legally required registration, tax, consumer, and regulator disclosures.
+- operator full name: `Suliddin Musa Əsədzadə`;
+- legal/privacy contact: `[EMAIL]`;
+- current legal version: `2026-08-07`, effective/updated 7 August 2026;
+- minimum age: 18;
+- governing law: Azerbaijan.
 
-Update `/terms`, `/privacy`, `/marketplace-rules`, and `/moderation-appeals`; search the repository for `[` placeholders; obtain written approval; then record reviewer/date/version in `docs/ai/QA_EVIDENCE.md`.
+The public pages and footer use those centralized values and contain no legacy identity/date/age/jurisdiction placeholders. A physical/service address was not supplied and is not invented in the approved copy. Qualified Azerbaijani counsel must still confirm whether another address/disclosure is legally required, approve the texts and response/appeal wording, confirm the retention and cross-border basis, and resolve state-registration, licensed-activity, tax, consumer, and regulator questions. Record reviewer, date, version, and any required correction in `docs/ai/QA_EVIDENCE.md` before public launch.
 
 ## DR-003 — Production Auth security choices
 

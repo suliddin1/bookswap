@@ -3,12 +3,25 @@ import { readFileSync } from "node:fs";
 import { getSiteUrl } from "@/lib/site-url";
 import { localizedAuthResponse } from "@/lib/auth-response";
 import { requireUser } from "@/lib/auth";
+import {
+  getLegalIdentity,
+  LEGAL_CONTACT_EMAIL,
+  LEGAL_OPERATOR_FULL_NAME,
+  LEGAL_VERSION,
+} from "@/lib/legal";
+import { isPrivateBeta } from "@/lib/private-beta";
+import { legalSignupInput } from "@/lib/legal-consent";
+import robots from "@/app/robots";
 
 const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+const originalPrivateBeta = process.env.BOOKSWAP_PRIVATE_BETA;
 
 afterEach(() => {
   if (originalSiteUrl === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
   else process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
+  if (originalPrivateBeta === undefined)
+    delete process.env.BOOKSWAP_PRIVATE_BETA;
+  else process.env.BOOKSWAP_PRIVATE_BETA = originalPrivateBeta;
 });
 
 describe("site URL and response security", () => {
@@ -25,6 +38,76 @@ describe("site URL and response security", () => {
   it("rejects non-HTTP public URL schemes", () => {
     process.env.NEXT_PUBLIC_SITE_URL = "javascript:alert(1)";
     expect(getSiteUrl().toString()).toBe("http://localhost:3000/");
+  });
+
+  it("uses the approved centralized legal identity and version", () => {
+    expect(LEGAL_VERSION).toBe("2026-08-07");
+    expect(LEGAL_OPERATOR_FULL_NAME).toBe("Suliddin Musa Əsədzadə");
+    expect(LEGAL_CONTACT_EMAIL).toBe("[EMAIL]");
+    expect(getLegalIdentity()).toMatchObject({
+      operatorFullName: "Suliddin Musa Əsədzadə",
+      contactEmail: "[EMAIL]",
+      complete: true,
+    });
+  });
+
+  it("fails closed for missing public identity but tolerates an explicit private beta", () => {
+    expect(() =>
+      getLegalIdentity({
+        BOOKSWAP_PRIVATE_BETA: "false",
+        LEGAL_OPERATOR_FULL_NAME: "",
+        LEGAL_CONTACT_EMAIL: "",
+      }),
+    ).toThrow(/Public launch requires/);
+    expect(
+      getLegalIdentity({
+        BOOKSWAP_PRIVATE_BETA: "true",
+        LEGAL_OPERATOR_FULL_NAME: "",
+        LEGAL_CONTACT_EMAIL: "",
+      }),
+    ).toMatchObject({ complete: false, privateBeta: true });
+    expect(isPrivateBeta({ BOOKSWAP_PRIVATE_BETA: "1" })).toBe(false);
+  });
+
+  it("keeps private beta directly reachable but excluded from crawlers", () => {
+    process.env.BOOKSWAP_PRIVATE_BETA = "true";
+    expect(robots()).toEqual({
+      rules: { userAgent: "*", disallow: "/" },
+    });
+    const layout = readFileSync(
+      new URL("../app/layout.tsx", import.meta.url),
+      "utf8",
+    );
+    expect(layout).toContain("index: false");
+    expect(layout).toContain("follow: false");
+    expect(layout).toContain("AZ_COPY.privateBeta.notice");
+  });
+
+  it("requires every current legal affirmation at the signup boundary", () => {
+    const accepted = {
+      name: "Sınaq Oxucusu",
+      email: "reader@example.invalid",
+      password: "BookSwapPass123",
+      termsVersion: LEGAL_VERSION,
+      privacyVersion: LEGAL_VERSION,
+      marketplaceRulesVersion: LEGAL_VERSION,
+      age18PlusConfirmed: true,
+      personalDataProcessingConsent: true,
+      crossBorderTransferDisclosedAndConsented: true,
+    } as const;
+    expect(legalSignupInput.parse(accepted)).toEqual(accepted);
+    expect(() =>
+      legalSignupInput.parse({
+        ...accepted,
+        personalDataProcessingConsent: false,
+      }),
+    ).toThrow();
+    expect(() =>
+      legalSignupInput.parse({
+        ...accepted,
+        marketplaceRulesVersion: "old-version",
+      }),
+    ).toThrow();
   });
 
   it("keeps global hardening and private API cache controls enabled", () => {

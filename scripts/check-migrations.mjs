@@ -36,6 +36,36 @@ for (const required of [
     failures.push(`Launch hardening is missing: ${required}`);
 }
 
+const legalAcceptance = readFileSync(
+  path.join(migrationRoot, "20260807090000_add_legal_acceptance_audit.sql"),
+  "utf8",
+);
+for (const required of [
+  "create table public.legal_acceptances",
+  "legal_acceptances_current_versions",
+  "legal_acceptances_affirmative_consent",
+  'create policy "Users view their own legal acceptances"',
+  "private.record_signup_legal_acceptance",
+  "set search_path = ''",
+  "cross_border_transfer_disclosed_and_consented",
+  "consent_withdrawal",
+]) {
+  if (!legalAcceptance.includes(required))
+    failures.push(`Legal acceptance migration is missing: ${required}`);
+}
+for (const forbidden of ["grant insert", "grant update"]) {
+  if (legalAcceptance.includes(forbidden))
+    failures.push(`Legal acceptance table must remain immutable: ${forbidden}`);
+}
+if (
+  !legalAcceptance.includes(
+    "grant delete on table public.legal_acceptances to service_role",
+  )
+)
+  failures.push(
+    "Legal acceptance retention cleanup must remain service-role only.",
+  );
+
 const config = readFileSync(path.join(root, "supabase", "config.toml"), "utf8");
 for (const required of [
   "major_version = 17",
@@ -62,6 +92,8 @@ const databaseTypes = readFileSync(
 );
 if (!databaseTypes.includes("consume_rate_limit:"))
   failures.push("Generated database types are missing consume_rate_limit.");
+if (!databaseTypes.includes("legal_acceptances:"))
+  failures.push("Generated database types are missing legal_acceptances.");
 
 if (failures.length) {
   console.error(

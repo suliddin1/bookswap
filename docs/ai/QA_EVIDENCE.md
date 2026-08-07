@@ -758,3 +758,47 @@ npm.cmd run test:e2e              PASS — Chromium 28/28
 ```
 
 The first authorization and build attempts were blocked by sandbox network policy; approved reruns reached only the guarded development backend and existing Google font host and passed. The first E2E run found a real stale administrator-navigation label and was fixed. A later run encountered the previously documented intermittent React 418 in an unchanged profile test; no assertion was weakened, and the final complete 28-test suite passed. No live external dependency advisory query, production smoke test, semantic image review, or claim of comprehensive deterministic content understanding is included.
+
+## 2026-08-07 — Legal identity, current legal copy, and auditable signup consent
+
+**Result: repository/local PASS; additive database contract PREPARED and intentionally not applied remotely.** Qualified legal review and the external compliance/operations items in `docs/legal/COMPLIANCE_STATUS.md` remain open. No production, remote Supabase, Auth, Storage, Vercel, DNS, or Git remote state changed.
+
+### User-visible and configuration evidence
+
+- One legal module owns version `2026-08-07`, effective date 7 August 2026, operator `Suliddin Musa Əsədzadə`, contact `[EMAIL]`, and the explicit public/private-beta configuration behavior. Legacy public identity/date/age/jurisdiction placeholders are absent.
+- Terms, Privacy, Marketplace/Community Rules, moderation contact, and footer render current Azerbaijani copy. Terms state 18+, physical-book C2C scope, no commission/payment/escrow, platform non-party role, moderation/appeal/reporting, liability limits, and Azerbaijan law. Privacy records real categories/providers, cross-border disclosure, message privacy, target retention periods with the automation gap, user-right response timing, security controls, no non-essential tracking, and 18+ scope.
+- The footer exposes all six required legal/safety links and the exact operator/contact/role disclosure. The friends-only private-beta banner, global noindex/nofollow metadata, and crawler disallow path are restored; public configuration explicitly missing either legal value throws instead of rendering incomplete identity.
+- Signup renders two separate required checkboxes, both unchecked. Missing Terms/18+/Rules acceptance focuses the first control and blocks the request; missing privacy/processing/provider/cross-border consent focuses the second and blocks the request. The accepted path sends all true flags and the one current version through `/api/auth/signup`.
+- The same-origin Auth route creates a fresh public-key server client per request with persistence, refresh, and URL-session detection disabled. It never uses the service-role client and cannot retain one registrant's session for another request when hosted email confirmation behavior differs.
+- The existing user-rights flow now includes explicit consent withdrawal without creating a duplicate request system.
+
+### Database/security evidence and boundary
+
+- Additive migration `20260807090000_add_legal_acceptance_audit.sql` creates an RLS-enabled `legal_acceptances` table, exact current-version/affirmative-consent constraints, a private fixed-search-path Auth trigger, own-row authenticated SELECT, no normal-user INSERT/UPDATE/DELETE, and service-only DELETE for verified retention/test cleanup.
+- The trigger rejects a new Auth row without all current affirmative fields, derives `user_id` from `auth.users`, hard-codes rather than trusts the client versions for storage, and uses `clock_timestamp()` in the database. Editable Auth metadata is transport into the trigger, not the authoritative audit record.
+- Static SQL prepares ACL, policy, trigger-execute, and privacy-type assertions. The generated-shaped TypeScript contract is updated manually, but true schema-generated types, advisors, and two-user RLS proof require first applying the migration to an authorized non-production project.
+- Supabase CLI, Docker/Podman, and `psql` are unavailable locally. The prompt prohibits remote migration application. Therefore `npm run test:authorization` was not rerun against the development project because its remote schema intentionally lacks migration 23; no remote pass is claimed and no fixture/residue was created.
+
+### Provider/no-cookie audit
+
+- Actual core providers: Supabase for database/Auth/Storage and Vercel for hosting/runtime. A dormant optional Edge Function can call Resend, but active transactional-email configuration is unverified, so public copy remains provider-neutral and conditional.
+- No third-party product analytics, advertising, Sentry, PostHog, Vercel Analytics, or Speed Insights package is installed. Optional Web Vitals are same-origin and privacy-minimized. Only necessary Auth/session browser storage was found; no cookie banner was added.
+
+### Final local validation
+
+```text
+npm.cmd run format:check                 PASS — all matched files
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 64/64 tests
+npm.cmd run test:database:static         PASS — 23 migrations
+npm.cmd run test:dependencies            PASS — 7 guarded packages
+npm.cmd run test:secrets                 PASS — 193 repository paths
+npm.cmd run test:env                     PASS — guarded development identity; no remote operation
+npm.cmd run build                        PASS — Next 15.5.21, 39/39 routes
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 31/31
+git diff --check                         PASS
+```
+
+The first build attempt was blocked only by sandbox denial of the existing Google Fonts fetch; the approved build compiled 39/39 routes. The first two browser runs exposed one stale legal-link expectation and one focus assertion that revealed the generic error focus overriding the invalid consent control. Copy expectations were updated to the approved titles, and focus handling was fixed without weakening the acceptance behavior. The final complete suite passed 31/31. The agent-browser helper required by the optional dev-server verification skill is not installed; the repository's production-server Playwright suite provided the browser, route, focus, reflow, and error-state verification instead. WebKit is not configured in this branch's Playwright project, so no WebKit pass is claimed.

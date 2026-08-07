@@ -6,6 +6,7 @@ export const PRIVACY_REQUEST_TYPES = [
   "correction",
   "export",
   "deletion",
+  "consent_withdrawal",
   "objection",
   "appeal",
 ] as const;

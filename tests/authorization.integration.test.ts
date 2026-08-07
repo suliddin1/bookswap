@@ -23,6 +23,7 @@ const suffix = randomUUID();
 const ids = {} as Record<TestRole, string>;
 const tokens = {} as Record<TestRole, string>;
 const clients = {} as Record<TestRole, SupabaseClient<Database>>;
+const createdUserIds: string[] = [];
 let service: SupabaseClient<Database>;
 let activeListingId = "";
 let draftListingId = "";
@@ -51,10 +52,19 @@ async function createRole(role: TestRole) {
     email,
     password,
     email_confirm: true,
-    user_metadata: { name: `Test ${role}` },
+    user_metadata: {
+      name: `Test ${role}`,
+      terms_version: "2026-08-07",
+      privacy_version: "2026-08-07",
+      marketplace_rules_version: "2026-08-07",
+      age_18_plus_confirmed: true,
+      personal_data_processing_consent: true,
+      cross_border_transfer_disclosed_and_consented: true,
+    },
   });
   if (error || !data.user) throw error ?? new Error(`Could not create ${role}`);
   ids[role] = data.user.id;
+  createdUserIds.push(data.user.id);
   clients[role] = createClient<Database>(url, publicKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -138,6 +148,13 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
 
   afterAll(async () => {
     if (!service) return;
+    if (createdUserIds.length > 0) {
+      const acceptanceCleanup = await service
+        .from("legal_acceptances")
+        .delete()
+        .in("user_id", createdUserIds);
+      if (acceptanceCleanup.error) throw acceptanceCleanup.error;
+    }
     for (const id of Object.values(ids).reverse()) {
       if (id) await service.auth.admin.deleteUser(id);
     }
@@ -177,6 +194,24 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
       .update({ is_admin: true } as never)
       .eq("id", ids.buyer);
     expect(promotion.error).not.toBeNull();
+  });
+
+  it("keeps legal acceptance immutable and visible only to its user", async () => {
+    const own = await clients.buyer
+      .from("legal_acceptances")
+      .select("user_id,terms_version,accepted_at")
+      .eq("user_id", ids.buyer)
+      .single();
+    expect(own.error).toBeNull();
+    expect(own.data?.user_id).toBe(ids.buyer);
+    expect(own.data?.terms_version).toBe("2026-08-07");
+
+    const other = await clients.unrelated
+      .from("legal_acceptances")
+      .select("user_id")
+      .eq("user_id", ids.buyer);
+    expect(other.error).toBeNull();
+    expect(other.data).toEqual([]);
   });
 
   it("denies direct listing writes and enforces protected route ownership", async () => {

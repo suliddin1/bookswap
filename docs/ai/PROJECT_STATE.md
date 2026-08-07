@@ -1,10 +1,10 @@
 # BookSwap project state
 
-Updated: 28 July 2026
+Updated: 7 August 2026
 
 ## Current verdict
 
-**Not production-ready; conditionally non-deployment ready.** All identified safe repository-side launch-critical work is implemented, and the guarded real development authorization matrix passes. The remaining non-deployment launch blocker is owner/counsel-supplied legal facts and approval. The production gate was inspected on 28 July 2026 and failed before migration or deployment because backup/restore evidence, migration-history reconciliation, hosted Auth settings, required environment values, operational ownership, and post-deploy verification are incomplete. External AI/moderation credentials are no longer part of the product or launch gate.
+**Not public-launch ready.** The owner supplied the public operator identity and legal/privacy contact on 7 August 2026, and the safe repository-side legal copy, separate signup consent, centralized version, footer disclosure, fail-closed public configuration, and additive auditable-consent migration are implemented. Qualified legal review, external regulatory/provider-location determinations, retention operations, non-production migration application/type regeneration/advisors/two-user proof, and the existing production/deployment gates remain unresolved. No production or remote system was mutated by this legal slice.
 
 ## Authoritative workspace and Git baseline
 
@@ -24,6 +24,10 @@ Normal-user listings and messages are free at launch. There is no commission, in
 Automated exchange matching, wanted-title matching, reader shelves, social reading, and advanced edition/bibliographic intelligence are post-launch. A `sale/exchange/both` model was not added because the current schema/UI coherently implement sale and the public promise does not claim an automated exchange platform.
 
 ## Implemented launch-readiness work
+
+- Centralized legal identity and `2026-08-07` document version across Terms, Privacy, Marketplace/Community Rules, footer, and signup; private beta tolerates missing identity while explicit public configuration fails closed.
+- Two separate unchecked signup affirmations and a trusted Auth flow carrying exact versions/consents to an additive `legal_acceptances` audit contract with database identity/time, own-row read-only RLS, and no normal-user mutation grant.
+- Explicit privacy-request support for consent withdrawal; provider/storage audit records Supabase and Vercel, conditional transactional email, same-origin operational Web Vitals, and no non-essential tracking/banner.
 
 - Correct development Supabase public identity with fail-fast project guard and an ignored local test credential boundary; no secret is tracked or documented.
 - Two additive migrations (22 total) for validation constraints, privacy uniqueness, report/review/chat invariants, Azerbaijani search normalization, service-only Storage mutations, durable atomic rate limiting, Azerbaijani moderation notifications, and explicit private-table ACL posture.
