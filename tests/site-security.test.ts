@@ -43,29 +43,42 @@ describe("site URL and response security", () => {
   it("uses the approved centralized legal identity and version", () => {
     expect(LEGAL_VERSION).toBe("2026-08-07");
     expect(LEGAL_OPERATOR_FULL_NAME).toBe("Suliddin Musa Əsədzadə");
-    expect(LEGAL_CONTACT_EMAIL).toBe("[EMAIL]");
+    expect(LEGAL_CONTACT_EMAIL).toBe("Suliddin677@gmail.com");
     expect(getLegalIdentity()).toMatchObject({
       operatorFullName: "Suliddin Musa Əsədzadə",
-      contactEmail: "[EMAIL]",
+      contactEmail: "Suliddin677@gmail.com",
       complete: true,
     });
   });
 
-  it("fails closed for missing public identity but tolerates an explicit private beta", () => {
+  it.each(["", "   ", "[EMAIL]", "{{LEGAL_CONTACT_EMAIL}}"])(
+    "fails closed for an unconfigured public legal contact: %j",
+    (contactEmail) => {
+      expect(() =>
+        getLegalIdentity({
+          BOOKSWAP_PRIVATE_BETA: "false",
+          LEGAL_OPERATOR_FULL_NAME: LEGAL_OPERATOR_FULL_NAME,
+          LEGAL_CONTACT_EMAIL: contactEmail,
+        }),
+      ).toThrow(/Public launch requires/);
+      expect(
+        getLegalIdentity({
+          BOOKSWAP_PRIVATE_BETA: "true",
+          LEGAL_OPERATOR_FULL_NAME: LEGAL_OPERATOR_FULL_NAME,
+          LEGAL_CONTACT_EMAIL: contactEmail,
+        }),
+      ).toMatchObject({ complete: false, privateBeta: true });
+    },
+  );
+
+  it("still fails closed for a missing public operator identity", () => {
     expect(() =>
       getLegalIdentity({
         BOOKSWAP_PRIVATE_BETA: "false",
         LEGAL_OPERATOR_FULL_NAME: "",
-        LEGAL_CONTACT_EMAIL: "",
+        LEGAL_CONTACT_EMAIL: LEGAL_CONTACT_EMAIL,
       }),
     ).toThrow(/Public launch requires/);
-    expect(
-      getLegalIdentity({
-        BOOKSWAP_PRIVATE_BETA: "true",
-        LEGAL_OPERATOR_FULL_NAME: "",
-        LEGAL_CONTACT_EMAIL: "",
-      }),
-    ).toMatchObject({ complete: false, privateBeta: true });
     expect(isPrivateBeta({ BOOKSWAP_PRIVATE_BETA: "1" })).toBe(false);
   });
 

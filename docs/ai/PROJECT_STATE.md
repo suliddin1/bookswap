@@ -4,7 +4,7 @@ Updated: 7 August 2026
 
 ## Current verdict
 
-**Not public-launch ready.** The owner supplied the public operator identity and legal/privacy contact on 7 August 2026, and the safe repository-side legal copy, separate signup consent, centralized version, footer disclosure, fail-closed public configuration, and additive auditable-consent migration are implemented. The listing-owner sold/relist flow now has explicit Azerbaijani confirmation and owner-only controls on both listing detail and dashboard surfaces; owner deletion uses retained non-public removal instead of the schema's destructive cascades. Qualified legal review, external regulatory/provider-location determinations, retention operations, non-production migration application/type regeneration/advisors/two-user proof, and the existing production/deployment gates remain unresolved. No production or remote system was mutated by these local slices.
+**Not public-launch ready.** The owner supplied the exact public operator identity and legal/privacy contact on 7 August 2026, and the safe repository-side legal copy, separate signup consent, centralized version, footer disclosure, placeholder-aware fail-closed public configuration, and additive auditable-consent migration are implemented. The listing-owner sold/relist flow now has explicit Azerbaijani confirmation and owner-only controls on both listing detail and dashboard surfaces; owner deletion uses retained non-public removal instead of the schema's destructive cascades. Qualified legal review, external regulatory/provider-location determinations, retention operations, non-production migration application/type regeneration/advisors/two-user proof, and the existing production/deployment gates remain unresolved. A development migration attempt was rejected before execution by the environment safety reviewer, so neither the development schema nor any production/remote system was mutated by this follow-up.
 
 ## Authoritative workspace and Git baseline
 
@@ -25,7 +25,7 @@ Automated exchange matching, wanted-title matching, reader shelves, social readi
 
 ## Implemented launch-readiness work
 
-- Centralized legal identity and `2026-08-07` document version across Terms, Privacy, Marketplace/Community Rules, footer, and signup; private beta tolerates missing identity while explicit public configuration fails closed.
+- Centralized exact legal identity/contact and `2026-08-07` document version across Terms, Privacy, Marketplace/Community Rules, footer, and signup; private beta tolerates missing identity while public configuration fails closed for empty, whitespace-only, `[EMAIL]`, and `{{LEGAL_CONTACT_EMAIL}}` contact values.
 - Two separate unchecked signup affirmations and a trusted Auth flow carrying exact versions/consents to an additive `legal_acceptances` audit contract with database identity/time, own-row read-only RLS, and no normal-user mutation grant.
 - Explicit privacy-request support for consent withdrawal; provider/storage audit records Supabase and Vercel, conditional transactional email, same-origin operational Web Vitals, and no non-essential tracking/banner.
 - Owner-only `Satıldı`, `Yenidən satışa çıxar`, and `Elanı sil` actions with explicit Azerbaijani confirmations, idempotent mutation guards, sold catalog/chat behavior, and retained removal through the existing hidden `locked` state. Owner removal preserves the listing row, images, chat/messages, reviews, reports, and moderation evidence instead of invoking cascade delete or Storage cleanup.
@@ -47,12 +47,13 @@ Automated exchange matching, wanted-title matching, reader shelves, social readi
 - The guarded authorization environment is a dedicated, healthy non-production project.
 - Public local URL/key: correct and guarded; ignored `.env.local` is not committed
 - Service-role test key: available only in ignored `.env.test.local`; verified as `service_role` for the intended project and not committed
-- Remote migrations: 22, including both 28 July hardening migrations
+- Remote migrations: 22, including both 28 July hardening migrations; migration 23 remains unapplied after a tool-level safety rejection before execution
 - Data: temporary authorization fixtures were cleaned; no production data was used
-- Security Advisor after migration: zero findings
+- Security Advisor on the current 22-migration development schema: zero findings; post-migration advice is pending because migration 23 was not applied
+- Performance Advisor on the current development schema: 11 informational unused-index findings and no warning/error finding
 - Structural SQL: public tables without RLS = 0; launch constraints/indexes present; browser Storage mutation policies = 0; anon/authenticated rate-RPC execute = false; service-role execute = true; fixed search path present
 - Real limiter behavior: allow/allow/deny at threshold 2; retry value valid; fixture removed
-- Generated TypeScript type for `consume_rate_limit`: matches `lib/database.types.ts`
+- Fresh remote-generated types confirm the current development schema does not yet contain `legal_acceptances`; repository types intentionally remain ahead with the prepared migration-23 contract, so post-migration parity is pending
 
 Local `supabase db reset` remains unexecuted on this workstation because Docker/Podman and `psql` are absent. `supabase/config.toml`, corrected seed ordering, and `supabase/tests/launch_readiness.sql` are prepared. The actual migrations were nevertheless executed successfully on the authorized empty development backend.
 
@@ -70,23 +71,23 @@ Local `supabase db reset` remains unexecuted on this workstation because Docker/
 ## Validation snapshot
 
 - Strict TypeScript: pass
-- Unit/adversarial tests: 65/65 pass
+- Unit/adversarial tests: 69/69 pass
 - Development environment identity and credential-role/project guard: pass without printing values
 - Migration static check: 23 migrations pass
 - Dependency patched-version baseline: 7/7 pass
-- Secret scan: 194 repository files pass
+- Secret scan: 193 repository files pass
 - Development database structural/behavioral checks: pass
 - Format/lint/strict TypeScript: pass
 - Production build: pass, 39/39 static pages generated
 - Bundle budgets: 5/5 pass
 - Chromium browser/E2E: 32/32 pass, including owner listing-detail/dashboard lifecycle confirmation, cancellation, relist, retained removal, double-submit protection, and non-owner action absence
-- Real multi-actor backend authorization: prior 10/10 pass against the guarded development project; the new sold/relist/retained-history extension is prepared but was not run because migration 23 is intentionally unapplied remotely and no remote mutation was authorized
+- Real multi-actor backend authorization: prior 10/10 pass against the guarded development project; the expanded signup/consent/RLS/sold/relist/retained-history suite is prepared but was not run because migration 23 remains unapplied after the safety reviewer blocked execution
 
 ## Remaining external requirements
 
 Launch blockers:
 
-1. owner supplies legal identity/contact/age/retention/appeal facts, replaces placeholders, and obtains qualified counsel approval.
+1. qualified counsel approves the exact supplied identity/contact, legal copy, age/retention/appeal facts, and unresolved regulatory/provider-location conclusions.
 
 Production/deployment-only requirements include project/domain/environment configuration, Auth dashboard controls and leaked-password decision, admin MFA enforcement, backup/restore evidence, alert routing, field performance, deployment, and production smoke/authorization verification. Optional email/CAPTCHA/telemetry services may remain disabled.
 

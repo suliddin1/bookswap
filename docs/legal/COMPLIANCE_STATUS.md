@@ -6,7 +6,7 @@ This repository document is an engineering compliance checklist, not a legal opi
 
 ## Resolved in this repository change
 
-- The public legal identity is centralized as `Suliddin Musa Əsədzadə` with legal/privacy contact `[EMAIL]`, exactly as approved by the owner. The public-launch guard fails when an explicit public configuration removes either value; an explicitly enabled private beta may instead render a completion notice.
+- The public legal identity is centralized as `Suliddin Musa Əsədzadə` with legal/privacy contact `Suliddin677@gmail.com`, exactly as approved by the owner. The public-launch guard treats empty, whitespace-only, `[EMAIL]`, and `{{LEGAL_CONTACT_EMAIL}}` values as unconfigured and fails closed; an explicitly enabled private beta may instead render a completion notice.
 - `LEGAL_VERSION = "2026-08-07"` is the single source for Terms, Privacy, Marketplace Rules, signup consent, and the audit contract. The effective/updated date is 7 August 2026.
 - Azerbaijani Terms, Privacy, and Marketplace/Community Rules now state the 18+ rule, C2C physical-book scope, platform/intermediary role, free current model, no payment/commission/escrow, reporting/takedown, appeal, user-rights, safety, provider, cross-border, retention, and contact boundaries.
 - The footer renders the operator, legal/privacy contact, platform-role limitation, and working links for Terms, Privacy, Marketplace Rules, Safety, User Rights, and Moderation Appeals.

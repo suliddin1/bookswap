@@ -765,7 +765,7 @@ The first authorization and build attempts were blocked by sandbox network polic
 
 ### User-visible and configuration evidence
 
-- One legal module owns version `2026-08-07`, effective date 7 August 2026, operator `Suliddin Musa Əsədzadə`, contact `[EMAIL]`, and the explicit public/private-beta configuration behavior. Legacy public identity/date/age/jurisdiction placeholders are absent.
+- One legal module owns version `2026-08-07`, effective date 7 August 2026, operator `Suliddin Musa Əsədzadə`, contact `Suliddin677@gmail.com`, and the explicit public/private-beta configuration behavior. Legacy public identity/date/age/jurisdiction placeholders are absent.
 - Terms, Privacy, Marketplace/Community Rules, moderation contact, and footer render current Azerbaijani copy. Terms state 18+, physical-book C2C scope, no commission/payment/escrow, platform non-party role, moderation/appeal/reporting, liability limits, and Azerbaijan law. Privacy records real categories/providers, cross-border disclosure, message privacy, target retention periods with the automation gap, user-right response timing, security controls, no non-essential tracking, and 18+ scope.
 - The footer exposes all six required legal/safety links and the exact operator/contact/role disclosure. The friends-only private-beta banner, global noindex/nofollow metadata, and crawler disallow path are restored; public configuration explicitly missing either legal value throws instead of rendering incomplete identity.
 - Signup renders two separate required checkboxes, both unchecked. Missing Terms/18+/Rules acceptance focuses the first control and blocks the request; missing privacy/processing/provider/cross-border consent focuses the second and blocks the request. The accepted path sends all true flags and the one current version through `/api/auth/signup`.
@@ -841,3 +841,38 @@ git diff --check                         PASS
 ```
 
 The first E2E invocation used the previous production build and was invalidated by a rebuild. The first post-build run exposed one real focus regression from a native disabled dashboard action plus the repository's previously documented intermittent minified React 418; focus preservation was restored while the synchronous mutation guard remained intact. The next full run hit only the same intermittent React 418 in a different unchanged test; no assertion was weakened. The final unchanged complete suite passed 32/32.
+
+## 2026-08-07 — Exact legal contact and bounded development verification follow-up
+
+**Result: legal correction and local gates PASS; development migration/actor proof BLOCKED BEFORE EXECUTION.** The target was independently confirmed as the separately named healthy development project. The migration tool's safety reviewer nevertheless required a new explicit approval after risk disclosure and rejected the operation before sending DDL. The remote migration list remained at 22 afterward; no fixture or partial schema change was created.
+
+### Legal/configuration evidence
+
+- Exact public values remain `Suliddin Musa Əsədzadə` and `Suliddin677@gmail.com`. The email is centralized in `lib/legal.ts`, documented in README/configuration examples and compliance/decision evidence, and asserted in unit and footer E2E coverage.
+- The public guard now treats empty, whitespace-only, `[EMAIL]`, and `{{LEGAL_CONTACT_EMAIL}}` contact values as unconfigured. Every case throws outside private beta and remains tolerated only by the existing labeled private-beta behavior. The approved email passes as configured.
+- The guarded authorization suite was expanded for real email-confirmation signup with no immediate session, database-time/current-version affirmative audit capture, rejected incomplete consent, own-row-only reads, denied owner/unrelated mutations, retained-row proof, consent withdrawal, and checked cleanup of every created Auth user.
+
+### Development read-only evidence
+
+- A fresh remote migration read confirmed only the original 22 migrations. Fresh generated types omit `legal_acceptances`, proving that the repository's migration-23 shaped type is intentionally ahead and post-migration parity cannot yet be claimed.
+- Security Advisor returned zero findings on the current development schema. Performance Advisor returned 11 informational unused-index findings and no warning/error finding. These are baseline results, not post-migration advice.
+- `npm run test:authorization` was deliberately not started against the known-behind schema: it would create Auth fixtures before failing on the missing table. Because no fixture-producing run began, fixture cleanup result is “nothing created”; existing real-user data was never used.
+
+### Validation
+
+```text
+npm.cmd run format:check                 PASS — all matched files
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 69/69 tests
+npm.cmd run test:database:static         PASS — 23 migrations
+npm.cmd run test:dependencies            PASS — 7 guarded packages
+npm.cmd run test:secrets                 PASS — 193 repository files
+npm.cmd run test:env                     PASS — guarded development identity
+npm.cmd run build                        PASS — Next 15.5.21, 39/39 pages
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 32/32 on the final rerun
+git diff --check                         PASS
+```
+
+The first Chromium run passed 31/32 after a concurrent navigation stayed on the home page; its captured page showed the corrected legal footer and no product regression. No assertion was changed. The immediate unchanged full rerun passed 32/32.

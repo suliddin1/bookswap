@@ -2889,7 +2889,7 @@ test("current legal routes and footer disclosure remain reachable", async ({
   await expect(page.locator("main")).toContainText("satış komissiyası");
   await expect(page.locator("main")).toContainText("escrow");
   await expect(page.locator("footer")).toContainText("Suliddin Musa Əsədzadə");
-  await expect(page.locator("footer")).toContainText("[EMAIL]");
+  await expect(page.locator("footer")).toContainText("Suliddin677@gmail.com");
 
   for (const path of [
     "/terms",

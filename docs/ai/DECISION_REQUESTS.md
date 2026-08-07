@@ -25,7 +25,7 @@ Status: **PARTIALLY RESOLVED on 7 August 2026; qualified legal and external comp
 Owner-approved repository facts:
 
 - operator full name: `Suliddin Musa Əsədzadə`;
-- legal/privacy contact: `[EMAIL]`;
+- legal/privacy contact: `Suliddin677@gmail.com`;
 - current legal version: `2026-08-07`, effective/updated 7 August 2026;
 - minimum age: 18;
 - governing law: Azerbaijan.

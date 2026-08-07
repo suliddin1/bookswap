@@ -4,7 +4,12 @@ export const LEGAL_VERSION = "2026-08-07";
 export const LEGAL_EFFECTIVE_DATE = "7 avqust 2026";
 
 export const LEGAL_OPERATOR_FULL_NAME = "Suliddin Musa Əsədzadə";
-export const LEGAL_CONTACT_EMAIL = "[EMAIL]";
+export const LEGAL_CONTACT_EMAIL = "Suliddin677@gmail.com";
+
+const UNCONFIGURED_LEGAL_CONTACT_VALUES = new Set([
+  "[EMAIL]",
+  "{{LEGAL_CONTACT_EMAIL}}",
+]);
 
 type LegalEnvironment = Partial<
   Record<
@@ -53,7 +58,11 @@ export function getLegalIdentity(env?: LegalEnvironment): {
     LEGAL_CONTACT_EMAIL,
   );
   const privateBeta = isPrivateBeta(env);
-  const complete = Boolean(operatorFullName && contactEmail);
+  const complete = Boolean(
+    operatorFullName &&
+    contactEmail &&
+    !UNCONFIGURED_LEGAL_CONTACT_VALUES.has(contactEmail),
+  );
 
   if (!privateBeta && !complete) {
     throw new Error(

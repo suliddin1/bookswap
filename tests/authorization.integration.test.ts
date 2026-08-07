@@ -24,11 +24,30 @@ const ids = {} as Record<TestRole, string>;
 const tokens = {} as Record<TestRole, string>;
 const clients = {} as Record<TestRole, SupabaseClient<Database>>;
 const createdUserIds: string[] = [];
+const deletedUserIds = new Set<string>();
 let service: SupabaseClient<Database>;
 let activeListingId = "";
 let draftListingId = "";
 let roomId = "";
 let reportId = "";
+
+async function legalAcceptanceMutation(
+  method: "DELETE" | "PATCH" | "POST",
+  role: TestRole,
+  targetUserId = ids[role],
+  body?: unknown,
+) {
+  return fetch(`${url}/rest/v1/legal_acceptances?user_id=eq.${targetUserId}`, {
+    method,
+    headers: {
+      apikey: publicKey,
+      authorization: `Bearer ${tokens[role]}`,
+      "content-type": "application/json",
+      prefer: "return=minimal",
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
 
 function apiRequest(
   path: string,
@@ -155,8 +174,10 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
         .in("user_id", createdUserIds);
       if (acceptanceCleanup.error) throw acceptanceCleanup.error;
     }
-    for (const id of Object.values(ids).reverse()) {
-      if (id) await service.auth.admin.deleteUser(id);
+    for (const id of [...createdUserIds].reverse()) {
+      if (deletedUserIds.has(id)) continue;
+      const deletion = await service.auth.admin.deleteUser(id);
+      if (deletion.error) throw deletion.error;
     }
   }, 60_000);
 
@@ -196,6 +217,72 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
     expect(promotion.error).not.toBeNull();
   });
 
+  it("records legal acceptance through the existing email-confirmation signup flow", async () => {
+    const email = `signup-${suffix}@example.invalid`;
+    const signupClient = createClient<Database>(url, publicKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const signup = await signupClient.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name: "Signup Test",
+          terms_version: "2026-08-07",
+          privacy_version: "2026-08-07",
+          marketplace_rules_version: "2026-08-07",
+          age_18_plus_confirmed: true,
+          personal_data_processing_consent: true,
+          cross_border_transfer_disclosed_and_consented: true,
+        },
+      },
+    });
+    expect(signup.error).toBeNull();
+    expect(signup.data.user).not.toBeNull();
+    expect(signup.data.session).toBeNull();
+    if (!signup.data.user) throw new Error("Signup user was not returned");
+    const signupUserId = signup.data.user.id;
+    createdUserIds.push(signupUserId);
+
+    const acceptance = await service
+      .from("legal_acceptances")
+      .select(
+        "user_id,terms_version,privacy_version,marketplace_rules_version,age_18_plus_confirmed,personal_data_processing_consent,cross_border_transfer_disclosed_and_consented,accepted_at",
+      )
+      .eq("user_id", signupUserId)
+      .single();
+    expect(acceptance.error).toBeNull();
+    expect(acceptance.data).toMatchObject({
+      user_id: signupUserId,
+      terms_version: "2026-08-07",
+      privacy_version: "2026-08-07",
+      marketplace_rules_version: "2026-08-07",
+      age_18_plus_confirmed: true,
+      personal_data_processing_consent: true,
+      cross_border_transfer_disclosed_and_consented: true,
+    });
+    expect(acceptance.data?.accepted_at).toBeTruthy();
+  });
+
+  it("rejects signup without the complete current legal acceptance", async () => {
+    const rejected = await service.auth.admin.createUser({
+      email: `rejected-${suffix}@example.invalid`,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        name: "Rejected Signup",
+        terms_version: "2026-08-07",
+        privacy_version: "2026-08-07",
+        marketplace_rules_version: "2026-08-07",
+        age_18_plus_confirmed: true,
+        personal_data_processing_consent: false,
+        cross_border_transfer_disclosed_and_consented: true,
+      },
+    });
+    expect(rejected.error).not.toBeNull();
+    expect(rejected.data.user).toBeNull();
+  });
+
   it("keeps legal acceptance immutable and visible only to its user", async () => {
     const own = await clients.buyer
       .from("legal_acceptances")
@@ -212,6 +299,40 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
       .eq("user_id", ids.buyer);
     expect(other.error).toBeNull();
     expect(other.data).toEqual([]);
+
+    const insert = await legalAcceptanceMutation("POST", "buyer", ids.buyer, {
+      user_id: ids.buyer,
+      terms_version: "2026-08-07",
+      privacy_version: "2026-08-07",
+      marketplace_rules_version: "2026-08-07",
+      age_18_plus_confirmed: true,
+      personal_data_processing_consent: true,
+      cross_border_transfer_disclosed_and_consented: true,
+    });
+    const update = await legalAcceptanceMutation("PATCH", "buyer", ids.buyer, {
+      accepted_at: new Date().toISOString(),
+    });
+    const deletion = await legalAcceptanceMutation("DELETE", "buyer");
+    const unrelatedDeletion = await legalAcceptanceMutation(
+      "DELETE",
+      "unrelated",
+      ids.buyer,
+    );
+    expect(insert.ok).toBe(false);
+    expect(update.ok).toBe(false);
+    expect(deletion.ok).toBe(false);
+    expect(unrelatedDeletion.ok).toBe(false);
+
+    const retained = await service
+      .from("legal_acceptances")
+      .select("user_id,accepted_at")
+      .eq("user_id", ids.buyer)
+      .single();
+    expect(retained.error).toBeNull();
+    expect(retained.data).toEqual({
+      user_id: ids.buyer,
+      accepted_at: own.data?.accepted_at,
+    });
   });
 
   it("denies direct listing writes and enforces protected route ownership", async () => {
@@ -464,6 +585,13 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
     expect(
       (await clients.buyer.from("privacy_requests").insert(privacy)).error,
     ).not.toBeNull();
+
+    const withdrawal = await clients.buyer.from("privacy_requests").insert({
+      user_id: ids.buyer,
+      type: "consent_withdrawal",
+      details: "Şəxsi məlumatların işlənməsinə razılığımı geri götürürəm.",
+    });
+    expect(withdrawal.error).toBeNull();
   });
 
   it("keeps administrator operations server-side and auditable", async () => {
@@ -513,6 +641,7 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
     const staleId = ids.stale;
     const deletion = await service.auth.admin.deleteUser(staleId);
     expect(deletion.error).toBeNull();
+    deletedUserIds.add(staleId);
     ids.stale = "";
     const profileRoute = await import("../app/api/profile/route");
     const response = await profileRoute.PATCH(
