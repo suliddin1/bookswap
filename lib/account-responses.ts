@@ -171,13 +171,13 @@ export function parseListingMutationResponse(
 export function parseListingDeletionResponse(
   value: unknown,
   expectedListingId: string,
-): { imageCleanupPending: boolean } | null {
+): { retainedForIntegrity: true } | null {
   if (
     !isRecord(value) ||
     value.listingId !== expectedListingId ||
-    value.deleted !== true ||
-    typeof value.imageCleanupPending !== "boolean"
+    value.removed !== true ||
+    value.retainedForIntegrity !== true
   )
     return null;
-  return { imageCleanupPending: value.imageCleanupPending };
+  return { retainedForIntegrity: true };
 }

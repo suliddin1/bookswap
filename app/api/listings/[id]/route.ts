@@ -169,26 +169,51 @@ export async function DELETE(
       windowMs: 60_000,
     });
     const supabase = requireSupabaseAdmin();
-    await drainListingImageCleanupJobs(supabase, user.id);
-    const { data: deleted, error } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from("listings")
-      .delete()
+      .select("id,status")
       .eq("id", id)
       .eq("seller_id", user.id)
-      .select("id")
       .maybeSingle();
-    if (error) throw error;
-    if (!deleted)
+    if (existingError) throw existingError;
+    if (!existing)
       throw new ApiError(
         "Elan tapılmadı və ya sənə aid deyil.",
         404,
         "LISTING_NOT_FOUND",
       );
-    const cleanup = await drainListingImageCleanupJobs(supabase, user.id, id);
+
+    if (existing.status !== "locked") {
+      const { data: removed, error: removalError } = await supabase
+        .from("listings")
+        .update({ status: "locked" })
+        .eq("id", id)
+        .eq("seller_id", user.id)
+        .neq("status", "locked")
+        .select("id")
+        .maybeSingle();
+      if (removalError) throw removalError;
+      if (!removed) {
+        const { data: current, error: currentError } = await supabase
+          .from("listings")
+          .select("status")
+          .eq("id", id)
+          .eq("seller_id", user.id)
+          .maybeSingle();
+        if (currentError) throw currentError;
+        if (current?.status !== "locked")
+          throw new ApiError(
+            "Elanı silmək mümkün olmadı.",
+            409,
+            "LISTING_REMOVAL_CONFLICT",
+          );
+      }
+    }
+
     return Response.json({
       listingId: id,
-      deleted: true,
-      imageCleanupPending: cleanup.pending > 0,
+      removed: true,
+      retainedForIntegrity: true,
     });
   } catch (error) {
     return apiError(error, 500, request);

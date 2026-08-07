@@ -245,6 +245,59 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
       { params: Promise.resolve({ id: activeListingId }) },
     );
     expect(owner.status).toBe(200);
+
+    const unrelatedSold = await listingRoute.PATCH(
+      apiRequest(`/api/listings/${activeListingId}`, "PATCH", "unrelated", {
+        status: "sold",
+      }),
+      { params: Promise.resolve({ id: activeListingId }) },
+    );
+    expect(unrelatedSold.status).toBe(404);
+
+    const sold = await listingRoute.PATCH(
+      apiRequest(`/api/listings/${activeListingId}`, "PATCH", "seller", {
+        status: "sold",
+      }),
+      { params: Promise.resolve({ id: activeListingId }) },
+    );
+    expect(sold.status).toBe(200);
+    expect((await sold.json()).data.status).toBe("sold");
+
+    const catalogRoute = await import("../app/api/listings/route");
+    const soldCatalog = await catalogRoute.GET(
+      new Request("http://localhost/api/listings?query=İşıqlı"),
+    );
+    expect(soldCatalog.status).toBe(200);
+    expect(
+      (await soldCatalog.json()).data.items.some(
+        (listing: { id: string }) => listing.id === activeListingId,
+      ),
+    ).toBe(false);
+
+    const roomRoute = await import("../app/api/chat/rooms/route");
+    const newSoldConversation = await roomRoute.POST(
+      apiRequest("/api/chat/rooms", "POST", "buyer", {
+        listingId: activeListingId,
+      }),
+    );
+    expect(newSoldConversation.status).toBe(404);
+
+    const relisted = await listingRoute.PATCH(
+      apiRequest(`/api/listings/${activeListingId}`, "PATCH", "seller", {
+        status: "active",
+      }),
+      { params: Promise.resolve({ id: activeListingId }) },
+    );
+    expect(relisted.status).toBe(200);
+    expect((await relisted.json()).data.status).toBe("active");
+
+    const activeCatalog = await catalogRoute.GET(
+      new Request("http://localhost/api/listings?query=İşıqlı"),
+    );
+    expect(activeCatalog.status).toBe(200);
+    expect((await activeCatalog.json()).data.items).toContainEqual(
+      expect.objectContaining({ id: activeListingId, status: "active" }),
+    );
   });
 
   it("binds favorites to the authenticated user and prevents duplicates", async () => {
@@ -470,5 +523,141 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
       }),
     );
     expect(response.status).toBe(401);
+  });
+
+  it("removes an owner listing without cascading retained history", async () => {
+    const listingRoute = await import("../app/api/listings/[id]/route");
+    const before = {
+      rooms: (
+        await service
+          .from("chat_rooms")
+          .select("*", { count: "exact", head: true })
+          .eq("listing_id", activeListingId)
+      ).count,
+      messages: (
+        await service
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("room_id", roomId)
+      ).count,
+      reviews: (
+        await service
+          .from("reviews")
+          .select("*", { count: "exact", head: true })
+          .eq("listing_id", activeListingId)
+      ).count,
+      reports: (
+        await service
+          .from("reports")
+          .select("*", { count: "exact", head: true })
+          .eq("listing_id", activeListingId)
+      ).count,
+      moderation: (
+        await service
+          .from("moderation_decisions")
+          .select("*", { count: "exact", head: true })
+          .eq("target_id", activeListingId)
+      ).count,
+      cleanupJobs: (
+        await service
+          .from("listing_image_cleanup_jobs")
+          .select("*", { count: "exact", head: true })
+          .eq("listing_id", activeListingId)
+      ).count,
+    };
+
+    const unrelated = await listingRoute.DELETE(
+      apiRequest(`/api/listings/${activeListingId}`, "DELETE", "unrelated"),
+      { params: Promise.resolve({ id: activeListingId }) },
+    );
+    expect(unrelated.status).toBe(404);
+
+    const owner = await listingRoute.DELETE(
+      apiRequest(`/api/listings/${activeListingId}`, "DELETE", "seller"),
+      { params: Promise.resolve({ id: activeListingId }) },
+    );
+    expect(owner.status).toBe(200);
+    expect(await owner.json()).toEqual({
+      listingId: activeListingId,
+      removed: true,
+      retainedForIntegrity: true,
+    });
+
+    const repeated = await listingRoute.DELETE(
+      apiRequest(`/api/listings/${activeListingId}`, "DELETE", "seller"),
+      { params: Promise.resolve({ id: activeListingId }) },
+    );
+    expect(repeated.status).toBe(200);
+
+    const retainedListing = await service
+      .from("listings")
+      .select("id,status,images")
+      .eq("id", activeListingId)
+      .single();
+    expect(retainedListing.error).toBeNull();
+    expect(retainedListing.data).toEqual({
+      id: activeListingId,
+      status: "locked",
+      images: [],
+    });
+
+    const anonymous = createClient<Database>(url, publicKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    expect(
+      (await anonymous.from("listings").select("id").eq("id", activeListingId))
+        .data,
+    ).toEqual([]);
+
+    const profileRoute = await import("../app/api/profile/route");
+    const profile = await profileRoute.GET(
+      apiRequest("/api/profile", "GET", "seller"),
+    );
+    expect(profile.status).toBe(200);
+    expect(
+      (await profile.json()).data.listings.some(
+        (listing: { id: string }) => listing.id === activeListingId,
+      ),
+    ).toBe(false);
+
+    const after = {
+      rooms: (
+        await service
+          .from("chat_rooms")
+          .select("*", { count: "exact", head: true })
+          .eq("listing_id", activeListingId)
+      ).count,
+      messages: (
+        await service
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("room_id", roomId)
+      ).count,
+      reviews: (
+        await service
+          .from("reviews")
+          .select("*", { count: "exact", head: true })
+          .eq("listing_id", activeListingId)
+      ).count,
+      reports: (
+        await service
+          .from("reports")
+          .select("*", { count: "exact", head: true })
+          .eq("listing_id", activeListingId)
+      ).count,
+      moderation: (
+        await service
+          .from("moderation_decisions")
+          .select("*", { count: "exact", head: true })
+          .eq("target_id", activeListingId)
+      ).count,
+      cleanupJobs: (
+        await service
+          .from("listing_image_cleanup_jobs")
+          .select("*", { count: "exact", head: true })
+          .eq("listing_id", activeListingId)
+      ).count,
+    };
+    expect(after).toEqual(before);
   });
 });

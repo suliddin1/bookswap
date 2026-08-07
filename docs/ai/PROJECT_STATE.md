@@ -4,7 +4,7 @@ Updated: 7 August 2026
 
 ## Current verdict
 
-**Not public-launch ready.** The owner supplied the public operator identity and legal/privacy contact on 7 August 2026, and the safe repository-side legal copy, separate signup consent, centralized version, footer disclosure, fail-closed public configuration, and additive auditable-consent migration are implemented. Qualified legal review, external regulatory/provider-location determinations, retention operations, non-production migration application/type regeneration/advisors/two-user proof, and the existing production/deployment gates remain unresolved. No production or remote system was mutated by this legal slice.
+**Not public-launch ready.** The owner supplied the public operator identity and legal/privacy contact on 7 August 2026, and the safe repository-side legal copy, separate signup consent, centralized version, footer disclosure, fail-closed public configuration, and additive auditable-consent migration are implemented. The listing-owner sold/relist flow now has explicit Azerbaijani confirmation and owner-only controls on both listing detail and dashboard surfaces; owner deletion uses retained non-public removal instead of the schema's destructive cascades. Qualified legal review, external regulatory/provider-location determinations, retention operations, non-production migration application/type regeneration/advisors/two-user proof, and the existing production/deployment gates remain unresolved. No production or remote system was mutated by these local slices.
 
 ## Authoritative workspace and Git baseline
 
@@ -28,6 +28,7 @@ Automated exchange matching, wanted-title matching, reader shelves, social readi
 - Centralized legal identity and `2026-08-07` document version across Terms, Privacy, Marketplace/Community Rules, footer, and signup; private beta tolerates missing identity while explicit public configuration fails closed.
 - Two separate unchecked signup affirmations and a trusted Auth flow carrying exact versions/consents to an additive `legal_acceptances` audit contract with database identity/time, own-row read-only RLS, and no normal-user mutation grant.
 - Explicit privacy-request support for consent withdrawal; provider/storage audit records Supabase and Vercel, conditional transactional email, same-origin operational Web Vitals, and no non-essential tracking/banner.
+- Owner-only `Satıldı`, `Yenidən satışa çıxar`, and `Elanı sil` actions with explicit Azerbaijani confirmations, idempotent mutation guards, sold catalog/chat behavior, and retained removal through the existing hidden `locked` state. Owner removal preserves the listing row, images, chat/messages, reviews, reports, and moderation evidence instead of invoking cascade delete or Storage cleanup.
 
 - Correct development Supabase public identity with fail-fast project guard and an ignored local test credential boundary; no secret is tracked or documented.
 - Two additive migrations (22 total) for validation constraints, privacy uniqueness, report/review/chat invariants, Azerbaijani search normalization, service-only Storage mutations, durable atomic rate limiting, Azerbaijani moderation notifications, and explicit private-table ACL posture.
@@ -69,17 +70,17 @@ Local `supabase db reset` remains unexecuted on this workstation because Docker/
 ## Validation snapshot
 
 - Strict TypeScript: pass
-- Unit/adversarial tests: 59/59 pass
+- Unit/adversarial tests: 65/65 pass
 - Development environment identity and credential-role/project guard: pass without printing values
-- Migration static check: 22 migrations pass
+- Migration static check: 23 migrations pass
 - Dependency patched-version baseline: 7/7 pass
-- Secret scan: 188 repository files pass
+- Secret scan: 194 repository files pass
 - Development database structural/behavioral checks: pass
 - Format/lint/strict TypeScript: pass
 - Production build: pass, 39/39 static pages generated
 - Bundle budgets: 5/5 pass
-- Chromium browser/E2E: 29/29 pass, including isolated authenticated privacy hydration readiness and cross-identity profile/privacy coverage
-- Real multi-actor backend authorization: 10/10 pass against `uibatsbzjswmtdvdrlxj`; temporary fixtures cleaned
+- Chromium browser/E2E: 32/32 pass, including owner listing-detail/dashboard lifecycle confirmation, cancellation, relist, retained removal, double-submit protection, and non-owner action absence
+- Real multi-actor backend authorization: prior 10/10 pass against the guarded development project; the new sold/relist/retained-history extension is prepared but was not run because migration 23 is intentionally unapplied remotely and no remote mutation was authorized
 
 ## Remaining external requirements
 

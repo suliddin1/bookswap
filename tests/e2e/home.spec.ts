@@ -654,6 +654,15 @@ test("listing detail exposes accessible seller actions and constrained reflow", 
     const bounds = await target.boundingBox();
     expect(bounds?.height).toBeGreaterThanOrEqual(44);
   }
+  await expect(
+    page.getByRole("button", { name: AZ_COPY.listingDetail.markSold }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: AZ_COPY.listingDetail.deleteListing }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: AZ_COPY.listingDetail.editListing }),
+  ).toHaveCount(0);
 
   const undersizedControls = await page
     .locator(
@@ -686,6 +695,158 @@ test("listing detail exposes accessible seller actions and constrained reflow", 
   expect(await horizontalOverflow(page)).toEqual([]);
 
   await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+  expect(await horizontalOverflow(page)).toEqual([]);
+});
+
+test("listing owner can confirm sold, relist, and safely remove without double submission", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installAuthenticatedUiFixture(page);
+  const ownerId = "11111111-1111-4111-8111-111111111111";
+  const listingId = "44444444-4444-4444-8444-444444444444";
+  const lifecycleRequests: Array<{ method: string; body: unknown }> = [];
+  const confirmations: string[] = [];
+  const confirmationChoices: boolean[] = [];
+  let currentStatus: "active" | "sold" = "active";
+  let releaseDeletion!: () => void;
+  const deletionGate = new Promise<void>((resolve) => {
+    releaseDeletion = resolve;
+  });
+  const listing = () => ({
+    id: listingId,
+    title: "Sahib həyat dövrü kitabı",
+    author: "Sınaq müəllifi",
+    description: "Sahib əməliyyatlarını yoxlamaq üçün etibarlı elan təsviri.",
+    price: 19,
+    images: ["/icon.svg"],
+    category: "Fiction",
+    condition: "Good",
+    city: "Baku",
+    status: currentStatus,
+    sellerId: ownerId,
+    seller: {
+      id: ownerId,
+      name: "Sınaq oxucusu",
+      initials: "SO",
+      city: "Baku",
+    },
+    reviews: [],
+  });
+
+  page.on("dialog", (dialog) => {
+    confirmations.push(dialog.message());
+    const shouldAccept = confirmationChoices.shift() ?? false;
+    void (shouldAccept ? dialog.accept() : dialog.dismiss());
+  });
+  await page.route("**/api/listings**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (url.pathname === `/api/listings/${listingId}`) {
+      if (request.method() === "GET") {
+        await route.fulfill({
+          contentType: "application/json",
+          body: JSON.stringify({ data: listing() }),
+        });
+        return;
+      }
+      if (request.method() === "PATCH") {
+        const body = request.postDataJSON() as { status: "active" | "sold" };
+        lifecycleRequests.push({ method: "PATCH", body });
+        currentStatus = body.status;
+        await route.fulfill({
+          contentType: "application/json",
+          body: JSON.stringify({
+            data: listing(),
+            imageCleanupPending: false,
+          }),
+        });
+        return;
+      }
+      if (request.method() === "DELETE") {
+        lifecycleRequests.push({ method: "DELETE", body: null });
+        await deletionGate;
+        await route.fulfill({
+          contentType: "application/json",
+          body: JSON.stringify({
+            listingId,
+            removed: true,
+            retainedForIntegrity: true,
+          }),
+        });
+        return;
+      }
+    }
+    if (url.pathname === "/api/listings") {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ data: { items: [], nextCursor: null } }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+  await page.route("**/api/favorites**", async (route) => {
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ data: { listingId, saved: false } }),
+    });
+  });
+
+  await page.goto(`/listings/${listingId}`);
+  await expect(page.getByRole("link", { name: "Redaktə et" })).toBeVisible();
+  const soldAction = page.getByRole("button", { name: "Satıldı" });
+  confirmationChoices.push(false);
+  await soldAction.click();
+  expect(lifecycleRequests).toHaveLength(0);
+  expect(confirmations).toEqual([AZ_COPY.listingDetail.soldConfirm]);
+
+  confirmationChoices.push(true);
+  await soldAction.click();
+  await expect(
+    page.getByRole("button", { name: "Yenidən satışa çıxar" }),
+  ).toBeVisible();
+  await expect(page.getByText("Satılıb", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Redaktə et" })).toHaveCount(0);
+  await expect(
+    page.getByRole("status").filter({
+      hasText: AZ_COPY.listingDetail.soldComplete,
+    }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Yenidən satışa çıxar" }).click();
+  await expect(page.getByRole("button", { name: "Satıldı" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Redaktə et" })).toBeVisible();
+
+  const deleteAction = page.getByRole("button", { name: "Elanı sil" });
+  confirmationChoices.push(false);
+  await deleteAction.click();
+  expect(
+    lifecycleRequests.filter((item) => item.method === "DELETE"),
+  ).toHaveLength(0);
+  expect(confirmations.at(-1)).toBe(AZ_COPY.listingDetail.deleteConfirm);
+
+  confirmationChoices.push(true);
+  await deleteAction.click();
+  await expect(deleteAction).toBeDisabled();
+  await deleteAction.dispatchEvent("click");
+  await expect
+    .poll(
+      () => lifecycleRequests.filter((item) => item.method === "DELETE").length,
+    )
+    .toBe(1);
+  releaseDeletion();
+  await expect(
+    page.getByRole("heading", { name: AZ_COPY.listingDetail.removedTitle }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(AZ_COPY.listingDetail.deleteComplete),
+  ).toBeVisible();
+  expect(lifecycleRequests).toEqual([
+    { method: "PATCH", body: { status: "sold" } },
+    { method: "PATCH", body: { status: "active" } },
+    { method: "DELETE", body: null },
+  ]);
   expect(await horizontalOverflow(page)).toEqual([]);
 });
 
@@ -1498,6 +1659,7 @@ test("profile listing mutations reject cross-resource and malformed acknowledgem
   };
   const statusRequests: string[] = [];
   const deleteRequests: string[] = [];
+  const confirmations: string[] = [];
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
   let releaseStatus!: () => void;
@@ -1508,7 +1670,10 @@ test("profile listing mutations reject cross-resource and malformed acknowledgem
   page.on("console", (message) => {
     if (message.type() === "error") consoleErrors.push(message.text());
   });
-  page.on("dialog", (dialog) => void dialog.accept());
+  page.on("dialog", (dialog) => {
+    confirmations.push(dialog.message());
+    void dialog.accept();
+  });
   await page.route("**/api/profile", async (route) => {
     await route.fulfill({
       contentType: "application/json",
@@ -1542,8 +1707,8 @@ test("profile listing mutations reject cross-resource and malformed acknowledgem
         contentType: "application/json",
         body: JSON.stringify({
           listingId,
-          deleted: true,
-          imageCleanupPending: "false",
+          removed: true,
+          retainedForIntegrity: "true",
           diagnostic: "private cleanup provider detail",
         }),
       });
@@ -1554,7 +1719,7 @@ test("profile listing mutations reject cross-resource and malformed acknowledgem
 
   await page.goto("/profile");
   await expect(page.getByText(listing.title, { exact: true })).toBeVisible();
-  const statusButton = page.getByRole("button", { name: "Satılıb işarələ" });
+  const statusButton = page.getByRole("button", { name: "Satıldı" });
   await statusButton.click();
   await expect(statusButton).toBeFocused();
   await expect(statusButton).toHaveAttribute("aria-disabled", "true");
@@ -1567,6 +1732,7 @@ test("profile listing mutations reject cross-resource and malformed acknowledgem
   );
   await expect(feedback).toBeFocused();
   expect(statusRequests).toEqual([JSON.stringify({ status: "sold" })]);
+  expect(confirmations).toEqual([AZ_COPY.profile.soldConfirm]);
   await expect(statusButton).toHaveAttribute("aria-disabled", "false");
   await expect(page.getByText(listing.title, { exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/profile$/);
@@ -1577,6 +1743,10 @@ test("profile listing mutations reject cross-resource and malformed acknowledgem
   await expect(feedback).toHaveText("Elanı silmək mümkün olmadı.");
   await expect(feedback).toBeFocused();
   expect(deleteRequests).toHaveLength(1);
+  expect(confirmations).toEqual([
+    AZ_COPY.profile.soldConfirm,
+    AZ_COPY.profile.deleteConfirm,
+  ]);
   await expect(page.getByText(listing.title, { exact: true })).toBeVisible();
   await expect(page.getByText(/təmizləmə növbəsindədir/i)).toHaveCount(0);
   await expect(page.getByText(/private .* provider detail/i)).toHaveCount(0);

@@ -448,12 +448,12 @@ describe("marketplace input validation", () => {
       parseListingDeletionResponse(
         {
           listingId: listing.id,
-          deleted: true,
-          imageCleanupPending: false,
+          removed: true,
+          retainedForIntegrity: true,
         },
         listing.id,
       ),
-    ).toEqual({ imageCleanupPending: false });
+    ).toEqual({ retainedForIntegrity: true });
     expect(parsePrivacyRequestListResponse({ data: [privacyItem] })).toEqual([
       privacyItem,
     ]);
@@ -571,8 +571,8 @@ describe("marketplace input validation", () => {
       parseListingDeletionResponse(
         {
           listingId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
-          deleted: true,
-          imageCleanupPending: false,
+          removed: true,
+          retainedForIntegrity: true,
         },
         listing.id,
       ),
@@ -581,8 +581,8 @@ describe("marketplace input validation", () => {
       parseListingDeletionResponse(
         {
           listingId: listing.id,
-          deleted: "true",
-          imageCleanupPending: false,
+          removed: "true",
+          retainedForIntegrity: true,
         },
         listing.id,
       ),
@@ -591,8 +591,8 @@ describe("marketplace input validation", () => {
       parseListingDeletionResponse(
         {
           listingId: listing.id,
-          deleted: true,
-          imageCleanupPending: "false",
+          removed: true,
+          retainedForIntegrity: false,
         },
         listing.id,
       ),
@@ -602,6 +602,66 @@ describe("marketplace input validation", () => {
       "utf8",
     );
     expect(listingRoute).toContain("listingId: id");
+    expect(listingRoute).toContain('.update({ status: "locked" })');
+    expect(listingRoute).not.toContain('.from("listings")\n      .delete()');
+    expect(listingRoute).toContain("retainedForIntegrity: true");
+  });
+
+  it("keeps owner lifecycle actions confirmed, owner-bound, and non-cascading", () => {
+    const listingRoute = readFileSync(
+      new URL("../app/api/listings/[id]/route.ts", import.meta.url),
+      "utf8",
+    );
+    const profileRoute = readFileSync(
+      new URL("../app/api/profile/route.ts", import.meta.url),
+      "utf8",
+    );
+    const chatRoomRoute = readFileSync(
+      new URL("../app/api/chat/rooms/route.ts", import.meta.url),
+      "utf8",
+    );
+    const profileDashboard = readFileSync(
+      new URL("../components/profile-dashboard.tsx", import.meta.url),
+      "utf8",
+    );
+    const listingDetail = readFileSync(
+      new URL("../components/listing-detail.tsx", import.meta.url),
+      "utf8",
+    );
+    const initialSchema = readFileSync(
+      new URL("../supabase/migrations/202606140001_init.sql", import.meta.url),
+      "utf8",
+    );
+
+    const deleteHandler = listingRoute.slice(
+      listingRoute.indexOf("export async function DELETE"),
+    );
+    expect(deleteHandler).toContain('.eq("seller_id", user.id)');
+    expect(deleteHandler).toContain('.update({ status: "locked" })');
+    expect(deleteHandler).not.toContain(".delete()");
+    expect(deleteHandler).not.toContain("drainListingImageCleanupJobs");
+    expect(deleteHandler).toContain("retainedForIntegrity: true");
+    expect(profileRoute).toContain('.neq("status", "locked")');
+    expect(chatRoomRoute).toContain('listing.status !== "active"');
+    expect(profileDashboard).toContain(
+      "window.confirm(AZ_COPY.profile.soldConfirm)",
+    );
+    expect(profileDashboard).toContain(
+      "window.confirm(AZ_COPY.profile.deleteConfirm)",
+    );
+    expect(listingDetail).toContain("listing.sellerId !== userId");
+    expect(listingDetail).toContain(
+      "window.confirm(AZ_COPY.listingDetail.soldConfirm)",
+    );
+    expect(listingDetail).toContain(
+      "window.confirm(AZ_COPY.listingDetail.deleteConfirm)",
+    );
+    for (const retainedTable of ["chat_rooms", "reviews", "reports"]) {
+      expect(initialSchema).toContain(
+        `references public.listings(id) on delete cascade`,
+      );
+      expect(initialSchema).toContain(`create table public.${retainedTable}`);
+    }
   });
 
   it("rejects malformed listing authoring and image success responses", async () => {

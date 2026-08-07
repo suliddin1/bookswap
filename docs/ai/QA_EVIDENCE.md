@@ -802,3 +802,42 @@ git diff --check                         PASS
 ```
 
 The first build attempt was blocked only by sandbox denial of the existing Google Fonts fetch; the approved build compiled 39/39 routes. The first two browser runs exposed one stale legal-link expectation and one focus assertion that revealed the generic error focus overriding the invalid consent control. Copy expectations were updated to the approved titles, and focus handling was fixed without weakening the acceptance behavior. The final complete suite passed 31/31. The agent-browser helper required by the optional dev-server verification skill is not installed; the repository's production-server Playwright suite provided the browser, route, focus, reflow, and error-state verification instead. WebKit is not configured in this branch's Playwright project, so no WebKit pass is claimed.
+
+## 2026-08-07 — Listing-owner sold, relist, and retained removal lifecycle
+
+**Result: local/code/browser PASS; guarded remote actor extension PREPARED.** No schema, migration, production, remote Supabase, Storage, Auth, deployment, or Git remote state changed.
+
+### Architecture and security evidence
+
+- The existing `active` → `sold` and `sold` → `active` route remains the single sold/relist lifecycle. Both profile and owner detail surfaces expose Azerbaijani `Satıldı`; sold references display `Satılıb`; sold owners receive `Yenidən satışa çıxar`.
+- `Satıldı` requires an explicit Azerbaijani confirmation explaining catalog/search removal and history/review preservation. The server reloads the listing through verified Auth and constrains update by both listing ID and `seller_id`; unrelated actor behavior remains indistinguishable from not found.
+- Catalog RPCs already select only `active`; the chat-room creation route already rejects every non-`active` listing. Existing room/message reads remain participant-bound and continue to join the retained listing.
+- The immutable initial schema uses `ON DELETE CASCADE` from listings to chat rooms, reviews, favorites, and reports; messages cascade from rooms. The former hard-delete owner route could therefore destroy private messages, review history, and report evidence.
+- Owner `Elanı sil` now performs an idempotent, owner-constrained update to the existing non-public `locked` state. The profile route excludes `locked`; public RLS and marketplace/seller RPCs already expose only active/sold states. A repeated owner request returns the same safe success, while an unrelated request returns 404.
+- No listing row or image array is deleted and the image-cleanup queue is not drained by owner removal. This deliberately retains image references alongside the listing/history; eventual hard deletion remains a separate verified retention operation.
+- The response boundary requires exact `{ listingId, removed: true, retainedForIntegrity: true }`. Malformed/cross-resource acknowledgements cannot produce false UI success.
+
+### Test evidence
+
+- Unit/source coverage validates strict sold/active inputs, owner ID filters, retained `locked` update, absence of hard delete and removal-time image cleanup, locked dashboard exclusion, active-only new-room creation, Azerbaijani confirmations, owner UI gating, and exact response parsing.
+- Browser coverage at 390×844 and the existing narrow/200% suite verifies non-owner action absence; owner edit/sold/delete actions; sold confirmation cancellation; sold badge/success; relist; deletion confirmation cancellation; one request under repeated click; retained-removal success; malformed acknowledgement rejection; and no horizontal overflow.
+- The guarded remote authorization suite now includes owner/unrelated sold mutation, active catalog removal, sold-room denial, relist restoration, unrelated/owner/repeated deletion, hidden profile/public reads, retained listing/images, unchanged room/message/review/report/moderation counts, and unchanged cleanup-job count. It was not executed because the development backend intentionally lacks migration 23 and remote mutation was not authorized; no remote pass or fixture cleanup claim is made for this extension.
+
+### Final local validation
+
+```text
+npm.cmd run format:check                 PASS — all matched files
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 65/65 tests
+npm.cmd run test:database:static         PASS — 23 migrations
+npm.cmd run test:dependencies            PASS — 7 guarded packages
+npm.cmd run test:secrets                 PASS — 194 repository paths
+npm.cmd run test:env                     PASS — guarded development identity; no remote operation
+npm.cmd run build                        PASS — Next 15.5.21, 39/39 routes
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 32/32
+git diff --check                         PASS
+```
+
+The first E2E invocation used the previous production build and was invalidated by a rebuild. The first post-build run exposed one real focus regression from a native disabled dashboard action plus the repository's previously documented intermittent minified React 418; focus preservation was restored while the synchronous mutation guard remained intact. The next full run hit only the same intermittent React 418 in a different unchanged test; no assertion was weakened. The final unchanged complete suite passed 32/32.

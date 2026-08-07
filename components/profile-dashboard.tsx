@@ -221,11 +221,7 @@ export function ProfileDashboard() {
             }
           : current,
       );
-      setNotice(
-        deletion.imageCleanupPending
-          ? AZ_COPY.profile.deleteCleanupPending
-          : AZ_COPY.profile.deleteComplete,
-      );
+      setNotice(AZ_COPY.profile.deleteComplete);
     } catch {
       if (isCurrentListingMutation(context))
         setError(AZ_COPY.profile.deleteFailed);
@@ -235,6 +231,9 @@ export function ProfileDashboard() {
   }
 
   async function setListingStatus(id: string, status: "active" | "sold") {
+    if (activeListingMutationRef.current) return;
+    if (status === "sold" && !window.confirm(AZ_COPY.profile.soldConfirm))
+      return;
     const context = beginListingMutation(id);
     if (!context) return;
     try {
@@ -269,7 +268,11 @@ export function ProfileDashboard() {
             }
           : current,
       );
-      setNotice(AZ_COPY.profile.statusUpdated);
+      setNotice(
+        status === "sold"
+          ? AZ_COPY.profile.soldComplete
+          : AZ_COPY.profile.relistComplete,
+      );
     } catch {
       if (isCurrentListingMutation(context))
         setError(AZ_COPY.profile.statusFailed);
@@ -619,12 +622,14 @@ export function ProfileDashboard() {
                           )}
                           <BookCard listing={listing} />
                           <div className="mt-4 flex min-w-0 flex-wrap gap-2">
-                            <Link
-                              href={`/listings/${listing.id}/edit`}
-                              className="btn-secondary !min-h-11 min-w-0 flex-[1_1_9rem] !border-[#95866f] !px-3 !text-xs"
-                            >
-                              <Edit3 size={12} /> {AZ_COPY.profile.edit}
-                            </Link>
+                            {listing.status !== "sold" && (
+                              <Link
+                                href={`/listings/${listing.id}/edit`}
+                                className="btn-secondary !min-h-11 min-w-0 flex-[1_1_9rem] !border-[#95866f] !px-3 !text-xs"
+                              >
+                                <Edit3 size={12} /> {AZ_COPY.profile.edit}
+                              </Link>
+                            )}
                             {nextStatus ? (
                               <button
                                 type="button"
@@ -645,10 +650,11 @@ export function ProfileDashboard() {
                               type="button"
                               aria-disabled={listingMutationBusy}
                               onClick={() => removeListing(listing.id)}
-                              className="grid h-11 w-11 shrink-0 place-items-center rounded border border-red-700 bg-red-50 text-red-700 aria-disabled:opacity-50"
+                              className="btn-secondary !min-h-11 min-w-0 flex-[1_1_9rem] !border-red-700 !bg-red-50 !px-3 !text-xs !text-red-700 aria-disabled:opacity-50"
                               aria-label={`${AZ_COPY.profile.deleteListing}: ${listing.title}`}
                             >
-                              <Trash2 size={13} />
+                              <Trash2 size={13} />{" "}
+                              {AZ_COPY.profile.deleteListing}
                             </button>
                           </div>
                         </div>
