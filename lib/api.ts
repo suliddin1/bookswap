@@ -110,6 +110,7 @@ export const privacyRequestInput = z
       "correction",
       "export",
       "deletion",
+      "consent_withdrawal",
       "objection",
       "appeal",
     ]),

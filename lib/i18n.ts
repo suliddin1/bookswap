@@ -33,7 +33,7 @@ export const AZ_COPY = {
   },
   footer: {
     description:
-      "Oxucuları bir-biri ilə birləşdirən kitab bazarı. BookSwap ödənişləri emal etmir və elandakı kitabları təhvil almır.",
+      "BookSwap alıcı ilə satıcını əlaqələndirən platformadır; kitabların satıcısı deyil, ödəniş qəbul etmir və istifadəçilər arasındakı alqı-satqı əməliyyatının tərəfi deyil.",
     marketplace: "Kitab bazarı",
     browse: "Kitablara bax",
     sell: "Kitab sat",
@@ -41,9 +41,9 @@ export const AZ_COPY = {
     faq: "Tez-tez verilən suallar",
     legal: "Hüquqi məlumat",
     rights: "Hüquqlarınız",
-    privacy: "Məxfilik bildirişi",
+    privacy: "Məxfilik siyasəti",
     terms: "İstifadə şərtləri",
-    marketplaceRules: "Kitab bazarı qaydaları",
+    marketplaceRules: "Kitab bazarı və icma qaydaları",
     moderationAppeals: "Moderasiya etirazları",
     userRights: "İstifadəçi hüquqları",
     copyright: "© 2026 BookSwap",
@@ -80,7 +80,7 @@ export const AZ_COPY = {
       {
         question: "Elanı necə satılıb işarələyim?",
         answer:
-          "Kabinetdə “Elanlarım” bölməsini açıb “Satılıb işarələ” düyməsini seçin. Razılaşma baş tutmazsa, “Yenidən yayımla” ilə elanı yenidən aktiv edə bilərsiniz.",
+          "Kabinetdə “Elanlarım” bölməsini açıb “Satıldı” düyməsini seçin. Razılaşma baş tutmazsa, “Yenidən satışa çıxar” ilə elanı yenidən aktiv edə bilərsiniz.",
       },
       {
         question: "Şübhəli elan görsəm nə edim?",
@@ -262,6 +262,23 @@ export const AZ_COPY = {
     reader: "BookSwap oxucusu",
     viewSeller: "Satıcının səhifəsinə bax",
     manage: "Elanı idarə et",
+    editListing: "Redaktə et",
+    markSold: "Satıldı",
+    relist: "Yenidən satışa çıxar",
+    deleteListing: "Elanı sil",
+    soldConfirm:
+      "Kitabın satıldığını təsdiqləyirsən? Elan aktiv bazar və axtarış nəticələrindən çıxacaq; mövcud söhbətlər və rəy uyğunluğu qorunacaq.",
+    deleteConfirm:
+      "Elanı silmək onu “Satıldı” kimi işarələmək deyil. Elan bazardan və kabinetindən götürüləcək, əlaqəli söhbətlər, rəylər, şikayətlər və moderasiya qeydləri qorunacaq. Davam etmək istəyirsən?",
+    soldComplete: "Elan Satılıb vəziyyətinə keçirildi.",
+    relistComplete: "Elan yenidən satışa çıxarıldı.",
+    lifecycleFailed: "Elanın vəziyyətini dəyişmək mümkün olmadı.",
+    deleteComplete:
+      "Elan bazardan və kabinetindən götürüldü. Əlaqəli tarixçə qorunur.",
+    deleteFailed: "Elanı silmək mümkün olmadı.",
+    soldBadge: "Satılıb",
+    removedTitle: "Elan bazardan götürüldü.",
+    backToProfile: "Elanlarıma qayıt",
     openingConversation: "Söhbət açılır...",
     messageSeller: "Satıcıya yaz",
     soldNotice: "Bu nüsxə satılıb.",
@@ -522,17 +539,20 @@ export const AZ_COPY = {
     listingsTitle: "Elanlarım",
     edit: "Redaktə et",
     publish: "Yayımla",
-    relist: "Yenidən yayımla",
-    markSold: "Satılıb işarələ",
+    relist: "Yenidən satışa çıxar",
+    markSold: "Satıldı",
     locked: "Elan kilidlənib",
     deleteListing: "Elanı sil",
-    deleteConfirm: "Bu elanı həmişəlik silmək istəyirsən?",
+    soldConfirm:
+      "Kitabın satıldığını təsdiqləyirsən? Elan aktiv bazar və axtarış nəticələrindən çıxacaq; mövcud söhbətlər və rəy uyğunluğu qorunacaq.",
+    deleteConfirm:
+      "Elanı silmək onu “Satıldı” kimi işarələmək deyil. Elan bazardan və kabinetindən götürüləcək, əlaqəli söhbətlər, rəylər, şikayətlər və moderasiya qeydləri qorunacaq. Davam etmək istəyirsən?",
     deleteFailed: "Elanı silmək mümkün olmadı.",
-    deleteComplete: "Elan silindi.",
-    deleteCleanupPending:
-      "Elan silindi. Şəkillər təhlükəsiz təmizləmə növbəsindədir.",
+    deleteComplete:
+      "Elan bazardan və kabinetindən götürüldü. Əlaqəli tarixçə qorunur.",
     statusFailed: "Elanın vəziyyətini dəyişmək mümkün olmadı.",
-    statusUpdated: "Elanın vəziyyəti yeniləndi.",
+    soldComplete: "Elan Satılıb vəziyyətinə keçirildi.",
+    relistComplete: "Elan yenidən satışa çıxarıldı.",
     listingUpdating: (title: string) => `${title} elanı yenilənir.`,
     emptyListingsTitle: "Hələ elan yoxdur.",
     emptyListingsBody:
@@ -783,6 +803,7 @@ export const AZ_COPY = {
       "Yanlış və ya natamam məlumatı düzəltmək.",
       "Daşına bilən məlumat çıxarışı istəmək.",
       "Müəyyən məlumat emalına etiraz etmək.",
+      "Fərdi məlumatların emalına verdiyin razılığı geri götürmək.",
       "Hesab və məlumatların silinməsini istəmək.",
       "Moderasiya və hesab məhdudiyyəti barədə izah və yenidən baxış istəmək.",
     ],
@@ -844,6 +865,7 @@ const privacyRequestTypeLabels: Record<string, string> = {
   correction: "Məlumatlarımın düzəldilməsi",
   export: "Məlumatlarımın ixracı",
   deletion: "Hesabımın və məlumatlarımın silinməsi",
+  consent_withdrawal: "Fərdi məlumat razılığının geri götürülməsi",
   objection: "Məlumat emalına etiraz",
   appeal: "Moderasiya qərarına etiraz",
 };
@@ -971,6 +993,7 @@ const apiErrorLabels: Record<string, string> = {
   INVALID_IMAGE_CONTENT: AZ_COPY.listingForm.invalidImageContent,
   INVALID_IMAGE_PATH: AZ_COPY.api.invalidImagePath,
   LISTING_LOCKED: "Kilidlənmiş elanı redaktə etmək mümkün deyil.",
+  LISTING_REMOVAL_CONFLICT: "Elanı silmək mümkün olmadı.",
   MODERATION_AUDIT_UNAVAILABLE:
     "Məzmun qaydası yoxlamasını qeyd etmək mümkün olmadı. Bir az sonra yenidən cəhd et.",
   CONTENT_REJECTED:

@@ -20,6 +20,7 @@ export async function GET(request: Request) {
           "*, seller:users!listings_seller_id_fkey(id,name,city,created_at)",
         )
         .eq("seller_id", user.id)
+        .neq("status", "locked")
         .order("created_at", { ascending: false }),
       supabase
         .from("favorites")

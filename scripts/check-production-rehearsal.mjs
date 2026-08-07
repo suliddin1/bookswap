@@ -95,6 +95,10 @@ const expectedMigrations = new Map([
     "20260728071355_clarify_private_rate_limit_policy.sql",
     "cef8da68fac2ea00fd9a4b19f55090c7078d3af6fbc4848774ff305774124ec7",
   ],
+  [
+    "20260807090000_add_legal_acceptance_audit.sql",
+    "81189b93ced1bdef0b41063ef56ee9660d5650e4d379c093beada8f02dcd2fb9",
+  ],
 ]);
 
 function normalizedSql(source) {
@@ -110,7 +114,7 @@ const actualMigrations = readdirSync(migrationRoot)
 const expectedNames = [...expectedMigrations.keys()];
 
 if (JSON.stringify(actualMigrations) !== JSON.stringify(expectedNames)) {
-  failures.push("The immutable 22-file migration inventory changed.");
+  failures.push("The immutable 23-file migration inventory changed.");
 }
 
 for (const [file, expectedHash] of expectedMigrations) {

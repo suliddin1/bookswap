@@ -1,6 +1,6 @@
 # Current architecture decisions
 
-Updated: 28 July 2026
+Updated: 7 August 2026
 
 ## ADR-001 — Marketplace launch scope
 
@@ -53,3 +53,7 @@ Repository procedures do not prove deployment, backups/PITR, restore, MFA, leake
 ## ADR-013 — AI-free launch and free core marketplace
 
 BookSwap has no AI/OpenAI runtime, key, dependency, or external content-classification request. Content safety combines strict boundary validation, a deliberately narrow deterministic credential-theft rule, durable abuse limits, secure upload checks, user reports, admin review/removal/bans, and audit history. These rules do not claim semantic understanding, especially for images. Normal-user listings and messages are free; launch has no commission, integrated payment, VIP listing, subscription, or display ads. Paid listing promotion, professional seller plans, and direct sponsorships remain future candidates only.
+
+## ADR-014 — Owner removal retains listing integrity
+
+`Satıldı` and `Yenidən satışa çıxar` continue to use the existing `sold`/`active` lifecycle. Owner-facing `Elanı sil` does not hard-delete `public.listings`, because the immutable schema cascades that deletion into chat rooms/messages, reviews, favorites, and reports. The protected owner route instead moves the listing to the existing non-public `locked` state, and the owner dashboard excludes that state. This is idempotent, owner-constrained, unavailable to unrelated users, and deliberately leaves listing images attached so retained references do not break. A future verified retention process may hard-delete expired records and drain the existing image-cleanup queue only after legal, moderation, review, report, and conversation retention requirements are satisfied.

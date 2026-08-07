@@ -84,7 +84,7 @@ Vercel rollback restores application code/config version; it does not reverse da
 - Storage ownership policy alignment, hosted Auth controls, administrator MFA, and Vercel Production variable names/scopes require owner verification.
 - The existing production release predates the launch-readiness branch. Vercel Git remains disconnected, no custom domain is verified, and this change does not deploy or promote a release.
 - Listing/chat content checks are deterministic repository code and require no external AI key. Notification email remains disabled until its separately documented operational requirements are met.
-- The gate stopped before every production mutation. Follow DR-006 and DR-007 in `docs/ai/DECISION_REQUESTS.md`; do not deploy until backup/restore, migration baseline, Auth, Storage, variables, canonical domain, operational ownership, and legal facts are complete.
+- This 28 July gate stopped before every production mutation. Its later, separately authorized clean-beta provisioning and controlled release are recorded below; that release did not resolve the legacy-production recovery gate or authorize PR #7 deployment.
 
 ## Production migration rehearsal inspection — 29 July 2026
 

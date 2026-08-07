@@ -28,6 +28,10 @@ Updated: 28 July 2026
 
 The launch application makes no AI or external content-classification request and needs no such credential. Text passes strict Zod length/shape validation and one deliberately narrow local rule that rejects requests for CVV/PIN/OTP-style secrets; this is not broad semantic moderation. Images are checked for owner path, count, size, MIME type, and file signature, but their visual meaning is not automatically classified. Durable rate limits, banned-account enforcement, reports, admin review/removal/bans, appeals, and audit history cover abuse the deterministic rules cannot understand.
 
+## Content-safety boundary
+
+The launch application makes no AI or external content-classification request and needs no such credential. Text passes strict Zod length/shape validation and one deliberately narrow local rule that rejects requests for CVV/PIN/OTP-style secrets; this is not broad semantic moderation. Images are checked for owner path, count, size, MIME type, and file signature, but their visual meaning is not automatically classified. Durable rate limits, banned-account enforcement, reports, admin review/removal/bans, appeals, and audit history cover abuse the deterministic rules cannot understand.
+
 ## Rate-limit policy
 
 Limits are defined at each route by action sensitivity and actor/resource identity. Login/signup/reset use IP/platform protection; listing/upload/chat/report/review/admin operations use authenticated actor and, where useful, target resource. Values are tuning defaults, not immutable policy. Change them only with observed traffic, abuse evidence, false-positive review, and an owner-approved rollback. Raw IP/account IDs are not stored in limiter rows.

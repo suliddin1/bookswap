@@ -41,14 +41,23 @@ function stopServer() {
 let exitCode = 1;
 try {
   await waitForServer();
-  const test = spawn(
-    node,
-    ["node_modules/@playwright/test/cli.js", "test", ...process.argv.slice(2)],
-    { stdio: "inherit" },
-  );
-  exitCode = await new Promise((resolve) =>
-    test.on("exit", (code) => resolve(code ?? 1)),
-  );
+  const forwardedArgs = process.argv.slice(2);
+  const runs = forwardedArgs.length
+    ? [forwardedArgs]
+    : [["--project=chromium"], ["--project=mobile-webkit", "--workers=1"]];
+
+  exitCode = 0;
+  for (const args of runs) {
+    const test = spawn(
+      node,
+      ["node_modules/@playwright/test/cli.js", "test", ...args],
+      { stdio: "inherit" },
+    );
+    exitCode = await new Promise((resolve) =>
+      test.on("exit", (code) => resolve(code ?? 1)),
+    );
+    if (exitCode !== 0) break;
+  }
 } finally {
   stopServer();
 }

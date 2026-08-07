@@ -23,6 +23,39 @@ begin
     raise exception 'Every public table must have RLS enabled';
   end if;
 
+  if has_table_privilege('anon', 'public.legal_acceptances', 'select')
+    or has_table_privilege('authenticated', 'public.legal_acceptances', 'insert')
+    or has_table_privilege('authenticated', 'public.legal_acceptances', 'update')
+    or has_table_privilege('authenticated', 'public.legal_acceptances', 'delete')
+    or not has_table_privilege('authenticated', 'public.legal_acceptances', 'select')
+    or not has_table_privilege('service_role', 'public.legal_acceptances', 'delete')
+  then
+    raise exception 'Legal acceptance ACLs are not read-own/immutable with service-only retention cleanup';
+  end if;
+
+  if has_function_privilege(
+    'authenticated',
+    'private.record_signup_legal_acceptance()',
+    'execute'
+  ) or has_function_privilege(
+    'anon',
+    'private.record_signup_legal_acceptance()',
+    'execute'
+  ) then
+    raise exception 'Browser roles must not execute the legal acceptance trigger';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'legal_acceptances'
+      and policyname = 'Users view their own legal acceptances'
+      and cmd = 'SELECT'
+  ) then
+    raise exception 'Own-row legal acceptance policy is missing';
+  end if;
+
   if has_function_privilege(
     'anon',
     'public.consume_rate_limit(text,text,integer,integer)',

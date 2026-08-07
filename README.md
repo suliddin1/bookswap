@@ -43,11 +43,20 @@ SUPABASE_SERVICE_ROLE_KEY=
 BOOKSWAP_REMOTE_TEST_CONFIRMATION=
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 BOOKSWAP_PRIVATE_BETA=false
+LEGAL_OPERATOR_FULL_NAME=Suliddin Musa Əsədzadə
+LEGAL_CONTACT_EMAIL=Suliddin677@gmail.com
 WEB_VITALS_ENABLED=false
 RESEND_API_KEY=
 ```
 
 Never expose `SUPABASE_SERVICE_ROLE_KEY` or other secret keys to client components.
+
+`LEGAL_OPERATOR_FULL_NAME` and `LEGAL_CONTACT_EMAIL` are public display
+configuration, not secrets. The repository contains the owner-approved public
+fallback values. Explicitly blank values fail closed outside
+`BOOKSWAP_PRIVATE_BETA=true`; private beta may render a completion notice.
+`RESEND_API_KEY` is optional and only relevant if the dormant transactional
+email function is deliberately configured and approved.
 
 Set `BOOKSWAP_PRIVATE_BETA=true` only for an explicitly approved friends-only
 deployment. It keeps direct-link access available, displays a beta-data warning,
@@ -64,7 +73,7 @@ evidence gate.
 
 The migrations create profiles, listings, favorites, rooms, messages, reviews, notifications, reports, RLS policies, search indexes, Realtime publications, and the `listing-images` bucket.
 
-The latest hardening migrations add database validation constraints, review/report/chat invariants, Azerbaijani-aware search normalization, service-only Storage mutation, stable Azerbaijani notifications, and an atomic Postgres-backed rate limiter. Apply all 22 migrations in filename order.
+The latest hardening migrations add database validation constraints, review/report/chat invariants, Azerbaijani-aware search normalization, service-only Storage mutation, stable Azerbaijani notifications, an atomic Postgres-backed rate limiter, and immutable current-version signup acceptance records. Apply all 23 migrations in filename order to an authorized non-production project before any production change.
 
 The first administrator is a production-owner bootstrap operation, not an application flow. Perform it only in the intended project, record the operator/ticket, and then use audited admin actions for subsequent changes:
 

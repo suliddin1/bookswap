@@ -86,6 +86,21 @@ export type Database = {
         },
         []
       >;
+      legal_acceptances: Table<
+        {
+          user_id: string;
+          terms_version: string;
+          privacy_version: string;
+          marketplace_rules_version: string;
+          age_18_plus_confirmed: boolean;
+          personal_data_processing_consent: boolean;
+          cross_border_transfer_disclosed_and_consented: boolean;
+          accepted_at: string;
+        },
+        never,
+        never,
+        []
+      >;
       listings: Table<
         Timestamps & {
           id: string;

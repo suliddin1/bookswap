@@ -1,3 +1,7 @@
-export function isPrivateBeta(env: NodeJS.ProcessEnv = process.env) {
-  return env.BOOKSWAP_PRIVATE_BETA === "true";
+export function isPrivateBeta(env?: { BOOKSWAP_PRIVATE_BETA?: string }) {
+  const value =
+    env === undefined
+      ? process.env.BOOKSWAP_PRIVATE_BETA
+      : env.BOOKSWAP_PRIVATE_BETA;
+  return value === "true";
 }

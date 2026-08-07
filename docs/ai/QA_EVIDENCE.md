@@ -815,6 +815,170 @@ npm.cmd run test:e2e              PASS — Chromium 28/28
 
 The first authorization and build attempts were blocked by sandbox network policy; approved reruns reached only the guarded development backend and existing Google font host and passed. The first E2E run found a real stale administrator-navigation label and was fixed. A later run encountered the previously documented intermittent React 418 in an unchanged profile test; no assertion was weakened, and the final complete 28-test suite passed. No live external dependency advisory query, production smoke test, semantic image review, or claim of comprehensive deterministic content understanding is included.
 
+## 2026-08-07 — Legal identity, current legal copy, and auditable signup consent
+
+**Result: repository/local PASS; additive database contract PREPARED and intentionally not applied remotely.** Qualified legal review and the external compliance/operations items in `docs/legal/COMPLIANCE_STATUS.md` remain open. No production, remote Supabase, Auth, Storage, Vercel, DNS, or Git remote state changed.
+
+### User-visible and configuration evidence
+
+- One legal module owns version `2026-08-07`, effective date 7 August 2026, operator `Suliddin Musa Əsədzadə`, contact `Suliddin677@gmail.com`, and the explicit public/private-beta configuration behavior. Legacy public identity/date/age/jurisdiction placeholders are absent.
+- Terms, Privacy, Marketplace/Community Rules, moderation contact, and footer render current Azerbaijani copy. Terms state 18+, physical-book C2C scope, no commission/payment/escrow, platform non-party role, moderation/appeal/reporting, liability limits, and Azerbaijan law. Privacy records real categories/providers, cross-border disclosure, message privacy, target retention periods with the automation gap, user-right response timing, security controls, no non-essential tracking, and 18+ scope.
+- The footer exposes all six required legal/safety links and the exact operator/contact/role disclosure. The friends-only private-beta banner, global noindex/nofollow metadata, and crawler disallow path are restored; public configuration explicitly missing either legal value throws instead of rendering incomplete identity.
+- Signup renders two separate required checkboxes, both unchecked. Missing Terms/18+/Rules acceptance focuses the first control and blocks the request; missing privacy/processing/provider/cross-border consent focuses the second and blocks the request. The accepted path sends all true flags and the one current version through `/api/auth/signup`.
+- The same-origin Auth route creates a fresh public-key server client per request with persistence, refresh, and URL-session detection disabled. It never uses the service-role client and cannot retain one registrant's session for another request when hosted email confirmation behavior differs.
+- The existing user-rights flow now includes explicit consent withdrawal without creating a duplicate request system.
+
+### Database/security evidence and boundary
+
+- Additive migration `20260807090000_add_legal_acceptance_audit.sql` creates an RLS-enabled `legal_acceptances` table, exact current-version/affirmative-consent constraints, a private fixed-search-path Auth trigger, own-row authenticated SELECT, no normal-user INSERT/UPDATE/DELETE, and service-only DELETE for verified retention/test cleanup.
+- The trigger rejects a new Auth row without all current affirmative fields, derives `user_id` from `auth.users`, hard-codes rather than trusts the client versions for storage, and uses `clock_timestamp()` in the database. Editable Auth metadata is transport into the trigger, not the authoritative audit record.
+- Static SQL prepares ACL, policy, trigger-execute, and privacy-type assertions. The generated-shaped TypeScript contract is updated manually, but true schema-generated types, advisors, and two-user RLS proof require first applying the migration to an authorized non-production project.
+- Supabase CLI, Docker/Podman, and `psql` are unavailable locally. The prompt prohibits remote migration application. Therefore `npm run test:authorization` was not rerun against the development project because its remote schema intentionally lacks migration 23; no remote pass is claimed and no fixture/residue was created.
+
+### Provider/no-cookie audit
+
+- Actual core providers: Supabase for database/Auth/Storage and Vercel for hosting/runtime. A dormant optional Edge Function can call Resend, but active transactional-email configuration is unverified, so public copy remains provider-neutral and conditional.
+- No third-party product analytics, advertising, Sentry, PostHog, Vercel Analytics, or Speed Insights package is installed. Optional Web Vitals are same-origin and privacy-minimized. Only necessary Auth/session browser storage was found; no cookie banner was added.
+
+### Final local validation
+
+```text
+npm.cmd run format:check                 PASS — all matched files
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 64/64 tests
+npm.cmd run test:database:static         PASS — 23 migrations
+npm.cmd run test:dependencies            PASS — 7 guarded packages
+npm.cmd run test:secrets                 PASS — 193 repository paths
+npm.cmd run test:env                     PASS — guarded development identity; no remote operation
+npm.cmd run build                        PASS — Next 15.5.21, 39/39 routes
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 31/31
+git diff --check                         PASS
+```
+
+The first build attempt was blocked only by sandbox denial of the existing Google Fonts fetch; the approved build compiled 39/39 routes. The first two browser runs exposed one stale legal-link expectation and one focus assertion that revealed the generic error focus overriding the invalid consent control. Copy expectations were updated to the approved titles, and focus handling was fixed without weakening the acceptance behavior. The final complete suite passed 31/31. The agent-browser helper required by the optional dev-server verification skill is not installed; the repository's production-server Playwright suite provided the browser, route, focus, reflow, and error-state verification instead. WebKit is not configured in this branch's Playwright project, so no WebKit pass is claimed.
+
+## 2026-08-07 — Listing-owner sold, relist, and retained removal lifecycle
+
+**Result: local/code/browser PASS; guarded remote actor extension PREPARED.** No schema, migration, production, remote Supabase, Storage, Auth, deployment, or Git remote state changed.
+
+### Architecture and security evidence
+
+- The existing `active` → `sold` and `sold` → `active` route remains the single sold/relist lifecycle. Both profile and owner detail surfaces expose Azerbaijani `Satıldı`; sold references display `Satılıb`; sold owners receive `Yenidən satışa çıxar`.
+- `Satıldı` requires an explicit Azerbaijani confirmation explaining catalog/search removal and history/review preservation. The server reloads the listing through verified Auth and constrains update by both listing ID and `seller_id`; unrelated actor behavior remains indistinguishable from not found.
+- Catalog RPCs already select only `active`; the chat-room creation route already rejects every non-`active` listing. Existing room/message reads remain participant-bound and continue to join the retained listing.
+- The immutable initial schema uses `ON DELETE CASCADE` from listings to chat rooms, reviews, favorites, and reports; messages cascade from rooms. The former hard-delete owner route could therefore destroy private messages, review history, and report evidence.
+- Owner `Elanı sil` now performs an idempotent, owner-constrained update to the existing non-public `locked` state. The profile route excludes `locked`; public RLS and marketplace/seller RPCs already expose only active/sold states. A repeated owner request returns the same safe success, while an unrelated request returns 404.
+- No listing row or image array is deleted and the image-cleanup queue is not drained by owner removal. This deliberately retains image references alongside the listing/history; eventual hard deletion remains a separate verified retention operation.
+- The response boundary requires exact `{ listingId, removed: true, retainedForIntegrity: true }`. Malformed/cross-resource acknowledgements cannot produce false UI success.
+
+### Test evidence
+
+- Unit/source coverage validates strict sold/active inputs, owner ID filters, retained `locked` update, absence of hard delete and removal-time image cleanup, locked dashboard exclusion, active-only new-room creation, Azerbaijani confirmations, owner UI gating, and exact response parsing.
+- Browser coverage at 390×844 and the existing narrow/200% suite verifies non-owner action absence; owner edit/sold/delete actions; sold confirmation cancellation; sold badge/success; relist; deletion confirmation cancellation; one request under repeated click; retained-removal success; malformed acknowledgement rejection; and no horizontal overflow.
+- The guarded remote authorization suite now includes owner/unrelated sold mutation, active catalog removal, sold-room denial, relist restoration, unrelated/owner/repeated deletion, hidden profile/public reads, retained listing/images, unchanged room/message/review/report/moderation counts, and unchanged cleanup-job count. It was not executed because the development backend intentionally lacks migration 23 and remote mutation was not authorized; no remote pass or fixture cleanup claim is made for this extension.
+
+### Final local validation
+
+```text
+npm.cmd run format:check                 PASS — all matched files
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 65/65 tests
+npm.cmd run test:database:static         PASS — 23 migrations
+npm.cmd run test:dependencies            PASS — 7 guarded packages
+npm.cmd run test:secrets                 PASS — 194 repository paths
+npm.cmd run test:env                     PASS — guarded development identity; no remote operation
+npm.cmd run build                        PASS — Next 15.5.21, 39/39 routes
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 32/32
+git diff --check                         PASS
+```
+
+The first E2E invocation used the previous production build and was invalidated by a rebuild. The first post-build run exposed one real focus regression from a native disabled dashboard action plus the repository's previously documented intermittent minified React 418; focus preservation was restored while the synchronous mutation guard remained intact. The next full run hit only the same intermittent React 418 in a different unchanged test; no assertion was weakened. The final unchanged complete suite passed 32/32.
+
+## 2026-08-07 — Exact legal contact and bounded development verification follow-up
+
+**Result: legal correction and local gates PASS; development migration/actor proof BLOCKED BEFORE EXECUTION.** The target was independently confirmed as the separately named healthy development project. The migration tool's safety reviewer nevertheless required a new explicit approval after risk disclosure and rejected the operation before sending DDL. The remote migration list remained at 22 afterward; no fixture or partial schema change was created.
+
+### Legal/configuration evidence
+
+- Exact public values remain `Suliddin Musa Əsədzadə` and `Suliddin677@gmail.com`. The email is centralized in `lib/legal.ts`, documented in README/configuration examples and compliance/decision evidence, and asserted in unit and footer E2E coverage.
+- The public guard now treats empty, whitespace-only, `[EMAIL]`, and `{{LEGAL_CONTACT_EMAIL}}` contact values as unconfigured. Every case throws outside private beta and remains tolerated only by the existing labeled private-beta behavior. The approved email passes as configured.
+- The guarded authorization suite was expanded for real email-confirmation signup with no immediate session, database-time/current-version affirmative audit capture, rejected incomplete consent, own-row-only reads, denied owner/unrelated mutations, retained-row proof, consent withdrawal, and checked cleanup of every created Auth user.
+
+### Development read-only evidence
+
+- A fresh remote migration read confirmed only the original 22 migrations. Fresh generated types omit `legal_acceptances`, proving that the repository's migration-23 shaped type is intentionally ahead and post-migration parity cannot yet be claimed.
+- Security Advisor returned zero findings on the current development schema. Performance Advisor returned 11 informational unused-index findings and no warning/error finding. These are baseline results, not post-migration advice.
+- `npm run test:authorization` was deliberately not started against the known-behind schema: it would create Auth fixtures before failing on the missing table. Because no fixture-producing run began, fixture cleanup result is “nothing created”; existing real-user data was never used.
+
+### Validation
+
+```text
+npm.cmd run format:check                 PASS — all matched files
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 69/69 tests
+npm.cmd run test:database:static         PASS — 23 migrations
+npm.cmd run test:dependencies            PASS — 7 guarded packages
+npm.cmd run test:secrets                 PASS — 193 repository files
+npm.cmd run test:env                     PASS — guarded development identity
+npm.cmd run build                        PASS — Next 15.5.21, 39/39 pages
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 32/32 on the final rerun
+git diff --check                         PASS
+```
+
+The first Chromium run passed 31/32 after a concurrent navigation stayed on the home page; its captured page showed the corrected legal footer and no product regression. No assertion was changed. The immediate unchanged full rerun passed 32/32.
+
+## 2026-08-07 — Authorized development migration and full actor verification
+
+**Result: DEVELOPMENT PASS; production untouched.** After the owner gave a new risk-informed approval, the separately named healthy development project and exact 22-migration precondition were reconfirmed. Migration `add_legal_acceptance_audit` applied once successfully; remote history is now exactly 23 entries. No clean-beta or production project was queried or mutated.
+
+### Schema, types, and advisors
+
+- `public.legal_acceptances` exists with RLS enabled, zero public-table RLS gaps, exact current-version/affirmative constraints, database `clock_timestamp()` default, and the intended composite primary key. The privacy request check includes `consent_withdrawal` without removing existing types.
+- Authenticated users have SELECT only; anon has no access; service role has SELECT/DELETE only. The only RLS policy is authenticated own-row SELECT. The private `SECURITY DEFINER` trigger function has an empty fixed `search_path`, no anon/authenticated/service execute privilege, and its `auth.users` trigger is enabled.
+- Fresh generated types contain the exact eight-column legal-acceptance row shape. The repository row contract matches it; `Insert` and `Update` intentionally remain `never` because verified ACLs make normal application mutation impossible.
+- Post-migration Security Advisor: zero findings. Performance Advisor: 11 informational unused-index notices and no warning/error. No index was removed without representative workload evidence.
+
+### Real Auth/RLS/lifecycle behavior
+
+- The final guarded suite passed 14/14. A no-email `admin.generateLink(type: "signup")` confirmation flow created an unconfirmed Auth user, fired the same `auth.users` trigger, and recorded database identity/time, all three current versions, age confirmation, processing consent, and cross-border disclosure/consent. Incomplete consent was rejected transactionally.
+- Owner acceptance read passed; unrelated read returned no row; owner insert/update/delete and unrelated delete were denied; the stored acceptance remained unchanged. Consent withdrawal succeeded through the existing `privacy_requests` table.
+- Owner sold passed; unrelated sold failed; sold left active catalog/search and blocked new rooms; relist restored active catalog visibility. Owner retained removal passed; unrelated removal failed; a repeated request was safe.
+- Chat room/message, eligible review, report, moderation-decision, image array, and image-cleanup-job counts were unchanged across owner removal. The retained listing became hidden `locked`, left public/profile surfaces, and preserved relational history.
+
+### Fixture and delivery boundary
+
+- Auth/public users, legal acceptances, listings, chat/messages, reviews, reports, privacy requests, notifications, four orphan test moderation rows, and 24 test rate-limit rows were removed; final counts for those fixture markers are zero.
+- Four administrator audit entries from this verification remain intentionally: the immutable audit trigger rejected their deletion and rolled back the attempted combined cleanup statement. The trigger was not disabled or bypassed because doing so would weaken the exact audit-integrity invariant under test. These rows contain test-only actor/target IDs and the fixed reason `Authorization integration test resolution.`
+- Direct public signup first demonstrated the hosted default-email rate limit (`429 over_email_send_rate_limit`). The final trigger/confirmation proof therefore used Supabase's official signup-link generation flow, which creates an unconfirmed user without sending another email. Actual outbound confirmation delivery remains an operational email-provider item, not a claimed pass.
+
+### Final gates
+
+```text
+npm.cmd run format:check                 PASS — all matched files
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 69/69 tests
+npm.cmd run test:database:static         PASS — 23 migrations
+npm.cmd run test:authorization           PASS — development actor/RLS 14/14
+npm.cmd run test:dependencies            PASS — 7 guarded packages
+npm.cmd run test:secrets                 PASS — 193 repository files
+npm.cmd run test:env                     PASS — guarded development identity
+npm.cmd run build                        PASS — Next 15.5.21, 39/39 pages
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 32/32
+git diff --check                         PASS
+```
+
+### Merge chronology note
+
+The following `main`-side entries cover 29 July–2 August and are preserved after the independently appended 7 August feature evidence above. The final PR #7 conflict-resolution evidence follows both histories.
+
 ## 2026-07-29 — Production backup and migration rehearsal inspection
 
 **Result: repository preparation PASS; recovery and migration rehearsal BLOCKED; production unchanged.** This section is aggregate/catalog evidence only. It contains no credential, project reference, personal row, object content, or backup artifact.
@@ -1032,3 +1196,42 @@ git diff --check                       PASS
 - Read-only browser/observability smoke: anonymous mobile Chromium at 390×844 loaded the home, messages, and conversation routes without the generic application-error screen, page errors, console errors, or unexpected HTTP failures. Two same-origin Next RSC GETs ended in `net::ERR_ABORTED` only because the script deliberately navigated to the next page; they are classified navigation cancellations, not application failures. Vercel reported zero runtime-error clusters in the sampled post-promotion window and no error/fatal logs for `dpl_ECZ6xdSzhgybz8Jj7Lx8wyDjS3j8`.
 - Immutable boundary and cleanup: this release created no production users, profiles, listings, rooms, messages, notifications, read states, files, Storage objects, database rows, schema, migration, RLS policy, grant, Auth configuration, or environment-value change. No cleanup write was necessary.
 - Required before issue closure: the recipient must use the canonical domain and confirm the existing conversation opens, the received message is visible, messages-list-to-detail navigation works, and a refresh remains correct. If it fails, collect the exact route, HTTP status, and client error; do not change database authorization, and roll back to `dpl_6nXYzBLTuEFrKin6n94oUXhhV9Lb` immediately if the promoted release shows a broader regression.
+
+## 2026-08-07 — PR #7 semantic merge-conflict resolution
+
+**Result: combined repository PASS; PR remains draft and undeployed.** `origin/main` had advanced by ten promoted commits after the common base while the feature branch independently added legal identity/consent and retained listing lifecycle work. A normal merge preserved published history; no rebase, force-push, reset, blanket side selection, deployment, or infrastructure mutation was used.
+
+### Exact conflict set and resolution
+
+- Environment/docs: `.env.example`, `.env.local.example`, `.env.test.example`, `.gitignore`, and `README.md` retain the exact public legal values and fail-closed guidance while adopting `main`'s blank project-specific test fields, backup-artifact ignores, and private-beta crawler warning.
+- Application/legal: `app/layout.tsx` retains the public legal guard. `app/privacy/page.tsx` retains the current 2026-08-07 policy and consent audit while incorporating `main`'s AI-free provider/content-moderation fact.
+- Shared code: `lib/i18n.ts` retains the owner-removal error. `lib/private-beta.ts` keeps exact `true` semantics and an injectable environment boundary used by both test sets.
+- Tests: `tests/authorization.integration.test.ts` combines the cryptographic development-target guard and image-cleanup cleanup from `main` with PR #7's legal-acceptance mutation probes, created-user tracking, already-deleted-user handling, and retained lifecycle assertions. `tests/site-security.test.ts` combines legal identity/placeholder/consent tests with private-beta crawler and ambiguous-value checks.
+- Durable facts: `docs/ai/ACCEPTANCE_MATRIX.md`, `docs/ai/ARCHITECTURE_DECISIONS.md`, `docs/ai/DECISION_REQUESTS.md`, `docs/ai/ISSUE_QUEUE.md`, `docs/ai/ITERATION_LOG.md`, `docs/ai/PROJECT_STATE.md`, `docs/ai/QA_EVIDENCE.md`, and `docs/launch-checklist.md` preserve `main`'s clean-beta release, production smoke, mobile-authoring, MSG-001, recovery, and SMTP evidence while keeping migration 23 explicitly development-only and PR #7 undeployed.
+- The production rehearsal fingerprint guard now covers all 23 immutable files. Migration `20260807090000_add_legal_acceptance_audit.sql` itself remains byte-for-byte identical to pre-merge PR #7 (`3afe8906b3c5c36355e9271f731ce1708e4c74f2`).
+- The default E2E wrapper runs Chromium and one-worker mobile WebKit sequentially against one local production server. This resolves a local multi-worker WebKit teardown stall without skipping or weakening any test; explicit Playwright arguments remain supported.
+
+### Preserved independent behavior
+
+- From `main`: production/clean-beta promotion evidence, migration rehearsal guards/runbooks, dependency advisory boundary, P0 mobile object-URL/Auth resilience, listing-authoring error boundary, HEIC/HEIF handling, nullable-profile messaging parsing/retry/session recovery, MSG-001 release evidence, Chromium/WebKit mobile tests, and current environment/CI safety checks.
+- From PR #7: `Suliddin Musa Əsədzadə`, `Suliddin677@gmail.com`, legal version `2026-08-07`, fail-closed public configuration, current Terms/Privacy/Marketplace Rules, separate unchecked signup consents, 18+ rule, immutable legal acceptance audit, consent withdrawal, owner-only `Satıldı`/relist/retained `Elanı sil`, active-chat prevention, and preservation of messages/reviews/reports/moderation/images.
+
+### Post-merge validation
+
+```text
+npm.cmd run format:check                 PASS — all matched files
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 74/74 tests
+npm.cmd run test:database:static         PASS — 23 migrations
+npm.cmd run test:production-rehearsal    PASS — 23 fingerprints; 0 backup artifacts
+npm.cmd run test:dependencies            PASS — 7 guarded packages; 0 affected production copies
+npm.cmd run test:secrets                 PASS — 201 repository files
+npm.cmd run test:env                     PASS — guarded development identity; no remote operation
+npm.cmd run build                        PASS — Next 15.5.21, 39/39 routes
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 37 + 1 expected beta-only skip; mobile WebKit 5/5
+git diff --check                         PASS
+```
+
+The existing guarded development authorization result remains 14/14. It was not rerun during conflict resolution because no schema/authorization contract changed and another run would create new immutable administrator-audit records. No Supabase project was queried or mutated in this slice.

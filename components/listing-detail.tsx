@@ -5,11 +5,15 @@ import Image from "next/image";
 import {
   AlertTriangle,
   ArrowLeft,
+  Check,
+  Edit3,
   Heart,
   MapPin,
   MessageCircle,
+  RefreshCw,
   ShieldCheck,
   Star,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BookCard } from "@/components/book-card";
@@ -40,6 +44,10 @@ import {
   parseRoomCreationResponse,
 } from "@/lib/listing-detail-action-responses";
 import type { Listing } from "@/lib/types";
+import {
+  parseListingDeletionResponse,
+  parseListingMutationResponse,
+} from "@/lib/account-responses";
 import type { FormEvent } from "react";
 
 type DetailListing = Listing & { reviews?: ListingReview[] };
@@ -79,6 +87,12 @@ export function ListingDetail({ id }: { id: string }) {
   const [rating, setRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewStatus, setReviewStatus] = useState("");
+  const [ownerActionBusy, setOwnerActionBusy] = useState(false);
+  const [ownerActionStatus, setOwnerActionStatus] = useState("");
+  const [ownerRemovalResult, setOwnerRemovalResult] = useState<{
+    resourceId: string;
+    message: string;
+  } | null>(null);
   const { user, loading: authLoading } = useAuth();
   const { data } = useListings();
   const userId = user?.id ?? null;
@@ -90,6 +104,7 @@ export function ListingDetail({ id }: { id: string }) {
   const messageRequest = useRef(0);
   const reportRequest = useRef(0);
   const reviewRequest = useRef(0);
+  const ownerActionRequest = useRef(0);
   contextKeyRef.current = contextKey;
 
   const listing = listingResult?.resourceId === id ? listingResult.data : null;
@@ -106,6 +121,10 @@ export function ListingDetail({ id }: { id: string }) {
   const currentRating = actionContextReady ? rating : 5;
   const currentReviewComment = actionContextReady ? reviewComment : "";
   const currentReviewStatus = actionContextReady ? reviewStatus : "";
+  const currentOwnerActionBusy = actionContextReady ? ownerActionBusy : false;
+  const currentOwnerActionStatus = actionContextReady ? ownerActionStatus : "";
+  const currentOwnerRemoval =
+    ownerRemovalResult?.resourceId === id ? ownerRemovalResult : null;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -140,6 +159,7 @@ export function ListingDetail({ id }: { id: string }) {
     favoriteMutationRequest.current += 1;
     reportRequest.current += 1;
     reviewRequest.current += 1;
+    ownerActionRequest.current += 1;
     setBusy(false);
     setFavoriteBusy(false);
     setMessageStatus("");
@@ -148,6 +168,9 @@ export function ListingDetail({ id }: { id: string }) {
     setRating(5);
     setReviewComment("");
     setReviewStatus("");
+    setOwnerActionBusy(false);
+    setOwnerActionStatus("");
+    setOwnerRemovalResult(null);
     setActionStateContext(contextKey);
   }, [contextKey]);
 
@@ -456,6 +479,136 @@ export function ListingDetail({ id }: { id: string }) {
     }
   }
 
+  async function setOwnerListingStatus(status: "active" | "sold") {
+    if (
+      !listing ||
+      !userId ||
+      listing.sellerId !== userId ||
+      !actionContextReady ||
+      currentOwnerActionBusy
+    )
+      return;
+    if (status === "sold" && !window.confirm(AZ_COPY.listingDetail.soldConfirm))
+      return;
+
+    const currentListing = listing;
+    const requestContext = contextKey;
+    const requestId = ++ownerActionRequest.current;
+    setOwnerActionBusy(true);
+    setOwnerActionStatus("");
+    try {
+      const response = await authFetch(`/api/listings/${currentListing.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const body = await readResponseJson(response);
+      if (!response.ok)
+        throw new LocalizedClientError(
+          localizeApiError(
+            getResponseErrorCode(body),
+            AZ_COPY.listingDetail.lifecycleFailed,
+          ),
+        );
+      const mutation = parseListingMutationResponse(body, {
+        listingId: currentListing.id,
+        ownerId: userId,
+        status,
+      });
+      if (!mutation) throw new Error();
+      if (
+        contextKeyRef.current !== requestContext ||
+        ownerActionRequest.current !== requestId
+      )
+        return;
+      setListingResult((current) =>
+        current?.resourceId === currentListing.id
+          ? {
+              resourceId: current.resourceId,
+              data: {
+                ...mutation.listing,
+                reviews: current.data.reviews,
+              },
+            }
+          : current,
+      );
+      setOwnerActionStatus(
+        status === "sold"
+          ? AZ_COPY.listingDetail.soldComplete
+          : AZ_COPY.listingDetail.relistComplete,
+      );
+    } catch (reason) {
+      if (
+        contextKeyRef.current === requestContext &&
+        ownerActionRequest.current === requestId
+      )
+        setOwnerActionStatus(
+          actionFailure(reason, AZ_COPY.listingDetail.lifecycleFailed),
+        );
+    } finally {
+      if (
+        contextKeyRef.current === requestContext &&
+        ownerActionRequest.current === requestId
+      )
+        setOwnerActionBusy(false);
+    }
+  }
+
+  async function removeOwnerListing() {
+    if (
+      !listing ||
+      !userId ||
+      listing.sellerId !== userId ||
+      !actionContextReady ||
+      currentOwnerActionBusy ||
+      !window.confirm(AZ_COPY.listingDetail.deleteConfirm)
+    )
+      return;
+
+    const currentListing = listing;
+    const requestContext = contextKey;
+    const requestId = ++ownerActionRequest.current;
+    setOwnerActionBusy(true);
+    setOwnerActionStatus("");
+    try {
+      const response = await authFetch(`/api/listings/${currentListing.id}`, {
+        method: "DELETE",
+      });
+      const body = await readResponseJson(response);
+      if (!response.ok)
+        throw new LocalizedClientError(
+          localizeApiError(
+            getResponseErrorCode(body),
+            AZ_COPY.listingDetail.deleteFailed,
+          ),
+        );
+      const deletion = parseListingDeletionResponse(body, currentListing.id);
+      if (!deletion?.retainedForIntegrity) throw new Error();
+      if (
+        contextKeyRef.current === requestContext &&
+        ownerActionRequest.current === requestId
+      )
+        setOwnerRemovalResult({
+          resourceId: currentListing.id,
+          message: AZ_COPY.listingDetail.deleteComplete,
+        });
+    } catch (reason) {
+      if (
+        contextKeyRef.current === requestContext &&
+        ownerActionRequest.current === requestId
+      )
+        setOwnerActionStatus(
+          actionFailure(reason, AZ_COPY.listingDetail.deleteFailed),
+        );
+    } finally {
+      if (
+        contextKeyRef.current === requestContext &&
+        ownerActionRequest.current === requestId
+      )
+        setOwnerActionBusy(false);
+    }
+  }
+
   if (error)
     return (
       <div className="container-shell py-16">
@@ -464,6 +617,18 @@ export function ListingDetail({ id }: { id: string }) {
           body={error}
           action={AZ_COPY.listingDetail.browseBooks}
           href="/listings"
+          headingLevel="h1"
+        />
+      </div>
+    );
+  if (currentOwnerRemoval)
+    return (
+      <div className="container-shell py-16">
+        <EmptyState
+          title={AZ_COPY.listingDetail.removedTitle}
+          body={currentOwnerRemoval.message}
+          action={AZ_COPY.listingDetail.backToProfile}
+          href="/profile"
           headingLevel="h1"
         />
       </div>
@@ -670,12 +835,69 @@ export function ListingDetail({ id }: { id: string }) {
             </div>
           </div>
           {ownListing ? (
-            <Link
-              href={`/listings/${listing.id}/edit`}
-              className="btn-secondary mt-5 w-full"
+            <div
+              className="mt-5 rounded-xl border border-line bg-[#fffaf0]/70 p-4"
+              aria-busy={currentOwnerActionBusy}
             >
-              {AZ_COPY.listingDetail.manage}
-            </Link>
+              {listing.status === "sold" && (
+                <p className="pill mb-3 w-fit" role="status">
+                  {AZ_COPY.listingDetail.soldBadge}
+                </p>
+              )}
+              <div className="grid gap-3 sm:grid-cols-2">
+                {listing.status === "active" && (
+                  <Link
+                    href={`/listings/${listing.id}/edit`}
+                    className="btn-secondary w-full"
+                  >
+                    <Edit3 size={14} /> {AZ_COPY.listingDetail.editListing}
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  disabled={currentOwnerActionBusy}
+                  aria-disabled={currentOwnerActionBusy}
+                  onClick={() =>
+                    void setOwnerListingStatus(
+                      listing.status === "sold" ? "active" : "sold",
+                    )
+                  }
+                  className={
+                    listing.status === "active"
+                      ? "btn-primary w-full"
+                      : "btn-secondary w-full"
+                  }
+                >
+                  {listing.status === "sold" ? (
+                    <RefreshCw size={14} />
+                  ) : (
+                    <Check size={14} />
+                  )}
+                  {listing.status === "sold"
+                    ? AZ_COPY.listingDetail.relist
+                    : AZ_COPY.listingDetail.markSold}
+                </button>
+                <button
+                  type="button"
+                  disabled={currentOwnerActionBusy}
+                  aria-disabled={currentOwnerActionBusy}
+                  onClick={() => void removeOwnerListing()}
+                  className="btn-secondary w-full !border-red-700 !bg-red-50 !text-red-700 sm:col-span-2"
+                >
+                  <Trash2 size={14} /> {AZ_COPY.listingDetail.deleteListing}
+                </button>
+              </div>
+              {currentOwnerActionStatus && (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className="mt-3 text-xs text-muted"
+                >
+                  {currentOwnerActionStatus}
+                </p>
+              )}
+            </div>
           ) : listing.status === "active" ? (
             <button
               type="button"

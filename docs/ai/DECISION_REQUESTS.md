@@ -1,41 +1,36 @@
 # Owner decisions and external actions
 
-Updated: 1 August 2026
+Updated: 7 August 2026
 
 Only facts or authority that cannot be derived safely from the repository remain here. Exchange matching, wanted titles, reader shelves, and social reading are intentionally post-launch and require no launch decision.
 
 ## DR-001 — Complete real development authorization verification
 
-Status: **RESOLVED** on 28 July 2026.
+Status: **RESOLVED and extended**; original 10/10 proof passed on 28 July 2026, and the migration-23 legal/lifecycle matrix passed 14/14 on 7 August 2026.
 
 The ignored local environment targets the dedicated development project. The public key was verified as `anon`, the private test key as `service_role`, and neither value nor project identifier was printed or committed. The guarded matrix refuses any other project, creates temporary actors, exercises anonymous/owner/unrelated/banned/moderator/admin/stale-account behavior, and removes its fixtures.
 
 Completion evidence:
 
 - `npm.cmd run test:env -- --authorization`: pass, exact project and both required roles present.
-- `npm.cmd run test:authorization`: 10/10 pass against the real development backend.
+- `npm.cmd run test:authorization`: 14/14 pass against the real development backend after migration 23, including legal-acceptance immutability, consent withdrawal, sold/relist/retained removal, and history/image integrity.
 - Temporary Auth/application/Storage-related fixtures cleaned by the guarded suite.
 - `.env.test.local` is ignored by Git; no production target or production data was used.
 - This is real backend evidence, not a mocked UI substitute.
 
 ## DR-002 — Insert legal identity and contact facts
 
-Status: public-launch blocking; explicitly deferred for the clearly labeled friends-only private beta.
+Status: **PARTIALLY RESOLVED on 7 August 2026; qualified legal and external compliance review remains launch-blocking.**
 
-Provide and have qualified Azerbaijani counsel approve every value below. Do not publish placeholders:
+Owner-approved repository facts:
 
-- `[HÜQUQİ OPERATORUN ADI]`
-- `[HÜQUQİ ÜNVAN]`
-- `[YURİSDİKSİYA]`
-- `[DƏSTƏK E-POÇTU]`
-- `[MƏXFİLİK ƏLAQƏSİ]`
-- `[QÜVVƏYƏ MİNMƏ TARİXİ]`
-- `[MİNİMUM YAŞ VƏ VALİDEYN RAZILIĞI QAYDASI]`
-- `[ETİRAZ MÜDDƏTİ VƏ CAVAB HƏDƏFİ]`
-- data-retention periods and cross-border processing basis;
-- any legally required registration, tax, consumer, and regulator disclosures.
+- operator full name: `Suliddin Musa Əsədzadə`;
+- legal/privacy contact: `Suliddin677@gmail.com`;
+- current legal version: `2026-08-07`, effective/updated 7 August 2026;
+- minimum age: 18;
+- governing law: Azerbaijan.
 
-Update `/terms`, `/privacy`, `/marketplace-rules`, and `/moderation-appeals`; search the repository for `[` placeholders; obtain written approval; then record reviewer/date/version in `docs/ai/QA_EVIDENCE.md`.
+The public pages and footer use those centralized values and contain no legacy identity/date/age/jurisdiction placeholders. A physical/service address was not supplied and is not invented in the approved copy. Qualified Azerbaijani counsel must still confirm whether another address/disclosure is legally required, approve the texts and response/appeal wording, confirm the retention and cross-border basis, and resolve state-registration, licensed-activity, tax, consumer, and regulator questions. Record reviewer, date, version, and any required correction in `docs/ai/QA_EVIDENCE.md` before public launch.
 
 ## DR-003 — Production Auth security choices
 
@@ -51,6 +46,8 @@ Supabase leaked-password protection is a paid-plan option. Choose one:
 No homemade leaked-password database is permitted. Optional CAPTCHA should be enabled only for high-risk anonymous Auth flows after provider, privacy basis, keys, and accessibility fallback are approved; the repository does not claim CAPTCHA is enabled.
 
 Observed 30 July 2026 on the clean beta project: the canonical HTTPS Site URL, three exact required redirects, email confirmation, secure password change, 12-character letters/digits policy, refresh-token rotation, and configured Auth rate limits were pushed through the pinned CLI. No localhost redirect remains on beta. Custom SMTP/Send Email Hook is not configured and is handled by DR-009. Before public launch, record the leaked-password decision and enforce MFA for every administrator.
+
+The separate paused legacy project was observed on 28 July with leaked-password protection disabled; its other hosted Auth settings were not treated as current clean-beta evidence and it remains untouched.
 
 ## DR-004 — Production operations ownership
 
@@ -89,7 +86,7 @@ Follow `docs/production-migration-runbook.md` and the sanitized evidence in `doc
 
 ## DR-007 — Controlled production release approval
 
-Status: **RESOLVED for deployment on 30 July 2026; invitations remain blocked by DR-009.** Application/schema compatibility is resolved through the separate clean beta project. DR-002 and the backup portion of DR-006 are accepted private-beta deferrals, not standalone beta blockers. DR-005 services remain optional.
+Status: **RESOLVED for the 30 July 2026 release only; invitations remain blocked by DR-009.** Application/schema compatibility for that release was resolved through the separate clean beta project. PR #7 remains undeployed, and its migration 23 is verified only on development; promoting this newer tree requires a separate clean-beta/production migration and deployment approval. DR-002 and the backup portion of DR-006 are accepted private-beta deferrals, not standalone beta blockers. DR-005 services remain optional.
 
 Vercel Production now has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, non-readable sensitive `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`, and `BOOKSWAP_PRIVATE_BETA` by name/scope. They target the clean beta project and are distinct from development and legacy. Never expose or attempt to read the sensitive value. The repository-compatible active legacy `anon`/`service_role` key formats are used because the installed server client path returned 403 HTML for the modern secret format during preflight.
 
@@ -101,7 +98,7 @@ Status: **RESOLVED by owner on 30 July 2026.**
 
 - Defer the encrypted production database/Auth/Storage backup and isolated restore rehearsal. Do not request a database password or Personal Access Token, enable temporary database access, reset a password, retry a dump, restore, or start an encryption-passphrase flow.
 - Accept the missing recovery proof as a temporary friends-only beta risk. Complete a verified encrypted backup before broad public launch, before a destructive or materially risky production migration, or after meaningful real-user data accumulates.
-- Final legal operator/contact/age/retention/counsel facts may remain a public-launch follow-up while the beta is visibly identified, invitation-only, and warns testers not to enter sensitive personal or payment data.
+- The legal operator/contact and 18+ policy are now supplied in the repository. Qualified counsel, provider-location, retention enforcement, and any required registration/address disclosures remain public-launch follow-up while the beta is visibly identified, invitation-only, and warns testers not to enter sensitive personal or payment data.
 - This decision did not authorize migrating the paused legacy project. The later clean-beta decision supplies an empty, separate 22/22 target instead; legacy data/history remain untouched and still require DR-006 before any future migration.
 
 ## DR-009 — Configure friend-facing Auth email

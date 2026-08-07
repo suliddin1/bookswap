@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { ArrowRight, Check, Mail, Wand2 } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase";
 import { AZ_COPY, localizeAuthError } from "@/lib/i18n";
+import { LEGAL_VERSION } from "@/lib/legal";
 import type { CSSProperties, FormEvent, RefObject } from "react";
 
 type Mode = "login" | "signup" | "reset" | "sent";
@@ -13,11 +15,18 @@ export function AuthPanel() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [error, setError] = useState("");
+  const [validationFocus, setValidationFocus] = useState<
+    "terms" | "privacy" | null
+  >(null);
   const [busy, setBusy] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
+  const termsRef = useRef<HTMLInputElement>(null);
+  const privacyRef = useRef<HTMLInputElement>(null);
   const previousModeRef = useRef(mode);
 
   useEffect(() => {
@@ -28,28 +37,64 @@ export function AuthPanel() {
   }, [mode]);
 
   useEffect(() => {
-    if (error) errorRef.current?.focus();
-  }, [error]);
+    if (!error) return;
+    if (validationFocus === "terms") termsRef.current?.focus();
+    else if (validationFocus === "privacy") privacyRef.current?.focus();
+    else errorRef.current?.focus();
+  }, [error, validationFocus]);
 
   function changeMode(nextMode: Mode) {
     setError("");
+    setValidationFocus(null);
+    setTermsAccepted(false);
+    setPrivacyAccepted(false);
     setMode(nextMode);
   }
 
-  async function submit(event: FormEvent) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (mode === "signup" && !termsAccepted) {
+      setValidationFocus("terms");
+      setError(
+        "Qeydiyyat üçün 18+ yaş təsdiqini, İstifadə Şərtlərini və Kitab Bazarı və İcma Qaydalarını qəbul et.",
+      );
+      return;
+    }
+    if (mode === "signup" && !privacyAccepted) {
+      setValidationFocus("privacy");
+      setError(
+        "Qeydiyyat üçün Məxfilik Siyasətini oxu və fərdi məlumatların emalına razılıq ver.",
+      );
+      return;
+    }
+    if (!event.currentTarget.checkValidity()) {
+      event.currentTarget.reportValidity();
+      return;
+    }
     const supabase = getSupabaseClient();
     if (!supabase) return setError(AZ_COPY.auth.configurationUnavailable);
+    setValidationFocus(null);
     setBusy(true);
     setError("");
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { name } },
+        const response = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            termsVersion: LEGAL_VERSION,
+            privacyVersion: LEGAL_VERSION,
+            marketplaceRulesVersion: LEGAL_VERSION,
+            age18PlusConfirmed: true,
+            personalDataProcessingConsent: true,
+            crossBorderTransferDisclosedAndConsented: true,
+          }),
         });
-        if (error) throw error;
+        const body = await response.json();
+        if (!response.ok) throw body.error ?? body;
         setMode("sent");
       } else if (mode === "reset") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -73,6 +118,7 @@ export function AuthPanel() {
   }
 
   async function magicLink() {
+    setValidationFocus(null);
     if (!emailRef.current?.reportValidity()) {
       emailRef.current?.focus();
       return;
@@ -174,7 +220,7 @@ export function AuthPanel() {
         aria-labelledby="auth-heading"
         className="catalog-drawer relative z-10 w-full min-w-0 max-w-md rounded-sm p-5 shadow-[0_30px_70px_rgba(0,0,0,.32)] sm:p-6 md:p-9"
       >
-        <form onSubmit={submit} aria-busy={busy}>
+        <form onSubmit={submit} noValidate aria-busy={busy}>
           <span className="bookmark-badge">
             {mode === "signup"
               ? AZ_COPY.auth.signupBadge
@@ -237,6 +283,103 @@ export function AuthPanel() {
                 hint={mode === "signup" ? AZ_COPY.auth.passwordHint : undefined}
                 hintId="auth-password-hint"
               />
+            )}
+            {mode === "signup" && (
+              <fieldset className="space-y-4 border-t border-[#ded4c1] pt-4">
+                <legend className="text-xs font-extrabold uppercase tracking-[.13em] text-muted">
+                  Məcburi hüquqi təsdiqlər
+                </legend>
+                <div className="flex min-h-11 items-start gap-3 text-xs leading-5 text-gray-700">
+                  <input
+                    id="terms-acceptance"
+                    ref={termsRef}
+                    type="checkbox"
+                    name="termsAccepted"
+                    required
+                    aria-label="18 yaşım tamam olub və İstifadə Şərtləri ilə Kitab Bazarı və İcma Qaydalarını oxuyub qəbul edirəm."
+                    checked={termsAccepted}
+                    onChange={(event) => {
+                      setTermsAccepted(event.target.checked);
+                      if (event.target.checked) {
+                        setValidationFocus(null);
+                        setError("");
+                      }
+                    }}
+                    className="mt-1 h-5 w-5 shrink-0 accent-[#a44728] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
+                  />
+                  <span>
+                    <label
+                      htmlFor="terms-acceptance"
+                      className="cursor-pointer"
+                    >
+                      18 yaşım tamam olub və
+                    </label>
+                    <Link className="text-orange underline" href="/terms">
+                      {" "}
+                      İstifadə Şərtləri
+                    </Link>{" "}
+                    <label
+                      htmlFor="terms-acceptance"
+                      className="cursor-pointer"
+                    >
+                      ilə
+                    </label>
+                    <Link
+                      className="text-orange underline"
+                      href="/marketplace-rules"
+                    >
+                      {" "}
+                      Kitab Bazarı və İcma Qaydalarını
+                    </Link>{" "}
+                    <label
+                      htmlFor="terms-acceptance"
+                      className="cursor-pointer"
+                    >
+                      oxuyub qəbul edirəm.
+                    </label>
+                  </span>
+                </div>
+                <div className="flex min-h-11 items-start gap-3 text-xs leading-5 text-gray-700">
+                  <input
+                    id="privacy-acceptance"
+                    ref={privacyRef}
+                    type="checkbox"
+                    name="privacyAccepted"
+                    required
+                    aria-label="Məxfilik və Fərdi Məlumatların Emalı Siyasətini oxudum və BookSwap xidmətinin göstərilməsi üçün orada təsvir olunan fərdi məlumatlarımın toplanılmasına və işlənilməsinə, zəruri xidmət təminatçılarına verilməsinə və tətbiq olunan hallarda transsərhəd ötürülməsinə razılıq verirəm."
+                    checked={privacyAccepted}
+                    onChange={(event) => {
+                      setPrivacyAccepted(event.target.checked);
+                      if (event.target.checked) {
+                        setValidationFocus(null);
+                        setError("");
+                      }
+                    }}
+                    className="mt-1 h-5 w-5 shrink-0 accent-[#a44728] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
+                  />
+                  <span>
+                    <Link className="text-orange underline" href="/privacy">
+                      Məxfilik və Fərdi Məlumatların Emalı Siyasətini
+                    </Link>{" "}
+                    <label
+                      htmlFor="privacy-acceptance"
+                      className="cursor-pointer"
+                    >
+                      oxudum və BookSwap xidmətinin göstərilməsi üçün orada
+                      təsvir olunan fərdi məlumatlarımın toplanılmasına və
+                      işlənilməsinə, zəruri xidmət təminatçılarına verilməsinə
+                      və tətbiq olunan hallarda transsərhəd ötürülməsinə razılıq
+                      verirəm.
+                    </label>
+                  </span>
+                </div>
+                <p className="text-xs leading-5 text-muted">
+                  Razılığınızı sonradan İstifadəçi Hüquqları bölməsindən geri
+                  götürə bilərsiniz. Xidmət üçün zəruri məlumatların emalına
+                  razılığın geri götürülməsi hesabın bağlanmasını tələb edə
+                  bilər.
+                </p>
+              </fieldset>
             )}
             {error && (
               <p

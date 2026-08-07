@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { WebVitalsReporter } from "@/components/web-vitals-reporter";
 import { AZ_COPY, DOCUMENT_LANGUAGE } from "@/lib/i18n";
+import { getLegalIdentity } from "@/lib/legal";
 import { isPrivateBeta } from "@/lib/private-beta";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -59,6 +60,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const privateBeta = isPrivateBeta();
+  getLegalIdentity();
 
   return (
     <html lang={DOCUMENT_LANGUAGE} dir="ltr" suppressHydrationWarning>
