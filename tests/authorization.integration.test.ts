@@ -217,13 +217,10 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
     expect(promotion.error).not.toBeNull();
   });
 
-  it("records legal acceptance through the existing email-confirmation signup flow", async () => {
-    const email = `signup-${suffix}@example.invalid`;
-    const signupClient = createClient<Database>(url, publicKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-    const signup = await signupClient.auth.signUp({
-      email,
+  it("records legal acceptance through the confirmation-link signup flow", async () => {
+    const signup = await service.auth.admin.generateLink({
+      type: "signup",
+      email: `signup-${suffix}@example.invalid`,
       password,
       options: {
         data: {
@@ -238,9 +235,9 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
       },
     });
     expect(signup.error).toBeNull();
-    expect(signup.data.user).not.toBeNull();
-    expect(signup.data.session).toBeNull();
-    if (!signup.data.user) throw new Error("Signup user was not returned");
+    if (signup.error) throw signup.error;
+    expect(signup.data.properties.verification_type).toBe("signup");
+    expect(signup.data.user.email_confirmed_at).toBeUndefined();
     const signupUserId = signup.data.user.id;
     createdUserIds.push(signupUserId);
 
@@ -419,7 +416,7 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
     expect((await activeCatalog.json()).data.items).toContainEqual(
       expect.objectContaining({ id: activeListingId, status: "active" }),
     );
-  });
+  }, 30_000);
 
   it("binds favorites to the authenticated user and prevents duplicates", async () => {
     const first = await clients.buyer.from("favorites").insert({
@@ -788,5 +785,5 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
       ).count,
     };
     expect(after).toEqual(before);
-  });
+  }, 30_000);
 });

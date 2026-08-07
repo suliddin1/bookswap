@@ -4,7 +4,7 @@ Updated: 7 August 2026
 
 ## Current verdict
 
-**Not public-launch ready.** The owner supplied the exact public operator identity and legal/privacy contact on 7 August 2026, and the safe repository-side legal copy, separate signup consent, centralized version, footer disclosure, placeholder-aware fail-closed public configuration, and additive auditable-consent migration are implemented. The listing-owner sold/relist flow now has explicit Azerbaijani confirmation and owner-only controls on both listing detail and dashboard surfaces; owner deletion uses retained non-public removal instead of the schema's destructive cascades. Qualified legal review, external regulatory/provider-location determinations, retention operations, non-production migration application/type regeneration/advisors/two-user proof, and the existing production/deployment gates remain unresolved. A development migration attempt was rejected before execution by the environment safety reviewer, so neither the development schema nor any production/remote system was mutated by this follow-up.
+**Not public-launch ready.** The owner supplied the exact public operator identity and legal/privacy contact on 7 August 2026, and the safe repository-side legal copy, separate signup consent, centralized version, footer disclosure, placeholder-aware fail-closed public configuration, and auditable-consent migration are implemented. Migration 23 is now applied and verified only on the dedicated development project: generated schema types, RLS/ACL/trigger/constraint structure, advisors, confirmation-link signup, consent withdrawal, multi-user authorization, and the retained listing lifecycle pass. Qualified legal review, external regulatory/provider-location determinations, retention operations, and the existing production/deployment gates remain unresolved. Clean beta and production systems were not mutated.
 
 ## Authoritative workspace and Git baseline
 
@@ -31,7 +31,7 @@ Automated exchange matching, wanted-title matching, reader shelves, social readi
 - Owner-only `Satıldı`, `Yenidən satışa çıxar`, and `Elanı sil` actions with explicit Azerbaijani confirmations, idempotent mutation guards, sold catalog/chat behavior, and retained removal through the existing hidden `locked` state. Owner removal preserves the listing row, images, chat/messages, reviews, reports, and moderation evidence instead of invoking cascade delete or Storage cleanup.
 
 - Correct development Supabase public identity with fail-fast project guard and an ignored local test credential boundary; no secret is tracked or documented.
-- Two additive migrations (22 total) for validation constraints, privacy uniqueness, report/review/chat invariants, Azerbaijani search normalization, service-only Storage mutations, durable atomic rate limiting, Azerbaijani moderation notifications, and explicit private-table ACL posture.
+- Twenty-three immutable migrations cover validation constraints, privacy uniqueness, report/review/chat invariants, Azerbaijani search normalization, service-only Storage mutations, durable atomic rate limiting, Azerbaijani moderation notifications, explicit private-table ACL posture, and the legal-acceptance audit/consent-withdrawal contract.
 - Postgres-backed HMAC-keyed limiter across Auth API, listing/upload/chat/favorite/report/review/notification/profile/privacy/admin/moderation actions; stable 429/503 and retry behavior.
 - Strict server ownership/state checks, bounded chat history/input, stale-account rejection, duplicate privacy handling, safe account-mutation response boundaries, and correlation IDs.
 - Structured provider-neutral logging without raw provider errors, full private messages, authorization material, or unnecessary personal data.
@@ -47,13 +47,13 @@ Automated exchange matching, wanted-title matching, reader shelves, social readi
 - The guarded authorization environment is a dedicated, healthy non-production project.
 - Public local URL/key: correct and guarded; ignored `.env.local` is not committed
 - Service-role test key: available only in ignored `.env.test.local`; verified as `service_role` for the intended project and not committed
-- Remote migrations: 22, including both 28 July hardening migrations; migration 23 remains unapplied after a tool-level safety rejection before execution
-- Data: temporary authorization fixtures were cleaned; no production data was used
-- Security Advisor on the current 22-migration development schema: zero findings; post-migration advice is pending because migration 23 was not applied
+- Remote migrations: exactly 23; the final entry is `add_legal_acceptance_audit`
+- Data: Auth/users/listings/chat/messages/reviews/reports/privacy/notification/legal-acceptance fixtures, four orphaned test moderation rows, and 24 test rate-limit rows were removed. Four test-only administrator audit rows remain because the immutable audit trigger correctly rejects deletion; it was not bypassed.
+- Security Advisor after migration 23: zero findings
 - Performance Advisor on the current development schema: 11 informational unused-index findings and no warning/error finding
 - Structural SQL: public tables without RLS = 0; launch constraints/indexes present; browser Storage mutation policies = 0; anon/authenticated rate-RPC execute = false; service-role execute = true; fixed search path present
 - Real limiter behavior: allow/allow/deny at threshold 2; retry value valid; fixture removed
-- Fresh remote-generated types confirm the current development schema does not yet contain `legal_acceptances`; repository types intentionally remain ahead with the prepared migration-23 contract, so post-migration parity is pending
+- Fresh remote-generated types include the exact eight-column `legal_acceptances` row shape and match the repository's generated-shaped row contract. Repository `Insert`/`Update` remain intentionally narrowed to `never` to mirror the verified no-mutation ACL rather than weakening the application type boundary.
 
 Local `supabase db reset` remains unexecuted on this workstation because Docker/Podman and `psql` are absent. `supabase/config.toml`, corrected seed ordering, and `supabase/tests/launch_readiness.sql` are prepared. The actual migrations were nevertheless executed successfully on the authorized empty development backend.
 
@@ -81,7 +81,7 @@ Local `supabase db reset` remains unexecuted on this workstation because Docker/
 - Production build: pass, 39/39 static pages generated
 - Bundle budgets: 5/5 pass
 - Chromium browser/E2E: 32/32 pass, including owner listing-detail/dashboard lifecycle confirmation, cancellation, relist, retained removal, double-submit protection, and non-owner action absence
-- Real multi-actor backend authorization: prior 10/10 pass against the guarded development project; the expanded signup/consent/RLS/sold/relist/retained-history suite is prepared but was not run because migration 23 remains unapplied after the safety reviewer blocked execution
+- Real multi-actor backend authorization: 14/14 pass against the guarded development project, covering confirmation-link signup/trigger/audit, incomplete-consent rejection, own/cross-user RLS, consent withdrawal, sold/catalog/chat/relist behavior, retained removal, and history/image-cleanup invariants
 
 ## Remaining external requirements
 

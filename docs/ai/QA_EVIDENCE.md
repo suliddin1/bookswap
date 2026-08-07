@@ -876,3 +876,45 @@ git diff --check                         PASS
 ```
 
 The first Chromium run passed 31/32 after a concurrent navigation stayed on the home page; its captured page showed the corrected legal footer and no product regression. No assertion was changed. The immediate unchanged full rerun passed 32/32.
+
+## 2026-08-07 — Authorized development migration and full actor verification
+
+**Result: DEVELOPMENT PASS; production untouched.** After the owner gave a new risk-informed approval, the separately named healthy development project and exact 22-migration precondition were reconfirmed. Migration `add_legal_acceptance_audit` applied once successfully; remote history is now exactly 23 entries. No clean-beta or production project was queried or mutated.
+
+### Schema, types, and advisors
+
+- `public.legal_acceptances` exists with RLS enabled, zero public-table RLS gaps, exact current-version/affirmative constraints, database `clock_timestamp()` default, and the intended composite primary key. The privacy request check includes `consent_withdrawal` without removing existing types.
+- Authenticated users have SELECT only; anon has no access; service role has SELECT/DELETE only. The only RLS policy is authenticated own-row SELECT. The private `SECURITY DEFINER` trigger function has an empty fixed `search_path`, no anon/authenticated/service execute privilege, and its `auth.users` trigger is enabled.
+- Fresh generated types contain the exact eight-column legal-acceptance row shape. The repository row contract matches it; `Insert` and `Update` intentionally remain `never` because verified ACLs make normal application mutation impossible.
+- Post-migration Security Advisor: zero findings. Performance Advisor: 11 informational unused-index notices and no warning/error. No index was removed without representative workload evidence.
+
+### Real Auth/RLS/lifecycle behavior
+
+- The final guarded suite passed 14/14. A no-email `admin.generateLink(type: "signup")` confirmation flow created an unconfirmed Auth user, fired the same `auth.users` trigger, and recorded database identity/time, all three current versions, age confirmation, processing consent, and cross-border disclosure/consent. Incomplete consent was rejected transactionally.
+- Owner acceptance read passed; unrelated read returned no row; owner insert/update/delete and unrelated delete were denied; the stored acceptance remained unchanged. Consent withdrawal succeeded through the existing `privacy_requests` table.
+- Owner sold passed; unrelated sold failed; sold left active catalog/search and blocked new rooms; relist restored active catalog visibility. Owner retained removal passed; unrelated removal failed; a repeated request was safe.
+- Chat room/message, eligible review, report, moderation-decision, image array, and image-cleanup-job counts were unchanged across owner removal. The retained listing became hidden `locked`, left public/profile surfaces, and preserved relational history.
+
+### Fixture and delivery boundary
+
+- Auth/public users, legal acceptances, listings, chat/messages, reviews, reports, privacy requests, notifications, four orphan test moderation rows, and 24 test rate-limit rows were removed; final counts for those fixture markers are zero.
+- Four administrator audit entries from this verification remain intentionally: the immutable audit trigger rejected their deletion and rolled back the attempted combined cleanup statement. The trigger was not disabled or bypassed because doing so would weaken the exact audit-integrity invariant under test. These rows contain test-only actor/target IDs and the fixed reason `Authorization integration test resolution.`
+- Direct public signup first demonstrated the hosted default-email rate limit (`429 over_email_send_rate_limit`). The final trigger/confirmation proof therefore used Supabase's official signup-link generation flow, which creates an unconfirmed user without sending another email. Actual outbound confirmation delivery remains an operational email-provider item, not a claimed pass.
+
+### Final gates
+
+```text
+npm.cmd run format:check                 PASS — all matched files
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 69/69 tests
+npm.cmd run test:database:static         PASS — 23 migrations
+npm.cmd run test:authorization           PASS — development actor/RLS 14/14
+npm.cmd run test:dependencies            PASS — 7 guarded packages
+npm.cmd run test:secrets                 PASS — 193 repository files
+npm.cmd run test:env                     PASS — guarded development identity
+npm.cmd run build                        PASS — Next 15.5.21, 39/39 pages
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 32/32
+git diff --check                         PASS
+```

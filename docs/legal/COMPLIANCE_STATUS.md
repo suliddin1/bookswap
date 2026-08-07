@@ -12,6 +12,7 @@ This repository document is an engineering compliance checklist, not a legal opi
 - The footer renders the operator, legal/privacy contact, platform-role limitation, and working links for Terms, Privacy, Marketplace Rules, Safety, User Rights, and Moderation Appeals.
 - Signup has two separate mandatory controls. Both start unchecked. The first records the 18+ and Terms/Marketplace acceptance; the second records personal-data processing, necessary-provider disclosure, and applicable cross-border consent.
 - An additive migration creates `public.legal_acceptances`. The Auth trigger rejects new users missing the current affirmative acceptance metadata, derives the subject from `auth.users.id`, hard-codes the current document versions, and uses a database-authoritative timestamp. Normal users have no insert/update/delete grant and can select only their own row through RLS. Deletion is limited to the server-only service role for verified retention/account-cleanup work; no application route exposes it.
+- The migration is applied only to the dedicated development project. Remote history is exactly 23 migrations; generated row types match; Security Advisor has zero findings; explicit grants/RLS, fixed-search-path trigger, confirmation-link signup, incomplete-consent rejection, consent withdrawal, and the 14-case multi-user authorization/lifecycle suite pass.
 - The existing privacy-request flow now includes explicit consent withdrawal alongside access/information, correction, export, deletion/account closure, objection/restriction, and moderation appeal.
 - Tests cover the centralized/fail-closed configuration, current signup schema, unchecked controls, blocked partial signup, trusted payload, legal routes, footer links, migration ACL/RLS contract, privacy requests, and existing private-data boundaries.
 
@@ -33,7 +34,6 @@ This repository document is an engineering compliance checklist, not a legal opi
 5. Transactional Auth email delivery must be finalized and tested through signup confirmation and recovery if it remains unresolved.
 6. Tax, VÖEN, business-registration, consumer, and regulated-payment analysis must be revisited before any commission, paid promotion, subscription, advertising, professional-seller fee, payment processing, escrow, shipping, or buyer-protection feature goes live.
 7. Retention automation must be reconciled with actual logs, moderation/audit operations, account deletion, provider backups, and recovery behavior before broad public data accumulation.
-8. The new migration must be applied only to an authorized non-production project first, types regenerated from that resulting schema, Supabase security/performance advisors reviewed, and two-user Auth/RLS behavior exercised. No remote application was authorized in this change.
 
 ## Retention enforcement boundary
 
