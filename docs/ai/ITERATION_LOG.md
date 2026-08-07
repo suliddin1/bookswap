@@ -826,3 +826,9 @@ Next slice: resolve P0-001 and P0-002 through an additive migration/API contract
 - Validation: format pass; lint zero warnings; strict TypeScript zero diagnostics; unit/security 69/69; static migrations 23; real development authorization 14/14; dependency baseline 7; secret scan 193; environment guard pass; build 39/39; performance budgets 5/5; Chromium 32/32; diff check pass.
 - Safety boundary: only the named development schema and disposable development fixtures were changed. Clean beta/production Supabase, production data/Auth/Storage/environment, Vercel, DNS, production migration history, deployment, and remote Git were untouched.
 - Ownership released after evidence, final diff/status review, and local checkpoint commit. No push or deployment was performed.
+
+### 2026-08-07 — PR #7 semantic merge-conflict resolution (started)
+
+- Goal / acceptance IDs: merge the latest `origin/main` into `autonomous/bookswap-product`, preserve independently verified production/main work and the development-only legal-consent/listing-owner lifecycle work, rerun full gates, and push only the resolved feature branch while PR #7 remains draft.
+- Ownership: root exclusively owns every conflict surfaced by the merge, including any database migration/type, security/API, shared-domain, shell/design, dependency/configuration, and durable evidence contract until the resolved tree is validated and pushed. No other agent is active.
+- Safety boundary: no migration application, database/Auth/Storage mutation, Supabase/Vercel/SMTP/DNS change, production/clean-beta access, deployment, force-push, rebase, or merge into `main` is authorized.
