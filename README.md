@@ -58,6 +58,11 @@ fallback values. Explicitly blank values fail closed outside
 `RESEND_API_KEY` is optional and only relevant if the dormant transactional
 email function is deliberately configured and approved.
 
+Set `BOOKSWAP_PRIVATE_BETA=true` only for an explicitly approved friends-only
+deployment. It keeps direct-link access available, displays a beta-data warning,
+and asks crawlers not to index or archive the site. It is not an authentication
+or access-control mechanism.
+
 `WEB_VITALS_ENABLED=true` must be set at build and runtime only for an
 authorized production environment. It enables privacy-minimized LCP, CLS, and
 INP events for the public marketplace route groups; it does not enable product
@@ -103,4 +108,4 @@ Real development authorization tests additionally require `.env.test.local` with
 - Marketplace mutations use strict Zod schemas and a concurrency-safe Postgres-backed rate limiter shared across server instances. Protected actions fail closed if the durable store is unavailable; optional Web Vitals telemetry is dropped.
 - The database remains the final authorization layer through RLS and column-level privileges.
 
-See [docs/security-model.md](docs/security-model.md), [docs/market-research.md](docs/market-research.md), and [docs/launch-checklist.md](docs/launch-checklist.md).
+See [docs/security-model.md](docs/security-model.md), [docs/market-research.md](docs/market-research.md), [docs/launch-checklist.md](docs/launch-checklist.md), and the [friends-only beta checklist](docs/private-beta-testing.md).

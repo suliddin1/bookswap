@@ -1,17 +1,26 @@
-# Non-deployment and production launch checklist
+# Private-beta and public launch checklist
 
-Updated: 28 July 2026
+Updated: 1 August 2026
 
 This document separates repository-prepared procedures from production facts that an owner must verify. A checked repository item is never evidence that production infrastructure is enabled.
 
+## Friends-only private-beta boundary
+
+- The owner has deferred encrypted backup/restore rehearsal and accepted that temporary recovery risk for this private beta. Do not request database/PAT secrets, enable temporary database access, reset passwords, dump, restore, or retry encryption in this run.
+- The beta must be visibly labeled, remain direct-link/invitation-only, send `noindex`/`nofollow`, and warn testers to use test listings/messages without sensitive personal or payment data. `noindex` is not access control.
+- Legal operator/contact/age/retention/counsel facts remain mandatory before broad public launch but do not independently block this clearly labeled friends beta.
+- Backup/restore evidence becomes mandatory before broad public launch, destructive/materially risky production migrations, or meaningful real-user data accumulation.
+- Deferral does not waive application/schema compatibility. Never deploy current code while production lacks its required contracts, and never apply a risky migration merely to unblock deployment.
+
 ## Repository-prepared release gate
 
-- Run `npm ci`, `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:database:static`, `npm run test:dependencies`, `npm run test:secrets`, `npm run build`, `npm run test:performance`, and `npm run test:e2e`.
+- Run `npm ci`, `npm audit --omit=dev --audit-level=high`, `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:database:static`, `npm run test:dependencies`, `npm run test:secrets`, `npm run build`, `npm run test:performance`, and `npm run test:e2e`. Also inspect the full `npm audit` result: the current accepted residual is one development-only ESLint-chain advisory, not a general vulnerability-count allowance.
 - With local Docker available, run `supabase db reset`, then execute `supabase/tests/launch_readiness.sql` and `supabase/tests/marketplace_query_plans.sql` with `psql -v ON_ERROR_STOP=1`.
 - With the guarded development credentials, run `npm run test:authorization` and retain only pass/fail evidence—never credentials or private fixture content.
 - Require zero Supabase Security Advisor findings. Treat unused-index notices on an empty development database as non-actionable until representative traffic exists.
-- Require all legal placeholders to be replaced and counsel-reviewed.
+- Require all legal placeholders to be replaced and counsel-reviewed before broad public launch. For friends beta, require the explicit beta warning and no sensitive/payment data.
 - Inspect `git diff`, generated artifacts, ignored env files, and the final secret scan; commit locally only after all achievable gates pass.
+- Run `npm run test:production-rehearsal` as a repository safety/fingerprint guard. The actual backup/restore exercise remains deferred by owner decision and must not be retried in this run.
 
 ## Pre-migration backup and change control
 
@@ -20,8 +29,8 @@ Before any production migration, the owner must:
 1. identify the exact project ref and migration range;
 2. stop concurrent schema changes and record approver/ticket;
 3. verify the provider backup/PITR setting and most recent successful recovery point;
-4. create a logical schema/data export using the approved Supabase CLI or `pg_dump` process, encrypt it, and store it outside the database account;
-5. separately inventory Storage objects because database backup does not by itself prove file-object recovery;
+4. create a logical schema/data export using the approved Supabase CLI and a PostgreSQL 17 full logical archive, checksum and encrypt them, and store them outside the database account; default `supabase db dump` excludes managed `auth` and `storage`, so separately prove managed Auth recovery;
+5. separately inventory/copy Storage objects because database metadata does not by itself prove file-object recovery; a zero-object observation needs a signed manifest but is not a database backup;
 6. restore the backup into an isolated non-production target and run row-count, foreign-key, RLS, authorization, and application smoke checks;
 7. apply migrations in filename order and run `supabase/tests/launch_readiness.sql` plus targeted post-migration queries.
 
@@ -29,7 +38,7 @@ Never run destructive authorization fixtures against production.
 
 ## Merge safety with Vercel Git integration
 
-The `bookswap` Vercel project is connected directly to `suliddin1/bookswap`. Repository history confirms that feature-branch pushes create Preview deployments and pushes to `main` create Production deployments. GitHub Actions performs validation only; it does not own the current Vercel deployment path. CI uses non-secret public fixture values so mocked browser flows can initialize the Supabase client; it receives no service-role key and is not real-backend authorization evidence.
+The `bookswap` Vercel project was historically connected directly to `suliddin1/bookswap`, but the Git integration is currently disconnected. Repository history confirms that while connected, feature-branch pushes created Preview deployments and pushes to `main` created Production deployments. GitHub Actions performs validation only; it does not own the current Vercel deployment path. CI uses non-secret public fixture values so mocked browser flows can initialize the Supabase client; it receives no service-role key and is not real-backend authorization evidence.
 
 Before merging a release PR when production publication is not authorized:
 
@@ -75,7 +84,27 @@ Vercel rollback restores application code/config version; it does not reverse da
 - Storage ownership policy alignment, hosted Auth controls, administrator MFA, and Vercel Production variable names/scopes require owner verification.
 - The existing production release predates the launch-readiness branch. Vercel Git remains disconnected, no custom domain is verified, and this change does not deploy or promote a release.
 - Listing/chat content checks are deterministic repository code and require no external AI key. Notification email remains disabled until its separately documented operational requirements are met.
-- The gate stopped before every production mutation. Follow DR-006 and DR-007 in `docs/ai/DECISION_REQUESTS.md`; do not deploy until backup/restore, migration baseline, Auth, Storage, variables, canonical domain, operational ownership, and legal facts are complete.
+- This 28 July gate stopped before every production mutation. Its later, separately authorized clean-beta provisioning and controlled release are recorded below; that release did not resolve the legacy-production recovery gate or authorize PR #7 deployment.
+
+## Production migration rehearsal inspection — 29 July 2026
+
+- Read-only normalized fingerprints prove the legacy history entries match the repository's reviewed initial baseline. An intermediate repository migration is not recorded separately, but its catalog effects are already represented by that baseline.
+- Production lacks the later ordered hardening migrations. The reviewed plan is history-only canonical baselining for the initial set, followed by only the remaining ordered migrations—first on an isolated restore, never by blind production push.
+- Production aggregate preconditions showed internally consistent Auth/profile state and no reviewed data conflicts; no Storage object content existed at inspection time. State can change and must be rerun immediately before backup/rehearsal/production.
+- No backup file, checksum, encryption artifact, managed Auth recovery, isolated restore, migration repair, migration application, smoke test, or measured RPO/RTO was produced. The gate remains failed.
+- Follow `docs/production-migration-runbook.md` and `docs/ai/PRODUCTION_MIGRATION_REHEARSAL.md`. No production reset, fixture, deployment, or Git reconnection is permitted by this evidence work.
+
+## Clean beta provisioning gate — 30 July 2026
+
+- The owner-designated beta, paused legacy, and development projects are three distinct PostgreSQL 17 targets. Legacy remains untouched and no legacy user, row, history, or Storage object is copied.
+- The clean beta project has exact 22/22 repository migration parity without seed data. Remote launch SQL, schema lint, eight representative query plans, Security Advisor, RLS/grants/Storage structure, and the seven-role 10/10 authorization matrix pass with zero fixture residue.
+- Hosted Auth has the canonical Site URL, three exact required redirects, confirmation enabled, secure password changes, a 12-character letters/digits policy, refresh rotation, and configured rate limits.
+- Vercel Production has the verified beta URL/public/server key entries plus `NEXT_PUBLIC_SITE_URL` and `BOOKSWAP_PRIVATE_BETA`; the server key is sensitive and server-only. No value or project reference is documented.
+- Use the active legacy `anon`/`service_role` key formats with the current client path. The modern secret format returned 403 HTML in the verified admin preflight; the legacy server role returned 200 JSON and passed the full actor matrix.
+- Vercel Git remains disconnected. The controlled CLI release from the clean, pushed, CI-green `a7a5a68` checkout is `READY` on the canonical HTTPS alias; retain the previous deployment as the application rollback candidate.
+- Direct post-deploy Chromium smoke passes six public routes, eight exact responsive checks, the catalog API, security headers, crawler controls, 29 asset responses, keyboard/mobile navigation, and zero real request, console, page, or runtime failures. Expected canceled Next.js speculative prefetches are recorded separately from failures.
+- Do not invite friends until custom SMTP or a Send Email Hook is configured and signup confirmation plus password recovery pass through an owner-controlled non-team inbox. Supabase's default mail service is not friend-facing production email.
+- Backup/restore remains deferred only for this friends beta. It is still mandatory before broad public launch, destructive/materially risky migration, or meaningful real-user data accumulation.
 
 ## Failed release and incident recovery
 

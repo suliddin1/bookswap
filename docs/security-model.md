@@ -22,7 +22,11 @@ Updated: 28 July 2026
 - Auth browser flows use Supabase Auth's platform limits; the application-controlled Auth route also uses the durable limiter. Password/reset copy and local policy require 12 characters, generic errors avoid account enumeration, redirects use the current origin, and roles are never trusted client-side.
 - API errors expose no stack, SQL/policy detail, secret, or raw provider message. Unexpected server failures use a correlation ID and structured JSON fields; logs omit passwords, cookies, tokens, authorization headers, service keys, full messages, and raw user content.
 - CSP, anti-framing, MIME-sniffing, referrer, permissions, HSTS-in-production, and no-store controls are configured at the application boundary.
-- Secret and dependency-baseline checks run in CI. A standalone external `npm audit` remains a separate networked operation and must be approved in the execution environment.
+- Secret and dependency-baseline checks run in CI. The baseline rejects affected production copies and unexpected affected `brace-expansion` paths while explicitly reporting the one known legacy ESLint development path. The 28 July 2026 live audit found 0 production advisories and 13 high development-tree entries, all derived from `GHSA-mh99-v99m-4gvg`; repeat live registry checks during release preparation.
+
+## Content-safety boundary
+
+The launch application makes no AI or external content-classification request and needs no such credential. Text passes strict Zod length/shape validation and one deliberately narrow local rule that rejects requests for CVV/PIN/OTP-style secrets; this is not broad semantic moderation. Images are checked for owner path, count, size, MIME type, and file signature, but their visual meaning is not automatically classified. Durable rate limits, banned-account enforcement, reports, admin review/removal/bans, appeals, and audit history cover abuse the deterministic rules cannot understand.
 
 ## Content-safety boundary
 

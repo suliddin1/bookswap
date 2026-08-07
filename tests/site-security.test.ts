@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
+import robots from "@/app/robots";
+import { isPrivateBeta } from "@/lib/private-beta";
 import { getSiteUrl } from "@/lib/site-url";
 import { localizedAuthResponse } from "@/lib/auth-response";
 import { requireUser } from "@/lib/auth";
@@ -9,9 +11,7 @@ import {
   LEGAL_OPERATOR_FULL_NAME,
   LEGAL_VERSION,
 } from "@/lib/legal";
-import { isPrivateBeta } from "@/lib/private-beta";
 import { legalSignupInput } from "@/lib/legal-consent";
-import robots from "@/app/robots";
 
 const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 const originalPrivateBeta = process.env.BOOKSWAP_PRIVATE_BETA;
@@ -84,6 +84,7 @@ describe("site URL and response security", () => {
 
   it("keeps private beta directly reachable but excluded from crawlers", () => {
     process.env.BOOKSWAP_PRIVATE_BETA = "true";
+    expect(isPrivateBeta()).toBe(true);
     expect(robots()).toEqual({
       rules: { userAgent: "*", disallow: "/" },
     });
@@ -133,6 +134,22 @@ describe("site URL and response security", () => {
     expect(config).toContain('value: "private, no-store, max-age=0"');
     expect(config).toContain("\"frame-ancestors 'none'\"");
     expect(config).toContain("\"object-src 'none'\"");
+  });
+
+  it("keeps exact development project identifiers out of tracked guards", () => {
+    const sources = [
+      readFileSync(
+        new URL("../scripts/validate-development-env.mjs", import.meta.url),
+        "utf8",
+      ),
+      readFileSync(
+        new URL("./authorization.integration.test.ts", import.meta.url),
+        "utf8",
+      ),
+    ].join("\n");
+    expect(sources).not.toMatch(/https:\/\/[a-z]{20}\.supabase\.co/);
+    expect(sources).not.toMatch(/projectRef\s*:/);
+    expect(sources).toContain("expectedDevelopmentTarget");
   });
 
   it("does not reveal whether a signup email already exists", async () => {

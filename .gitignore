@@ -7,6 +7,11 @@ test-results
 coverage
 .npm-cache
 *.log
+backups
+*.backup
+*.dump
+*.gpg
+*.7z
 .DS_Store
 *.tsbuildinfo
 

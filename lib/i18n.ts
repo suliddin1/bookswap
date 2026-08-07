@@ -402,7 +402,12 @@ export const AZ_COPY = {
     invalidImageCount: "1–5 şəkil seç.",
     invalidImageFile:
       "Hər şəkil JPEG, PNG və ya WebP formatında və ən çoxu 5 MB olmalıdır.",
+    unsupportedImageFormat:
+      "HEIC və HEIF daxil olmaqla bu şəkil formatı dəstəklənmir. JPEG, PNG və ya WebP şəkli seç.",
+    imageTooLarge: "Hər şəkil ən çoxu 5 MB olmalıdır.",
     invalidImageContent: "Seçilmiş fayllardan biri etibarlı şəkil deyil.",
+    previewUnavailable:
+      "Şəklin ön baxışını hazırlamaq mümkün olmadı. Şəkli yenidən seç və ya JPEG, PNG və ya WebP nüsxəsindən istifadə et.",
     uploadFailed: "Kitab şəkillərini yükləmək mümkün olmadı.",
     cleanupFailed: "Şəkillərin təmizlənməsini planlaşdırmaq mümkün olmadı.",
     maxPhotos: "Elanda ən çoxu 5 şəkil saxlamaq olar.",
@@ -427,6 +432,11 @@ export const AZ_COPY = {
     saveFailed: "Elan dəyişikliklərini yadda saxlamaq mümkün olmadı.",
     cleanupPending:
       "Elan yadda saxlanıldı. Köhnə şəkillər təhlükəsiz təmizləmə növbəsindədir.",
+    recoveryBadge: "Elan qorundu",
+    recoveryTitle: "Elan yaratma səhifəsində xəta baş verdi.",
+    recoveryBody:
+      "Daxil etdiyin məlumatları yenidən yoxlamaq üçün formaya qayıt. Problem davam edərsə, başqa şəkil seç.",
+    recoveryAction: "Formaya qayıt",
   },
   auth: {
     metadataTitle: "Daxil ol və ya hesab yarat",
@@ -601,6 +611,11 @@ export const AZ_COPY = {
     signIn: "Daxil ol",
     unavailableTitle: "Söhbət əlçatan deyil.",
     unavailableBody: "Söhbət tapılmadı və ya ona baxmaq icazən yoxdur.",
+    loadFailedTitle: "Söhbəti yükləmək mümkün olmadı.",
+    loadFailedBody: "Bağlantını yoxla və yenidən cəhd et.",
+    retry: "Yenidən cəhd et",
+    sessionExpiredTitle: "Sessiyanın müddəti bitib.",
+    sessionExpiredBody: "Söhbəti açmaq üçün hesabına yenidən daxil ol.",
     openMessages: "Mesajlara qayıt",
     conversation: "BookSwap söhbəti",
     you: "Siz",
@@ -615,6 +630,8 @@ export const AZ_COPY = {
     sending: "Göndərilir...",
     sendFailed: "Mesajı göndərmək mümkün olmadı.",
     readFailed: "Mesajların oxunma vəziyyətini yeniləmək mümkün olmadı.",
+    refreshFailed:
+      "Yeni mesajları yükləmək mümkün olmadı. Bir az sonra yenidən cəhd et.",
     startFailed: "Söhbəti açmaq mümkün olmadı.",
     aboutBook: "Bu kitab haqqında",
     viewListing: "Elana bax",

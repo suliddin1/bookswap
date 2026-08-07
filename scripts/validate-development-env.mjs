@@ -1,10 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
-export const DEVELOPMENT_PROJECT_REF = "uibatsbzjswmtdvdrlxj";
-export const DEVELOPMENT_PROJECT_NAME = "bookswap-development";
-export const DEVELOPMENT_URL = `https://${DEVELOPMENT_PROJECT_REF}.supabase.co`;
+const EXPECTED_DEVELOPMENT_URL_SHA256 =
+  "5e74aa476bfdc401db2cf40f68dc08c349df0d763cb9188d0763a07097cb7163";
+const EXPECTED_CONFIRMATION_SHA256 =
+  "c20585ead668991423a9cc51342a5b511f80a39d69d9ba342df46de28434bf3f";
 
 function parseEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return {};
@@ -40,26 +42,46 @@ function projectRefFromUrl(value) {
   }
 }
 
+function sha256(value) {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
+function jwtClaims(value) {
+  try {
+    return JSON.parse(Buffer.from(value.split(".")[1], "base64url").toString());
+  } catch {
+    return null;
+  }
+}
+
 export function validateDevelopmentEnv(env, { authorization = false } = {}) {
   const failures = [];
-  const ref = projectRefFromUrl(env.NEXT_PUBLIC_SUPABASE_URL ?? "");
-  if (env.NEXT_PUBLIC_SUPABASE_URL !== DEVELOPMENT_URL) {
+  const url = env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const ref = projectRefFromUrl(url);
+  if (sha256(url) !== EXPECTED_DEVELOPMENT_URL_SHA256 || !ref) {
     failures.push(
-      `NEXT_PUBLIC_SUPABASE_URL must target ${DEVELOPMENT_PROJECT_NAME} (${DEVELOPMENT_PROJECT_REF}); observed ref: ${ref ?? "missing/invalid"}.`,
+      "NEXT_PUBLIC_SUPABASE_URL does not match the authorized development target.",
     );
   }
-  if (!env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    failures.push("NEXT_PUBLIC_SUPABASE_ANON_KEY is missing.");
+  const publicClaims = jwtClaims(env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "");
+  if (publicClaims?.role !== "anon" || publicClaims.ref !== ref) {
+    failures.push(
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY is missing or does not match the authorized development target.",
+    );
   }
   if (authorization) {
-    if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+    const serviceClaims = jwtClaims(env.SUPABASE_SERVICE_ROLE_KEY ?? "");
+    if (serviceClaims?.role !== "service_role" || serviceClaims.ref !== ref) {
       failures.push(
-        "SUPABASE_SERVICE_ROLE_KEY is missing from .env.test.local.",
+        "SUPABASE_SERVICE_ROLE_KEY is missing or does not match the authorized development target.",
       );
     }
-    if (env.BOOKSWAP_REMOTE_TEST_CONFIRMATION !== DEVELOPMENT_PROJECT_NAME) {
+    if (
+      sha256(env.BOOKSWAP_REMOTE_TEST_CONFIRMATION ?? "") !==
+      EXPECTED_CONFIRMATION_SHA256
+    ) {
       failures.push(
-        `BOOKSWAP_REMOTE_TEST_CONFIRMATION must equal ${DEVELOPMENT_PROJECT_NAME}.`,
+        "BOOKSWAP_REMOTE_TEST_CONFIRMATION does not authorize the development target.",
       );
     }
   }
@@ -68,10 +90,9 @@ export function validateDevelopmentEnv(env, { authorization = false } = {}) {
   }
   return {
     authorization,
-    projectName: DEVELOPMENT_PROJECT_NAME,
-    projectRef: DEVELOPMENT_PROJECT_REF,
-    hasPublicKey: true,
-    hasServiceRole: Boolean(env.SUPABASE_SERVICE_ROLE_KEY),
+    expectedDevelopmentTarget: true,
+    publicRoleVerified: true,
+    serviceRoleVerified: authorization,
   };
 }
 

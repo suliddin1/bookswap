@@ -1,7 +1,9 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Database } from "@/lib/database.types";
+import { parseChatRoomDetail, parseChatRoomSummaries } from "@/lib/chat-client";
+import { parseRoomCreationResponse } from "@/lib/listing-detail-action-responses";
 
 type TestRole =
   | "admin"
@@ -16,7 +18,10 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const publicKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const runRemote = process.env.RUN_REMOTE_AUTHORIZATION_TESTS === "1";
-const expectedUrl = "https://uibatsbzjswmtdvdrlxj.supabase.co";
+const expectedUrlSha256 =
+  "5e74aa476bfdc401db2cf40f68dc08c349df0d763cb9188d0763a07097cb7163";
+const expectedConfirmationSha256 =
+  "c20585ead668991423a9cc51342a5b511f80a39d69d9ba342df46de28434bf3f";
 const password = `BookSwap!${randomUUID()}Aa1`;
 const suffix = randomUUID();
 
@@ -28,8 +33,13 @@ const deletedUserIds = new Set<string>();
 let service: SupabaseClient<Database>;
 let activeListingId = "";
 let draftListingId = "";
+let removedListingId = "";
 let roomId = "";
 let reportId = "";
+
+function sha256(value: string) {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
 
 async function legalAcceptanceMutation(
   method: "DELETE" | "PATCH" | "POST",
@@ -98,10 +108,11 @@ async function createRole(role: TestRole) {
 
 describe.skipIf(!runRemote)("development authorization matrix", () => {
   beforeAll(async () => {
-    if (url !== expectedUrl)
-      throw new Error(`Refusing unexpected Supabase URL: ${url || "missing"}`);
+    if (sha256(url) !== expectedUrlSha256)
+      throw new Error("Refusing an unexpected Supabase target");
     if (
-      process.env.BOOKSWAP_REMOTE_TEST_CONFIRMATION !== "bookswap-development"
+      sha256(process.env.BOOKSWAP_REMOTE_TEST_CONFIRMATION ?? "") !==
+      expectedConfirmationSha256
     )
       throw new Error("Missing development-project confirmation");
     if (!publicKey || !serviceKey) throw new Error("Missing test credentials");
@@ -131,21 +142,31 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
       .eq("id", ids.admin);
     if (adminUpdate.error) throw adminUpdate.error;
 
+    const listingRoute = await import("../app/api/listings/route");
+    const activeListingResponse = await listingRoute.POST(
+      apiRequest("/api/listings", "POST", "seller", {
+        title: "İşıqlı dünya",
+        author: "Test Müəllif",
+        description: "Authorization test üçün etibarlı kitab elanı.",
+        price: 20,
+        images: [
+          `${url}/storage/v1/object/public/listing-images/${ids.seller}/authorization-fixture.png`,
+        ],
+        category: "Fiction",
+        condition: "Good",
+        city: "Baku",
+      }),
+    );
+    if (activeListingResponse.status !== 201)
+      throw new Error("Seller could not create the active test listing");
+    const activeListingBody = await activeListingResponse.json();
+    activeListingId = activeListingBody.data?.id ?? "";
+    if (!activeListingId)
+      throw new Error("Listing creation did not return an identifier");
+
     const { data: listings, error: listingError } = await service
       .from("listings")
       .insert([
-        {
-          title: "İşıqlı dünya",
-          author: "Test Müəllif",
-          description: "Authorization test üçün etibarlı kitab elanı.",
-          price: 20,
-          images: [],
-          category: "Fiction",
-          condition: "Good",
-          city: "Baku",
-          seller_id: ids.seller,
-          status: "active",
-        },
         {
           title: "Gizli qaralama",
           author: "Test Müəllif",
@@ -158,11 +179,29 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
           seller_id: ids.seller,
           status: "draft",
         },
+        {
+          title: "Silinəcək elan",
+          author: "Test Müəllif",
+          description: "Silinmiş elan üçün söhbət başlanmaması sınağı.",
+          price: 16,
+          images: [],
+          category: "History",
+          condition: "Good",
+          city: "Baku",
+          seller_id: ids.seller,
+          status: "active",
+        },
       ])
       .select("id,status");
     if (listingError || !listings) throw listingError;
-    activeListingId = listings.find((row) => row.status === "active")!.id;
     draftListingId = listings.find((row) => row.status === "draft")!.id;
+    removedListingId =
+      listings.find((row) => row.status === "active")?.id ?? "";
+    const removed = await service
+      .from("listings")
+      .delete()
+      .eq("id", removedListingId);
+    if (removed.error) throw removed.error;
   }, 60_000);
 
   afterAll(async () => {
@@ -178,6 +217,13 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
       if (deletedUserIds.has(id)) continue;
       const deletion = await service.auth.admin.deleteUser(id);
       if (deletion.error) throw deletion.error;
+    }
+    if (createdUserIds.length > 0) {
+      const imageCleanup = await service
+        .from("listing_image_cleanup_jobs")
+        .delete()
+        .in("user_id", createdUserIds);
+      if (imageCleanup.error) throw imageCleanup.error;
     }
   }, 60_000);
 
@@ -441,18 +487,91 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
     expect(banned.error).not.toBeNull();
   });
 
-  it("isolates chat rooms and rejects forged senders", async () => {
-    const opened = await clients.buyer
-      .from("chat_rooms")
-      .insert({
-        listing_id: activeListingId,
-        buyer_id: ids.buyer,
-        seller_id: ids.seller,
-      })
-      .select("id")
-      .single();
-    expect(opened.error).toBeNull();
-    roomId = opened.data!.id;
+  it("creates a complete room that both participants can open", async () => {
+    const roomsRoute = await import("../app/api/chat/rooms/route");
+    const roomRoute = await import("../app/api/chat/rooms/[id]/route");
+    const messageRoute = await import("../app/api/chat/message/route");
+    const starts = await Promise.all(
+      Array.from({ length: 3 }, () =>
+        roomsRoute.POST(
+          apiRequest("/api/chat/rooms", "POST", "buyer", {
+            listingId: activeListingId,
+          }),
+        ),
+      ),
+    );
+    expect(starts.map((response) => response.status)).toEqual([201, 201, 201]);
+    const startedRooms = await Promise.all(
+      starts.map(async (response) =>
+        parseRoomCreationResponse(await response.json(), {
+          listingId: activeListingId,
+          buyerId: ids.buyer,
+          sellerId: ids.seller,
+        }),
+      ),
+    );
+    expect(startedRooms.every(Boolean)).toBe(true);
+    const startedIds = startedRooms.flatMap((room) => (room ? [room.id] : []));
+    expect(new Set(startedIds).size).toBe(1);
+    roomId = startedIds[0] ?? "";
+    expect(roomId).not.toBe("");
+
+    const readStates = await service
+      .from("chat_room_reads")
+      .select("user_id")
+      .eq("room_id", roomId)
+      .order("user_id");
+    expect(readStates.error).toBeNull();
+    expect(readStates.data?.map((state) => state.user_id).sort()).toEqual(
+      [ids.buyer, ids.seller].sort(),
+    );
+
+    for (const role of ["buyer", "seller"] as const) {
+      const response = await roomRoute.GET(
+        apiRequest(`/api/chat/rooms/${roomId}`, "GET", role),
+        { params: Promise.resolve({ id: roomId }) },
+      );
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(parseChatRoomDetail(body.data)).not.toBeNull();
+
+      const listResponse = await roomsRoute.GET(
+        apiRequest("/api/chat/rooms", "GET", role),
+      );
+      expect(listResponse.status).toBe(200);
+      const listBody = await listResponse.json();
+      expect(
+        parseChatRoomSummaries(listBody.data)?.map((room) => room.id),
+      ).toContain(roomId);
+    }
+
+    const buyerMessage = await messageRoute.POST(
+      apiRequest("/api/chat/message", "POST", "buyer", {
+        roomId,
+        text: "Salam, kitab hələ mövcuddur?",
+      }),
+    );
+    expect(buyerMessage.status).toBe(201);
+    const sellerMessage = await messageRoute.POST(
+      apiRequest("/api/chat/message", "POST", "seller", {
+        roomId,
+        text: "Bəli, kitab mövcuddur.",
+      }),
+    );
+    expect(sellerMessage.status).toBe(201);
+
+    for (const role of ["buyer", "seller"] as const) {
+      const response = await roomRoute.GET(
+        apiRequest(`/api/chat/rooms/${roomId}`, "GET", role),
+        { params: Promise.resolve({ id: roomId }) },
+      );
+      const body = await response.json();
+      const detail = parseChatRoomDetail(body.data);
+      expect(detail?.messages.map((message) => message.sender_id)).toEqual([
+        ids.buyer,
+        ids.seller,
+      ]);
+    }
 
     const hidden = await clients.unrelated
       .from("chat_rooms")
@@ -461,12 +580,63 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
     expect(hidden.error).toBeNull();
     expect(hidden.data).toEqual([]);
 
-    const valid = await clients.buyer.from("messages").insert({
-      room_id: roomId,
-      sender_id: ids.buyer,
-      text: "Salam, kitab hələ mövcuddur?",
-    });
-    expect(valid.error).toBeNull();
+    const unrelatedDetail = await roomRoute.GET(
+      apiRequest(`/api/chat/rooms/${roomId}`, "GET", "unrelated"),
+      { params: Promise.resolve({ id: roomId }) },
+    );
+    expect(unrelatedDetail.status).toBe(404);
+    const anonymousDetail = await roomRoute.GET(
+      new Request(`http://localhost/api/chat/rooms/${roomId}`),
+      { params: Promise.resolve({ id: roomId }) },
+    );
+    expect(anonymousDetail.status).toBe(401);
+    const expiredDetail = await roomRoute.GET(
+      new Request(`http://localhost/api/chat/rooms/${roomId}`, {
+        headers: { authorization: "Bearer expired-development-session" },
+      }),
+      { params: Promise.resolve({ id: roomId }) },
+    );
+    expect(expiredDetail.status).toBe(401);
+
+    const ownListing = await roomsRoute.POST(
+      apiRequest("/api/chat/rooms", "POST", "seller", {
+        listingId: activeListingId,
+      }),
+    );
+    expect(ownListing.status).toBe(409);
+    const missingListing = await roomsRoute.POST(
+      apiRequest("/api/chat/rooms", "POST", "buyer", {
+        listingId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      }),
+    );
+    expect(missingListing.status).toBe(404);
+    const removedListing = await roomsRoute.POST(
+      apiRequest("/api/chat/rooms", "POST", "buyer", {
+        listingId: removedListingId,
+      }),
+    );
+    expect(removedListing.status).toBe(404);
+    const inactiveListing = await roomsRoute.POST(
+      apiRequest("/api/chat/rooms", "POST", "buyer", {
+        listingId: draftListingId,
+      }),
+    );
+    expect(inactiveListing.status).toBe(404);
+    const bannedStart = await roomsRoute.POST(
+      apiRequest("/api/chat/rooms", "POST", "banned", {
+        listingId: activeListingId,
+      }),
+    );
+    expect(bannedStart.status).toBe(403);
+    const anonymousStart = await roomsRoute.POST(
+      new Request("http://localhost/api/chat/rooms", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ listingId: activeListingId }),
+      }),
+    );
+    expect(anonymousStart.status).toBe(401);
+
     const forged = await clients.buyer.from("messages").insert({
       room_id: roomId,
       sender_id: ids.seller,
@@ -479,7 +649,7 @@ describe.skipIf(!runRemote)("development authorization matrix", () => {
       text: "Outsider",
     });
     expect(outsider.error).not.toBeNull();
-  });
+  }, 30_000);
 
   it("protects notifications and Azerbaijani system payloads", async () => {
     const inserted = await service

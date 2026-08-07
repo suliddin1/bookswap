@@ -1,8 +1,64 @@
 # QA evidence
 
-Evidence date: 2026-07-28 (Asia/Baku). Repository: `C:\Users\Lenovo\Documents\2HandedBook`, branch `autonomous/bookswap-product`.
+## 2026-07-30 — Friends-only private-beta finalization and deployment gate
+
+The run started from clean synchronized `main` at `39108b7dd21724a91ad8d81ccf8fbf3ec2e96714`. Read-only provider metadata reconfirmed separate healthy production and development Supabase projects on PostgreSQL 17, authenticated Supabase CLI access, the intended existing Vercel project, and a healthy but older Production deployment. Vercel Production has the Supabase URL/public/server entries by name and scope; the server entry is sensitive and non-readable, the URL points to production rather than development, and the canonical site URL plus private-beta flag are absent. No environment value or project reference is retained here.
+
+The owner explicitly deferred encrypted database/Auth/Storage backup and isolated restore work for the friends-only beta. No database password or Personal Access Token was requested, Temporary Database Access was not enabled, and no dump, restore, encryption prompt, backup file, checksum, or Storage copy was attempted. The accepted risk remains mandatory to close before broad public launch, destructive/materially risky production migration, or meaningful real-user data accumulation.
+
+Repository finalization added a server-only `BOOKSWAP_PRIVATE_BETA` switch, an Azerbaijani visible warning, global noindex/nofollow/noarchive metadata, crawler-wide `robots.txt` disallow, explicit environment examples, and a friend-testing checklist. Direct-link access remains available; noindex is documented as crawler guidance rather than access control. Exact development target values were removed from the tracked validator, real authorization test, environment example, and historical evidence; SHA-256 identity fingerprints plus URL/key-role/ref consistency preserve the fail-closed non-production guard without printing the target.
+
+The fresh unlinked local Supabase stack initially exposed a genuine config defect: `[local_smtp]` is invalid for the pinned CLI and current official config contract. Renaming it to `[inbucket]` allowed PostgreSQL 17 startup and a clean reset through all 22 migrations plus seed. `launch_readiness.sql` passed. The representative query-plan test then exposed two over-specific assertions: it required a valid review index to be selected even when PostgreSQL's cost-based planner chose a 1.244 ms bounded hash/sequence plan, and it counted a 202-row dimension-table sequential scan as post-index filtering despite a 0.072 ms seller cursor index plan. The corrected guard still preflights the review index, caps a review sequence scan at 10,000 actual rows, requires the seller index, and limits post-filter rows specifically on Index/Index Only/Bitmap Heap nodes. All eight representative plans then passed; generated fixtures were 0/0/0, migration history was 22, schema lint reported no errors, and the local stack/generated metadata were removed.
+
+Verification evidence at this checkpoint: format/diff checks pass after generated metadata cleanup; lint has zero warnings; strict non-incremental TypeScript passes; Vitest is 62/62; static migration guard is 22/22; production-rehearsal fingerprints are 22/22 with zero repository backup artifacts; dependency baseline is 7/7; live production-only npm audit is 0 while the reviewed development-only ESLint chain remains 13 high; secret and identifier scans pass; guarded real development authorization is 10/10 with fixture cleanup; beta-enabled optimized build generates 39/39 static pages; bundle budgets are 5/5; Chromium is 30/30 including visible beta/noindex behavior and 320/375/1024/1440-width containment.
+
+The production promotion gate remains closed for a reason independent of the backup deferral. Production represents the reviewed legacy baseline, while current `main` directly calls catalog RPCs, chat-read state, cleanup/audit structures, and the durable limiter from migrations 4–22. The immutable sequence includes migration 21's generated-search-column/index rebuild, documented as lock/rewrite-sensitive. Deploying current code would break core paths; applying that risky sequence is prohibited in this iteration. No production connection/write, history repair, migration, Auth/Storage mutation, environment change, Vercel Git reconnection, deployment, rollback, or production fixture occurred.
+
+Evidence date: 2026-07-28 (Asia/Baku). Repository: authoritative BookSwap checkout, branch `main`.
 
 No production database, production deployment, migration, or Vercel Git setting was touched. No credential was written to tracked files. Generated build and browser diagnostics remained ignored and were removed after verification.
+
+## Dependency-security audit - current evidence
+
+The authorized live registry audit started at 0 critical, 13 high, 0 moderate, 0 low, and 0 informational findings across the complete dependency tree. `npm audit --omit=dev --json` returned 0 at every severity, proving that no reported advisory is installed in the production dependency tree. The 13 full-tree entries are npm's propagation of one reviewed advisory, [`GHSA-mh99-v99m-4gvg`](https://github.com/advisories/GHSA-mh99-v99m-4gvg), through the ESLint development graph; they are not 13 independent vulnerabilities.
+
+| npm audit entry               | Installed | Relationship       | npm-reported affected range             | Development dependency path and role                                                                    | Compatible remediation status                                                                                           |
+| ----------------------------- | --------- | ------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `@eslint/eslintrc`            | 2.1.4     | Transitive         | 0.0.1; or >=0.1.1                       | `eslint > @eslint/eslintrc > minimatch > brace-expansion`; lint/config only                             | Underlying fix is `brace-expansion` 5.0.8; no compatible parent release removes the 1.x API path                        |
+| `@humanwhocodes/config-array` | 0.13.0    | Transitive         | `*`                                     | `eslint > @humanwhocodes/config-array > minimatch > brace-expansion`; lint/config only                  | Same upstream constraint                                                                                                |
+| `brace-expansion`             | 1.1.16    | Transitive         | `<=5.0.7`                               | `minimatch` 3.1.5; brace/glob expansion during lint only                                                | Fixed in 5.0.8; no patched 1.x release exists                                                                           |
+| `eslint`                      | 8.57.1    | Direct development | 0.12.0-2.0.0-rc.1; or 4.1.0-10.0.0-rc.2 | Root lint command and its config/cache/glob dependencies                                                | npm suggests ESLint 10.8.0, but that is outside `eslint-config-next` 15's peer range and does not remove plugin paths   |
+| `eslint-config-next`          | 15.5.21   | Direct development | `>=10.2.1-canary.2`                     | Supplies Next, React, import, JSX accessibility, and TypeScript lint rules                              | npm's 0.2.4 suggestion is an invalid downgrade; Next 16 remains a major migration and still depends on affected plugins |
+| `eslint-plugin-import`        | 2.32.0    | Transitive         | `>=1.15.0`                              | `eslint-config-next > eslint-plugin-import > minimatch > brace-expansion`; lint only                    | Latest release still uses minimatch 3; no compatible fix                                                                |
+| `eslint-plugin-jsx-a11y`      | 6.10.2    | Transitive         | `>=6.5.0`                               | `eslint-config-next > eslint-plugin-jsx-a11y > minimatch > brace-expansion`; lint only                  | Latest release still uses minimatch 3; no compatible fix                                                                |
+| `eslint-plugin-react`         | 7.37.5    | Transitive         | `>=7.23.0`                              | `eslint-config-next > eslint-plugin-react > minimatch > brace-expansion`; lint only                     | Latest release still uses minimatch 3; no compatible fix                                                                |
+| `file-entry-cache`            | 6.0.1     | Transitive         | `4.0.0-7.0.2`                           | `eslint > file-entry-cache > flat-cache > rimraf > glob > minimatch > brace-expansion`; lint cache only | ESLint 10 updates this branch but is currently peer-incompatible and other plugin paths remain                          |
+| `flat-cache`                  | 3.2.0     | Transitive         | `1.3.4-4.0.0`                           | ESLint cache cleanup path; local/CI only                                                                | Same upstream constraint                                                                                                |
+| `glob`                        | 7.1.7     | Transitive         | `4.3.0-10.5.0`                          | ESLint cache cleanup path; local/CI only                                                                | Same upstream constraint                                                                                                |
+| `minimatch`                   | 3.1.5     | Transitive         | `2.0.0-10.0.2`                          | Shared by ESLint core and three Next lint plugins                                                       | Fixed modern line uses a different export/API contract; a forced major override is unsupported                          |
+| `rimraf`                      | 3.0.2     | Transitive         | 2.3.0-3.0.2; or 4.2.0-5.0.10            | ESLint cache cleanup path; local/CI only                                                                | Same upstream constraint                                                                                                |
+
+Exploitability requires attacker-controlled brace/glob patterns. The application does not import this graph, and HTTP, listing, search, chat, upload, database, build output, and production server paths cannot reach it. Repository lint patterns are static. A contributor able to alter lint configuration or package scripts could exhaust an ephemeral CI runner, but already controls code executed in that unprivileged check; this creates a development/CI availability risk, not a production service or data-exposure path.
+
+No package or lockfile was changed. Forcing `brace-expansion` 5.0.8 beneath minimatch 3 was rejected because 1.x exports a callable CommonJS function while 5.x exposes `expand` through a new package contract and requires a different supported Node range. Forcing minimatch 10 or ESLint 10 would likewise create unsupported API/peer combinations, and updating Next does not remove the affected lint plugins. The baseline now fails if the known affected copy becomes production-scoped or if any unexpected affected copy appears, while reporting the exact accepted development-only advisory instead of describing 1.1.16 as fully patched.
+
+After repository remediation, the live counts remain 0 critical, 13 high, 0 moderate, 0 low, and 0 informational for the full development tree, and 0 across the production-only tree. The residual is accepted temporarily with an upstream-update watch, static trusted lint patterns, no production installation, and an exact baseline guard. It is a strong pre-launch maintenance item, not a launch blocker.
+
+```text
+npm.cmd run format:check          PASS — all matched files use Prettier
+npm.cmd run lint                  PASS — zero warnings
+npm.cmd run typecheck             PASS — strict TypeScript, zero diagnostics
+npm.cmd test                      PASS — 3 files, 59/59 tests
+npm.cmd run test:database:static  PASS — 22 migrations
+npm.cmd run test:dependencies     PASS — 7 pinned locations; exact known dev advisory reported; affected production brace-expansion copies 0
+npm.cmd run test:secrets          PASS — 188 repository files
+npm.cmd run test:env              PASS — intended guarded development environment
+npm.cmd run build                 PASS — Next 15.5.21, 39/39 static pages
+npm.cmd run test:performance      PASS — 5/5 gzip budgets
+npm.cmd run test:e2e              PASS — Chromium 29/29
+npm.cmd audit --json              EXPECTED NONZERO — 13 high development-tree entries from one advisory
+npm.cmd audit --omit=dev --json   PASS — 0 advisories at every severity
+```
 
 ## PR #2 profile/privacy hydration stabilization - current evidence
 
@@ -210,7 +266,7 @@ Adversarial keyboard and resize testing exposed two genuine defects and drove th
 
 The fixture-backed optimized-production matrix exercised home and catalog at 1440x900, 1024x768, 390x844, and 360x800. Across all eight cases: `lang=az`; exactly one `h1`; the skip/main contract and visible first-tab focus pass; mobile/tablet menu focus open/Escape restoration passes; every visible button/input/select/textarea/summary has a programmatic name and a target at least 24px in both dimensions; primary discovery controls are at least 44px; nested interactive counts are zero; reduced-motion animations longer than one millisecond are zero; base and 200% page widths match the viewport; and framework overlays, hydration errors, console warnings/errors, page errors, failed requests, and HTTP failures are zero. Visual inspection of all eight full-page captures is clean and preserves the warm bookstore hierarchy.
 
-The unmocked production runtime was also checked before fixture isolation. Every public listing request returned the already-documented 500 because ignored `.env.local` points at Supabase ref `lnhublqrtkdrrafghvki` instead of authorized development ref `uibatsbzjswmtdvdrlxj`; Chromium consequently emitted the matching resource error. No code change can truthfully remove that external configuration boundary without the correct public configuration, and no backend cleanliness is claimed. The final local fixture intercepts only `/api/listings` and therefore provides UI/hydration/responsive evidence, not protected-route or backend success evidence.
+The unmocked production runtime was also checked before fixture isolation. Every public listing request returned the already-documented 500 because ignored `.env.local` points at Supabase ref `sanitized-project-ref` instead of authorized development ref `sanitized-project-ref`; Chromium consequently emitted the matching resource error. No code change can truthfully remove that external configuration boundary without the correct public configuration, and no backend cleanliness is claimed. The final local fixture intercepts only `/api/listings` and therefore provides UI/hydration/responsive evidence, not protected-route or backend success evidence.
 
 Current repository gate: lint pass; strict TypeScript pass; Vitest 38/38; Next.js production build 37 routes; Playwright 13/13. `git diff --check`, tracked UTF-8/mojibake scanning, artifact review, and port cleanup pass. An initial Playwright launch without the repository-local browser path started no page; the complete rerun used the existing `.playwright` runtime. No database/schema/package/Auth/Storage/email/provider or other external mutation occurred. The production server is stopped, port 3000 is free, and the temporary harness, screenshots, failure traces, and result directories are removed.
 
@@ -256,7 +312,7 @@ The interrupted rendering defect was runtime-default timestamp presentation in t
 
 The optimized production runtime passed 12 representative authenticated UI cases: `/messages`, `/notifications`, and `/chat/[roomId]` at 1440x900, 1024x768, 390x844, and 360x800. Every case had `lang=az`, `dir=ltr`, exactly one `h1`, private robots, viewport width equal to scroll width, deterministic Baku time, no mojibake, no framework overlay, and zero unexpected console/page/request/HTTP failures. Visual review covered all four chat sizes; the desktop/tablet sidebar and mobile conversation/composer/footer remained readable and unclipped. The 390px interaction probe mapped one expected browser-local moderation 503 to safe Azerbaijani copy and confirmed the notification read-all success status. Signed-out Playwright coverage proves messages, notifications, and room chat send no protected reads.
 
-Authenticated data, Auth, route responses, and Realtime were browser-local representatives only. No backend mutation was submitted and this is not protected-route success evidence. The ignored `.env.local` public URL points at ref `lnhublqrtkdrrafghvki`, while durable state names `uibatsbzjswmtdvdrlxj` as the authorized development project; it was preserved rather than silently repointed. Together with the absent development service secret and the earlier fresh-token `PGRST303` anomaly, this keeps real authenticated browser/network cleanliness blocked under P0-005/P1-012.
+Authenticated data, Auth, route responses, and Realtime were browser-local representatives only. No backend mutation was submitted and this is not protected-route success evidence. The ignored `.env.local` public URL points at ref `sanitized-project-ref`, while durable state names `sanitized-project-ref` as the authorized development project; it was preserved rather than silently repointed. Together with the absent development service secret and the earlier fresh-token `PGRST303` anomaly, this keeps real authenticated browser/network cleanliness blocked under P0-005/P1-012.
 
 Current repository gate: lint pass; strict TypeScript pass; Vitest 33/33; Next.js production build 37 routes; Playwright 9/9. The UTF-8/mojibake scan and `git diff --check` pass. No database/schema/package change was made.
 
@@ -565,7 +621,7 @@ Do not follow that hint literally: granting the entire users table would expose 
 
 ## Development backend verification
 
-Target: bookswap-development, ref uibatsbzjswmtdvdrlxj, eu-central-1, ACTIVE_HEALTHY, PostgreSQL 17. The authorized organization was on the free plan and the connector reported zero monthly project cost.
+Target: bookswap-development, ref sanitized-project-ref, eu-central-1, ACTIVE_HEALTHY, PostgreSQL 17. The authorized organization was on the free plan and the connector reported zero monthly project cost.
 
 Applied migrations in repository order:
 
@@ -628,9 +684,9 @@ This section supersedes earlier current-status/blocker summaries in this histori
 
 ### Environment and repository
 
-- Writable repository: `C:\Users\Lenovo\Documents\2HandedBook`; read-only D source was not modified.
+- Authoritative BookSwap checkout was writable; the separate source checkout remained read-only and untouched.
 - Branch/baseline: `autonomous/bookswap-product` from `5e36c584ca12780226f8b18ae7876335a0bbe82f`.
-- `npm run test:env -- --authorization` passed with project name `bookswap-development`, ref `uibatsbzjswmtdvdrlxj`, correct public configuration, and both required key roles present. No values were printed.
+- `npm run test:env -- --authorization` passed with project name `bookswap-development`, ref `sanitized-project-ref`, correct public configuration, and both required key roles present. No values were printed.
 - `npm run test:authorization` passed 10/10 against the real development backend. The exact-project confirmation guard remained active, and temporary fixtures were cleaned.
 
 ### Database and migrations
@@ -918,3 +974,264 @@ npm.cmd run test:performance             PASS — 5/5 gzip budgets
 npm.cmd run test:e2e                     PASS — Chromium 32/32
 git diff --check                         PASS
 ```
+
+### Merge chronology note
+
+The following `main`-side entries cover 29 July–2 August and are preserved after the independently appended 7 August feature evidence above. The final PR #7 conflict-resolution evidence follows both histories.
+
+## 2026-07-29 — Production backup and migration rehearsal inspection
+
+**Result: repository preparation PASS; recovery and migration rehearsal BLOCKED; production unchanged.** This section is aggregate/catalog evidence only. It contains no credential, project reference, personal row, object content, or backup artifact.
+
+### Read-only production evidence
+
+- PostgreSQL major version aligns with the repository target, the footprint is small, and aggregate Auth/profile correspondence is internally consistent. No current rows conflicted with the reviewed migration preconditions.
+- No Storage object content existed at inspection time. This is an inventory observation, not a Storage copy or completed backup; bucket configuration still requires post-rehearsal verification.
+- Every observed public application table has RLS enabled. Production retains the legacy grants/policies and does not yet contain migrations 4–22.
+- All aggregate migration preconditions returned zero violations: Auth/profile correspondence; user and listing bounds; room participant/seller integrity; favorite visibility; report reason/target/duplicate-open groups; review comment length; and Storage objects.
+- Platform advisors still require hosted Auth and legacy performance/security configuration review; no advisor-driven change was applied.
+
+### History fingerprint evidence
+
+- Two legacy production history entries have exact normalized SQL matches to the repository's initial-schema and production-hardening migrations. Exact remote history versions and observed fingerprints are retained only in private operator evidence.
+- Repository `202606140002_marketplace_upgrade.sql` is not recorded separately, but its catalog effects are already represented in the exact legacy initial schema.
+- The development project records all 22 migration names under generated timestamp versions; every stored normalized SQL fingerprint exactly matches its repository file. This supports, but does not prove, earlier invocation-time version assignment as the mismatch cause.
+- Reconciliation design: on an isolated restore only, use privately verified legacy versions to repair history; mark the three canonical baseline migrations applied after a second equivalence review; require `db push --dry-run` to show only the remaining ordered files; then apply them in immutable order.
+
+### Backup/restore blockers and non-actions
+
+- The rehearsal environment lacked the required Supabase/PostgreSQL tools, secure database connection, and approved encrypted off-repository destination.
+- Default `supabase db dump` excludes managed `auth` and `storage`; with one Auth account present, a public-schema dump alone would not prove recovery.
+- An existing non-production environment was not used because reset/reprovision was not authorized. No paid project was created.
+- No database archive, checksum, encryption proof, object copy, isolated restore, Auth recovery, migration-history repair, dry run, migration application, RPO/RTO measurement, production fixture, DDL/DML, Auth/Storage change, Vercel change, deploy, push, PR, or merge occurred.
+
+### Repository artifacts and final validation
+
+- Added the sanitized assessment `docs/ai/PRODUCTION_MIGRATION_REHEARSAL.md`, operator procedure `docs/production-migration-runbook.md`, read-only aggregate SQL `supabase/tests/production_rehearsal_read_only.sql`, and deterministic 22-fingerprint/backup-artifact guard `scripts/check-production-rehearsal.mjs`.
+- Existing 22 migration SQL files, generated database types, application/API code, package lock, Supabase/Vercel settings, and remote systems were unchanged.
+
+```text
+npm.cmd run format:check                 PASS — all matched files use Prettier
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 59/59 tests
+npm.cmd run test:database:static         PASS — 22 immutable migrations
+npm.cmd run test:production-rehearsal    PASS — 22 fingerprints; 0 repo backup artifacts
+npm.cmd run test:dependencies            PASS — 7 pinned package locations; known dev-only advisory unchanged
+npm.cmd run test:secrets                 PASS — 192 repository files
+npm.cmd run test:env -- --authorization  PASS — guarded development identity/roles
+npm.cmd run test:authorization           PASS — guarded development backend 10/10; fixtures cleaned
+npm.cmd run build                        PASS — Next 15.5.21, 39/39 pages
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 29/29
+git diff --check                         PASS
+```
+
+The first authorization invocation was blocked by sandbox network access before fixture creation. The approved network rerun targeted only the guarded development backend and passed 10/10 with cleanup. No SQL restore test or PostgreSQL parse/execute proof is claimed because the required database tools and isolated target were unavailable.
+
+## 2026-07-30 — Clean beta backend and pre-deployment verification
+
+**Result: clean beta schema/authorization PASS; repository release gates PASS; friend invitations BLOCKED only by transactional Auth email; deployment evidence pending.** No project reference, URL, API key, credential, email address, personal row, or Storage content is retained here.
+
+### Identity, migration, and hosted configuration evidence
+
+- Authenticated metadata independently identified one active/healthy `bookswap-beta`, one active/healthy `bookswap-development`, and one inactive legacy `bookswap`; all are distinct PostgreSQL 17 projects. Legacy remained paused and untouched.
+- An ACL-restricted workspace outside Git was linked only to the exact beta target. The 22 migration copies matched repository SHA-256 values, `db push --dry-run` listed exactly the canonical 22 files, and the push applied 22/22 in order without seed data.
+- Migration parity is exact from `202606140001_init` through `20260728071355_clarify_private_rate_limit_policy`. Thirteen public application tables have RLS; required extensions, constraints, indexes, triggers, grants, Realtime publication, and fixed-search-path functions pass the aggregate probes.
+- `listing-images` is public-read, limited to 5 MiB JPEG/PNG/WebP, has zero objects, and has zero browser mutation policies. Security Advisor reports zero findings. Remaining performance notices are INFO-only unused-index notices expected on an empty project.
+- Remote `launch_readiness.sql`, schema lint, and eight representative query plans pass. The 60,000-listing plan fixture and all associated users/reviews were cleaned; aggregate Auth/application/limiter/Storage counts returned to zero.
+- Hosted Auth was configured with the canonical HTTPS Site URL, three exact redirect URLs, 12-character letters/digits policy, confirmation, secure password changes, refresh rotation, and rate limits. The external config copy was restored byte-for-byte to the repository source afterward; repository `supabase/config.toml` was unchanged.
+- Vercel Production now contains exactly the five required names: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, sensitive `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`, and `BOOKSWAP_PRIVATE_BETA`. Values were streamed in memory and never printed or written to Git.
+- Modern secret-key preflight returned 403 HTML while the repository-compatible legacy `service_role` returned 200 JSON. The Vercel public/server entries were therefore set to the active legacy `anon`/`service_role` pair; the full remote actor matrix then passed.
+
+### Remote authorization and cleanup evidence
+
+- Seven disposable roles—seller, buyer, unrelated, banned, moderator, admin, and stale—exercised the existing ten-case authorization matrix on beta. All 10/10 passed: public/draft visibility, safe profile mutation, protected listing ownership, favorites, chat sender/participant isolation, notifications, review eligibility, reports/privacy, admin audit boundaries, direct Storage denial, and stale-user rejection.
+- The ephemeral test file and process-level credentials were removed. Auth users, public application rows, limiter rows, and Storage objects returned to zero. The immutable test audit row was identified by its complete deterministic fixture predicate and removed only on beta with a transaction-local trigger bypass; a final aggregate check returned zero.
+- Reserved-domain signup probes were rejected as invalid email before mail delivery and created no user. They do not prove SMTP delivery. Current official Supabase guidance says the default provider only sends to organization-member addresses, so custom SMTP or a Send Email Hook plus an owner-controlled inbox round trip remains the only friends-beta external blocker.
+
+### Repository verification
+
+```text
+npm.cmd run format:check                 PASS — all matched files use Prettier
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 62/62 tests
+npm.cmd run test:database:static         PASS — 22 immutable migrations
+npm.cmd run test:production-rehearsal    PASS — 22 fingerprints; 0 repo backup artifacts
+npm.cmd run test:dependencies            PASS — 7 pinned package locations
+npm.cmd run test:secrets                 PASS — 194 repository files
+npm.cmd run test:env                     PASS — guarded development public target; no server key printed
+npm.cmd run build                        PASS — private-beta production build; 39/39 pages
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 30/30
+npm.cmd audit --omit=dev --audit-level=high PASS — 0 production vulnerabilities
+beta remote authorization matrix        PASS — 7 roles, 10/10, zero residual users/rows/objects
+beta remote launch/query plans           PASS — launch SQL plus 8/8 plans, zero fixture residue
+```
+
+The first local build attempt was blocked only by sandbox denial of the existing Google Fonts fetch; the approved network run compiled 39/39 pages. A generated ignored Supabase linkage file caused the first format check to fail, was privately verified as beta-only metadata, and was deleted before the passing rerun. No assertion, RLS rule, grant, or security boundary was weakened.
+
+## 2026-08-01 — Private-beta deployment, public smoke, and final cleanup
+
+**Result: production-hosted public surface PASS; friend invitations remain externally blocked by transactional Auth email.** No account was created, no email was sent, and no production database/Auth/Storage mutation occurred during this verification.
+
+### Deployment and observability evidence
+
+- The existing intended Vercel project is linked locally, the expected Next.js project identity matches, and the canonical HTTPS alias resolves to a `READY` Production deployment.
+- The controlled CLI deployment was initiated from the clean, synchronized `a7a5a68` checkout after exact-SHA CI and all repository/remote backend gates passed. The CLI deployment has no provider-embedded Git source SHA, so this is operator preflight attribution rather than a Vercel metadata claim.
+- Direct headless Chromium smoke passed six public pages: home, catalog, login, signed-out favorites, signed-out profile, and privacy. All returned 200, reached network idle, retained `lang=az`, exposed the private-beta notice, and sent `noindex`.
+- Exact-width reflow passed 8/8 checks across home/catalog at 320, 375, 1024, and 1440 px. The mobile menu opened/closed correctly; keyboard Tab reached the skip link and Enter focused the main content.
+- Catalog API returned 200 with the expected empty-safe shape; invalid filter returned the expected localized 400 machine boundary; `robots.txt` and the manifest returned 200; crawler disallow and baseline security headers passed.
+- The final run observed 29 successful script/stylesheet/font/image responses, zero real failed requests, zero unexpected HTTP failures, zero console errors, and zero page errors. Eleven `net::ERR_ABORTED` requests were confirmed as non-navigation GET speculative Next.js route/chunk prefetches and are reported separately, not hidden or counted as application failures.
+- Vercel's 24-hour runtime error summary returned no error cluster. The one-hour status summary contained only successful/cache responses plus the smoke sequence's expected HTTP 400 validation probes; no 5xx appeared.
+- The first final local E2E run was 29/30 because the beta reflow test applied a global per-element bounds helper to the intentionally clipped decorative hero shelf while racing viewport propagation. The test now waits for the exact `window.innerWidth`, checks the beta notice bounds directly, and asserts actual document `scrollWidth`; no UI style or runtime behavior changed. The complete unchanged-functional-scope rerun passed 30/30.
+- Final focused diff gates: format pass; test-file lint zero warnings; strict non-incremental TypeScript pass; Vitest 62/62; static migrations 22/22; rehearsal guard 22/22 with zero repository backup artifacts; dependency baseline 7/7; secret scan 194; private-beta build 39/39; bundle budgets 5/5; Chromium 30/30; production-only npm audit 0; diff check pass.
+
+### Cleanup and residue evidence
+
+- The ACL-restricted external provisioning workspace was resolved to the exact operator path before deletion. Its 29 non-generated files had repository counterparts with 29/29 SHA-256 equality; the remaining ten link metadata files and one branch marker were generated. It contained no `.git`, `.env`, credential-named file, reparse point, or unknown repository-source mismatch, and was removed.
+- The ignored zero-byte Supabase CLI version marker and ignored Playwright last-run receipts were removed. The temporary production-smoke script and now-empty artifact directory were removed after the passing run. Chromium also emitted one non-sensitive transient GPU `debug.log`; it was removed, and root `.gitignore` now rejects `*.log` so runtime diagnostics cannot enter Git accidentally.
+- No backup, dump, decrypted copy, credential file, personal row, Auth identity, Storage object, screenshot, or secret entered the repository. The protected future encrypted-backup destination was not touched.
+
+### Remaining external boundary
+
+- The current official Supabase Auth guidance still states that default SMTP refuses non-team addresses and is not production mail delivery. The last verified clean-beta configuration has no custom SMTP/Send Email Hook.
+- The available authenticated connector exposes project/database operations but not Auth config, and CLI `2.101.0` exposes config push but no read-only config pull/dry-run. No provider-presence pass is invented and no config push, token extraction, browser secret inspection, signup probe, or email send was attempted.
+- Before invitations, the owner must privately configure custom SMTP or a Send Email Hook and complete one signup-confirmation plus one recovery round trip through an owner-controlled non-team inbox. Keep confirmation enabled.
+
+## 2026-08-01 — P0 iPhone listing-authoring exception
+
+**Result: repository and guarded-development fix PASS; the pre-release production boundary below is superseded by the completed release evidence in the next section.**
+
+### Root-cause and reproduction evidence
+
+- The deployed `/listings/new` bundle matched the repository's unguarded preview path. `files.map(file => URL.createObjectURL(file))` ran in a passive React effect outside the upload/publication `try/catch`; a WebKit iPhone 13 reproduction forced the browser API to throw `NotSupportedError`, and the whole authoring surface was replaced by the route error UI before `/api/upload` was called.
+- The real guarded journey also produced a rejected `/auth/v1/user` lookup on WebKit. `useAuth` chained `.then(...)` without `.catch(...)`, leaving a second unhandled client promise. The hook now handles rejection/finalization and ignores completion after unmount.
+- The historical production incident has no retained client stack or source-mapped telemetry, so evidence cannot distinguish which of these two concrete uncaught paths fired on the user's device. Both are fixed; no unsupported causal claim is made about file contents beyond the reproduced object-URL failure.
+
+### Implementation and case matrix
+
+- Shared preview helpers catch missing/throwing object-URL APIs, revoke partial/all URLs best-effort, clear the failed selection, focus the file field, and show Azerbaijani recovery without leaving the form. Create and edit flows share the helper.
+- HEIC/HEIF, zero-byte, oversized, and excessive selections have explicit Azerbaijani validation; JPEG/PNG multi-preview remains functional. Server-side MIME/signature/count/size enforcement and service-only Storage mutation are unchanged.
+- Upload, malformed/failed Storage, expired session, create response, cleanup, duplicate publish tap, completion UI, and detail rendering remain bounded. An authoring-scoped React boundary provides recovery for unexpected render/lifecycle errors.
+- A newly created normal development user (`is_admin=false`, `banned=false`) with null optional city/phone completed real browser login, real PNG Storage upload, listing insert, completion, and detail render at a mobile viewport with zero page errors and zero failed responses. The listing, owner-folder objects, and Auth user were removed; residue verification returned zero listings and zero `listing-p0-*` users. Two stale disposable users from failed harness attempts were identified by the exact prefix and removed before final validation.
+
+### Final validation
+
+```text
+npm run lint                           PASS — zero warnings
+npx tsc --noEmit --incremental false  PASS — zero diagnostics
+npm test                               PASS — 3 files, 66/66 tests
+npm run test:authorization             PASS — guarded development 10/10; fixtures cleaned
+npm run build                          PASS — Next 15.5.21, 39/39 routes
+npm run test:e2e                       PASS — 35 passed, 1 expected private-beta skip; Chromium full suite plus 3/3 mobile WebKit
+real fresh-user listing flow           PASS — login/upload/create/render; 0 page errors, 0 failed responses, 0 residue
+git diff --check                       PASS
+```
+
+No production Auth/Storage/database mutation, deployment, Vercel setting change, push, merge, or remote Git action occurred during the investigation slice. That historical boundary is superseded by the separately authorized release below.
+
+## 2026-08-01 — P0 mobile listing-authoring production release
+
+**Result: PASS — focused `main` release, canonical Production promotion, guarded Chromium/WebKit smoke, and zero production data residue.**
+
+- Preservation/publication: the validated worktree was branched directly from synchronized `main` without stash/reset/checkout loss. The focused fix commit and a one-line WebKit CI installer correction were published through PR #5 and squash-merged as `606212adbd95e05eaae6113e26d961dd896e9847`. No divergent autonomous history was merged or rewritten.
+- CI: the first PR run proved the workflow installed only Chromium; all Chromium tests passed while WebKit could not launch. The workflow now installs Chromium and WebKit. A later unrelated chat-focus assertion missed once under runner contention and passed on the diagnostic rerun. The exact final `main` SHA then passed the complete GitHub push workflow, including all Chromium and WebKit E2E cases.
+- Local release gates: format, lint, strict non-incremental TypeScript, 66/66 unit/security tests, 22/22 static migrations, rehearsal guard with zero backup artifacts, dependency baseline, 196-file secret scan, guarded development authorization 10/10 with cleanup, 39/39 production build, five performance budgets, 35 passed browser tests plus one expected beta-only skip, mobile WebKit 3/3, production-only audit 0, and diff check all passed.
+- Deployment gate: the linked intended Vercel project and account were accessible; all five required Production variable names existed as encrypted entries; the prior `READY` Production deployment was retained as rollback. The first raw upload ended before artifact creation or alias movement; the compressed retry built 39/39 routes and reached `READY`. Blue/green `/listings/new` returned 200 with the expected security/crawler headers before promotion.
+- Promotion/alias: the new Production deployment was promoted successfully. The canonical HTTPS domain resolved through Vercel DNS to that exact `READY` deployment and `/listings/new` plus the public catalog API returned 200 with expected shapes. The sampled post-deploy error-log query returned no entries.
+- Guarded production smoke: 390×844 Chromium and iPhone 13 WebKit both passed HEIC validation, PNG object-URL preview, intercepted upload, intercepted listing submission, completion, catalog navigation, and detail rendering. Both recorded zero page errors, zero console errors, zero real failed requests, and zero persistent mutations. Two Chromium speculative App Router GET prefetch cancellations were classified separately; WebKit recorded none.
+- Production cleanup: the smoke used an in-memory fake session and fulfilled all write routes in the browser before network dispatch. It created no Auth user, profile, listing, Storage object, favorite, database row, or schema/configuration change, so no production cleanup mutation was required.
+- Residual device boundary: Playwright WebKit exercises iPhone-compatible browser behavior but does not reproduce every physical-iPhone Safari version, camera picker, Photos permission, iCloud/file-provider, memory-pressure, or HEIC metadata path. One owner-observed physical-iPhone pass remains recommended; it is not evidence that the automated production release failed.
+
+## 2026-08-01 — MSG-001 messaging room retrieval fix
+
+**Result: repository/development PASS; production release pending.** No production row, schema, policy, Auth identity, Storage object, environment value, deployment, or Git remote changed.
+
+### Proven root cause and affected path
+
+- Buyer room creation was successful: three concurrent guarded development starts returned HTTP 201 and the same `chat_rooms.id`; `(listing_id, buyer_id)` uniqueness prevented duplicates, and the `initialize_chat_room_reads` trigger created exactly the buyer and seller read-state rows in the insert transaction.
+- Buyer and seller detail routes both returned HTTP 200 with the correct room ID, participant IDs, listing, read state, and messages. Unrelated and anonymous callers received no private data.
+- `public.users.city` is nullable. The detail/list APIs return raw participant summaries, so fresh profiles without optional location carry `city: null`. `lib/chat-client.ts` accepted only an omitted or string city; `parseChatRoomDetail`/`parseChatRoomSummaries` therefore returned `null`. `ChatPanel` collapsed that client-contract failure into the same permanent unavailable state used for a genuine 403/404.
+- Read-only production aggregation independently confirmed two rooms, both with null buyer and seller cities, zero missing-listing rooms, and zero self rooms. Thus both deployed room responses are rejected by the old client contract; no participant row, redirect ID, transaction, RLS, or migration failure was found.
+
+### Security/database verification
+
+- Development and clean-beta production each contain the same 22 named migrations. Messaging policies, grants, triggers, constraints, and relevant function definitions match: participant-only room/message SELECT, active participant message INSERT, authenticated room INSERT, no anon chat grants, distinct participants, unique `(listing_id, buyer_id)`, listing/seller FK, two-row read-state trigger, and participant-validating delivery trigger.
+- There is no conversation-creation RPC. The authenticated server route validates the active listing/seller/account, blocks self-message, and performs one service-side Postgres upsert; trigger effects are atomic with that statement. No migration or generated type change was required.
+- Security Advisor: development zero findings. Production retains only the already tracked leaked-password-protection and MFA warnings; performance findings are INFO-only unused-index notices on the small beta dataset.
+
+### Regression and validation evidence
+
+```text
+npm run lint                           PASS — zero warnings
+npx tsc --noEmit --incremental false  PASS — zero diagnostics
+npm test                               PASS — 3 files, 66/66 tests
+npm run test:authorization             PASS — guarded development 10/10
+npm run test:database:static           PASS — 22 migrations
+npm run test:production-rehearsal      PASS — 22 fingerprints; 0 backup artifacts
+npm run test:dependencies              PASS — 7 guarded packages
+npm run test:secrets                   PASS — 197 files
+npm run build                          PASS — Next 15.5.21, 39/39 routes
+npm run test:performance               PASS — 5/5 budgets
+npm run test:e2e -- --workers=1        PASS — 39 passed, 1 expected beta skip
+mobile messaging regressions           PASS — Chromium 2/2; iPhone 13 WebKit 2/2
+npm run format:check                    PASS
+git diff --check                       PASS
+```
+
+- Guarded actor matrix: seller creates through the protected listing route; buyer opens/reuses the room concurrently; both actors read room/list responses and send messages; refresh reads both messages. Unrelated, anonymous, forged-sender, self-message, banned, expired-session, missing, deleted, draft, and malformed cases fail safely.
+- Mobile matrix covers listing CTA, returned room ID redirect, transient HTTP failure with Azerbaijani retry, null participant fields, conversation render, message submit, expired-session sign-in recovery, and zero page/console errors in Chromium and iPhone WebKit.
+- Development cleanup proof after the final run: Auth users 0, matching profiles 0, listings 0, rooms 0, read states 0, messages 0, notifications 0, task moderation rows 0, task cleanup jobs 0, and fixture Storage objects 0.
+
+## 2026-08-02 — MSG-001 risk-accepted Production promotion
+
+**Result: Production promotion PASS; MSG-001 remains open pending recipient-side canonical-domain confirmation.**
+
+- Release identity: local `main` and `origin/main` were clean and both exactly `73d0628cd65372c8187198f847062814893cf9be`. All PR and `main` CI had passed; post-merge lint, strict TypeScript, 66/66 unit/security tests, production build, Chromium messaging 2/2, and iPhone WebKit messaging 2/2 had also passed.
+- Candidate gate: `dpl_ECZ6xdSzhgybz8Jj7Lx8wyDjS3j8` (`https://bookswap-8cl1vyo4e-suliddin1s-projects.vercel.app`) was still `READY`, target `production`, and provider metadata matched `sourceSha=73d0628cd65372c8187198f847062814893cf9be` and `release=MSG-001`. The prior canonical deployment `dpl_6nXYzBLTuEFrKin6n94oUXhhV9Lb` was separately reconfirmed `READY` before promotion and remains the immediate rollback deployment.
+- Accepted residual risk: the owner explicitly authorized promotion without recipient-side manual candidate smoke because the protected candidate was not practically reachable for that participant. The independently reported sender-side protected-candidate smoke opened and rendered the room and submitted a message; the recipient notification confirmed message insertion and notification creation. The recipient had only the old canonical client, which still rejected nullable cities.
+- Promotion and canonical verification: only the exact candidate was promoted; no rebuild or new deployment was created. Vercel canonical inspection now resolves `https://bookswap.suliddin.dev` to `dpl_ECZ6xdSzhgybz8Jj7Lx8wyDjS3j8`, which remains `READY` and retains the recorded source SHA. Canonical `/`, `/messages`, and a non-existent conversation route each returned HTTP 200; an anonymous request for a room API route returned HTTP 401.
+- Read-only browser/observability smoke: anonymous mobile Chromium at 390×844 loaded the home, messages, and conversation routes without the generic application-error screen, page errors, console errors, or unexpected HTTP failures. Two same-origin Next RSC GETs ended in `net::ERR_ABORTED` only because the script deliberately navigated to the next page; they are classified navigation cancellations, not application failures. Vercel reported zero runtime-error clusters in the sampled post-promotion window and no error/fatal logs for `dpl_ECZ6xdSzhgybz8Jj7Lx8wyDjS3j8`.
+- Immutable boundary and cleanup: this release created no production users, profiles, listings, rooms, messages, notifications, read states, files, Storage objects, database rows, schema, migration, RLS policy, grant, Auth configuration, or environment-value change. No cleanup write was necessary.
+- Required before issue closure: the recipient must use the canonical domain and confirm the existing conversation opens, the received message is visible, messages-list-to-detail navigation works, and a refresh remains correct. If it fails, collect the exact route, HTTP status, and client error; do not change database authorization, and roll back to `dpl_6nXYzBLTuEFrKin6n94oUXhhV9Lb` immediately if the promoted release shows a broader regression.
+
+## 2026-08-07 — PR #7 semantic merge-conflict resolution
+
+**Result: combined repository PASS; PR remains draft and undeployed.** `origin/main` had advanced by ten promoted commits after the common base while the feature branch independently added legal identity/consent and retained listing lifecycle work. A normal merge preserved published history; no rebase, force-push, reset, blanket side selection, deployment, or infrastructure mutation was used.
+
+### Exact conflict set and resolution
+
+- Environment/docs: `.env.example`, `.env.local.example`, `.env.test.example`, `.gitignore`, and `README.md` retain the exact public legal values and fail-closed guidance while adopting `main`'s blank project-specific test fields, backup-artifact ignores, and private-beta crawler warning.
+- Application/legal: `app/layout.tsx` retains the public legal guard. `app/privacy/page.tsx` retains the current 2026-08-07 policy and consent audit while incorporating `main`'s AI-free provider/content-moderation fact.
+- Shared code: `lib/i18n.ts` retains the owner-removal error. `lib/private-beta.ts` keeps exact `true` semantics and an injectable environment boundary used by both test sets.
+- Tests: `tests/authorization.integration.test.ts` combines the cryptographic development-target guard and image-cleanup cleanup from `main` with PR #7's legal-acceptance mutation probes, created-user tracking, already-deleted-user handling, and retained lifecycle assertions. `tests/site-security.test.ts` combines legal identity/placeholder/consent tests with private-beta crawler and ambiguous-value checks.
+- Durable facts: `docs/ai/ACCEPTANCE_MATRIX.md`, `docs/ai/ARCHITECTURE_DECISIONS.md`, `docs/ai/DECISION_REQUESTS.md`, `docs/ai/ISSUE_QUEUE.md`, `docs/ai/ITERATION_LOG.md`, `docs/ai/PROJECT_STATE.md`, `docs/ai/QA_EVIDENCE.md`, and `docs/launch-checklist.md` preserve `main`'s clean-beta release, production smoke, mobile-authoring, MSG-001, recovery, and SMTP evidence while keeping migration 23 explicitly development-only and PR #7 undeployed.
+- The production rehearsal fingerprint guard now covers all 23 immutable files. Migration `20260807090000_add_legal_acceptance_audit.sql` itself remains byte-for-byte identical to pre-merge PR #7 (`3afe8906b3c5c36355e9271f731ce1708e4c74f2`).
+- The default E2E wrapper runs Chromium and one-worker mobile WebKit sequentially against one local production server. This resolves a local multi-worker WebKit teardown stall without skipping or weakening any test; explicit Playwright arguments remain supported.
+
+### Preserved independent behavior
+
+- From `main`: production/clean-beta promotion evidence, migration rehearsal guards/runbooks, dependency advisory boundary, P0 mobile object-URL/Auth resilience, listing-authoring error boundary, HEIC/HEIF handling, nullable-profile messaging parsing/retry/session recovery, MSG-001 release evidence, Chromium/WebKit mobile tests, and current environment/CI safety checks.
+- From PR #7: `Suliddin Musa Əsədzadə`, `Suliddin677@gmail.com`, legal version `2026-08-07`, fail-closed public configuration, current Terms/Privacy/Marketplace Rules, separate unchecked signup consents, 18+ rule, immutable legal acceptance audit, consent withdrawal, owner-only `Satıldı`/relist/retained `Elanı sil`, active-chat prevention, and preservation of messages/reviews/reports/moderation/images.
+
+### Post-merge validation
+
+```text
+npm.cmd run format:check                 PASS — all matched files
+npm.cmd run lint                         PASS — zero warnings
+npx.cmd tsc --noEmit --incremental false PASS — zero diagnostics
+npm.cmd test                             PASS — 3 files, 74/74 tests
+npm.cmd run test:database:static         PASS — 23 migrations
+npm.cmd run test:production-rehearsal    PASS — 23 fingerprints; 0 backup artifacts
+npm.cmd run test:dependencies            PASS — 7 guarded packages; 0 affected production copies
+npm.cmd run test:secrets                 PASS — 201 repository files
+npm.cmd run test:env                     PASS — guarded development identity; no remote operation
+npm.cmd run build                        PASS — Next 15.5.21, 39/39 routes
+npm.cmd run test:performance             PASS — 5/5 gzip budgets
+npm.cmd run test:e2e                     PASS — Chromium 37 + 1 expected beta-only skip; mobile WebKit 5/5
+git diff --check                         PASS
+```
+
+The existing guarded development authorization result remains 14/14. It was not rerun during conflict resolution because no schema/authorization contract changed and another run would create new immutable administrator-audit records. No Supabase project was queried or mutated in this slice.

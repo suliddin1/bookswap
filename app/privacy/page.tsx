@@ -79,7 +79,11 @@ export default function PrivacyPage() {
           Supabase-dən, hosting və server icrası üçün Vercel-dən istifadə edir.
           Aktivləşdirildiyi halda tranzaksiya e-poçtu təminatçısı yalnız zəruri
           e-poçt və çatdırılma məlumatını emal edə bilər. Hazırkı tətbiqdə
-          reklam və üçüncü tərəf məhsul analitikası yoxdur.
+          reklam və üçüncü tərəf məhsul analitikası yoxdur. Məzmun qaydaları dar
+          daxili yoxlamalar, dərəcə məhdudiyyəti, istifadəçi şikayətləri və
+          idarəçi baxışı ilə tətbiq olunur; mətn və şəkillər xarici avtomatik
+          qiymətləndirmə xidmətinə göndərilmir. Yalnız faktiki aktivləşdirilən
+          təminatçıya zəruri məlumat ötürülməlidir.
         </p>
       </InfoSection>
       <InfoSection id="cross-border" title="7. Transsərhəd ötürmə">
